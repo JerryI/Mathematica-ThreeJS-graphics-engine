@@ -55,9 +55,9 @@ var JSONThree = [...
 
 4. Run ``index.html``
 
-``Drag`` - rotate
-``Ctrl+Drag`` - zoom
-``Shift+Drag`` - drag
+``Drag`` - rotate;
+``Ctrl+Drag`` - zoom;
+``Shift+Drag`` - drag;
 
 
 Single page export
