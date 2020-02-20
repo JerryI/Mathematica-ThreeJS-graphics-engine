@@ -73,20 +73,20 @@ Issues
 ------
 There a lot a functions which are not implemented such as ``Style[]``, ``Tube[]``, ``Ball[]``, ``Cone[]``, ``BezierCurve[]``...
 Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, ``Plot3D`` is already done
-  ``Graphics3D`` - supported without styling, themes, custom lighting
-  ``List`` - supported
-  ``GraphicsGroup`` - supported
-  ``RGBColor`` - supported
-  ``Opacity`` - supported
-  ``RGBColor`` - supported
-  ``Tube`` - renders like arrows
-  ``Sphere`` - supported
-  ``Center`` - supported
-  ``Tetrahedron`` - supported
-  ``GeometricTransformation`` - fully supported
-  ``GraphicsComplex`` - supported
-  ``Polygon`` - fully supported
-  ``Line`` - supported
+- ``Graphics3D`` - supported without styling, themes, custom lighting
+- ``List`` - supported
+- ``GraphicsGroup`` - supported
+- ``RGBColor`` - supported
+- ``Opacity`` - supported
+- ``RGBColor`` - supported
+- ``Tube`` - renders like arrows
+- ``Sphere`` - supported
+- ``Center`` - supported
+- ``Tetrahedron`` - supported
+- ``GeometricTransformation`` - fully supported
+- ``GraphicsComplex`` - supported
+- ``Polygon`` - fully supported
+- ``Line`` - supported
 
 
 License
