@@ -1,7 +1,7 @@
 3D Graphics drawer for Mathematica based on Three.js
 ===================
-Written in JS parser and drawer allows to export and embed to web pages 3D graphics from Wolfram Mathematica. 
-Unlike build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc.
+Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook. 
+Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at https://mathematica.stackexchange.com/a/215025/53728.
 
 Some parts of the code which is responsible for rotation, zoom, dragging objects and lighting system were taken from Mathics project.
 The home page of Mathics is http://mathics.github.io.
@@ -46,7 +46,7 @@ ExportString[%//N, "ExpressionJSON"]
 				,...
 ```
 
-3. Copy and paste it to data.js
+3. Copy and paste it to data.js (must be simplified!)
 ```javascript
 //\data.js
 
@@ -62,7 +62,7 @@ var JSONThree = [...
 
 Single page export
 ----------
-If you want to share your figure via e-mail, you will be able export it to autonomous .html page. Just pass a figure to a function ``Export2ThreeJS`` located in ``Export2ThreeJS.nb``. 
+If you want to share your figure via e-mail for instance, you will be able export it to the autonomous ``.html`` page. Just pass a figure to a the function ``Export2ThreeJS`` located in ``Export2ThreeJS.nb``. 
 
 Contributing
 ------------
