@@ -8,7 +8,7 @@ The home page of Mathics is http://mathics.github.io.
 
 Usage
 ----------
-1. Plot some graphics (used a low-poly mode for smaller code)
+1. Plot some graphics (used a low-poly mode for smaller code, see ``Example.nb``)
 
 ```Mathematica
 Graphics3D[{
