@@ -62,7 +62,7 @@ var JSONThree = [...
 
 Single page export
 ----------
-If you want to share your figure via e-mail, you will be able export it to autonomous .html page. Just pass a figure to a function ``Export2ThreeJS`` located in ``\deploy\Export2ThreeJS.nb``. 
+If you want to share your figure via e-mail, you will be able export it to autonomous .html page. Just pass a figure to a function ``Export2ThreeJS`` located in ``Export2ThreeJS.nb``. 
 
 Contributing
 ------------
