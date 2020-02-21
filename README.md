@@ -6,6 +6,10 @@ Unlike other build-in export functions it recreates pure Mathematica's functions
 Some parts of the code which is responsible for rotation, zoom, dragging objects and lighting system were taken from Mathics project.
 The home page of Mathics is http://mathics.github.io.
 
+Live example
+----------
+https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/
+
 Usage
 ----------
 1. Plot some graphics (used a low-poly mode for smaller code, see ``Example.nb``)
