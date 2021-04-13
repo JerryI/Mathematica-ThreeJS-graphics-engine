@@ -63,7 +63,7 @@
 				params = {
 	
 					matrix: new THREE.Matrix4(),
-					color: RGBtoColor(1,1,1),
+					color: RGBtoColor(0,0,0),
 					opacity: 1,
 					thickness: 1
 				};
@@ -1193,6 +1193,29 @@
 					
 					geometry.dispose();
 					material.dispose();
+				} else {
+					var arr = interpretate(func.args[0]);
+					if (arr.length ==  1) arr = arr[0];
+					//if (arr.length !== 2) throw "Tube must have 2 vectors!";
+					console.log("points: "+arr.length);
+				
+					var points = [];
+					arr.forEach(function(p) {
+						points.push(new THREE.Vector4(...p, 1));
+					});
+					//new THREE.Vector4(...arr[0], 1)
+					
+					points.forEach(function(p) {
+						p = p.applyMatrix4(params.matrix);
+					});
+		
+					const geometry = new THREE.BufferGeometry().setFromPoints( points );
+					const material = new THREE.LineBasicMaterial({
+						color: params.color
+					});
+					
+					mesh.add(new THREE.Line( geometry, material ));
+					
 				}
 			break;
 			
