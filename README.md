@@ -64,9 +64,6 @@ var JSONThree = [...
 ``Shift+Drag`` - drag;
 
 
-Single page export
-----------
-If you want to share your figure via e-mail for instance, you will be able export it to the autonomous ``.html`` page. Just pass a figure to a the function ``Export2ThreeJS`` located in ``Export2ThreeJS.nb``. 
 
 Contributing
 ------------
