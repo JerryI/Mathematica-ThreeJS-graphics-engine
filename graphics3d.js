@@ -63,9 +63,10 @@
 				params = {
 	
 					matrix: new THREE.Matrix4(),
-					color: RGBtoColor(0,0,0),
+					color: RGBtoColor(1,1,1),
 					opacity: 1,
-					thickness: 1
+					thickness: 1,
+					edgecolor: RGBtoColor(0,0,0)
 				};
 				
 				params.matrix.set( 1,0,0,0,
@@ -851,14 +852,27 @@
 				//	var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
 				//				new THREE.Vector4(...interpretate(func.args[1]), 1)];				
 				//}
-			
-				if (func.args.length !== 2) throw "Cube must have 2 vectors!";
+				console.log("Cuboid");
+				var points, diff, origin;
 				
-				var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
+				if (func.args.length == 2) {
+				
+					points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
 							new THREE.Vector4(...interpretate(func.args[1]), 1)];			
 				
-				var origin = points[0].clone().add(points[1].clone()).divideScalar(2);
-				var diff = points[0].clone().add(points[1].clone().negate());
+					origin = points[0].clone().add(points[1].clone()).divideScalar(2);
+					diff = points[0].clone().add(points[1].clone().negate());
+				
+				} else if (func.args.length == 1) {
+					p = interpretate(func.args[0]);
+					origin = new THREE.Vector4(...p, 1);
+					diff = new THREE.Vector4(1,1,1, 1);
+					
+					//shift it
+					origin.add(diff.clone().divideScalar(2))
+				} else {
+					throw "Expected 2 or 1 arguments";
+				}
 				
 				
 				var geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
@@ -866,9 +880,9 @@
 					color:params.color,
 					transparent:true,
 					opacity:params.opacity,
-					depthWrite: false
+					depthWrite: true
 				});
-				material.side = THREE.DoubleSide;
+				//material.side = THREE.DoubleSide;
 				
 				var cube = new THREE.Mesh( geometry, material );
 				
@@ -1182,7 +1196,7 @@
 						geometry.vertices.push(new THREE.Vector3().copy(params.geometry.vertices[el-1]));
 					});
 					
-					var material = new THREE.LineBasicMaterial( { linewidth: 10, color: RGBtoColor(0,0,0) } );
+					var material = new THREE.LineBasicMaterial( { linewidth: params.thickness, color: params.edgecolor } );
 					var line = new THREE.Line( geometry, material );
 					
 					line.material.polygonOffset = true;
@@ -1211,7 +1225,8 @@
 		
 					const geometry = new THREE.BufferGeometry().setFromPoints( points );
 					const material = new THREE.LineBasicMaterial({
-						color: params.color
+						color: params.edgecolor,
+						linewidth: params.thickness
 					});
 					
 					mesh.add(new THREE.Line( geometry, material ));
