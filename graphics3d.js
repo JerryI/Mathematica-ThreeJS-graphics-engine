@@ -753,7 +753,7 @@
 			break;
 			
 			case 'RGBColor':
-				if (func.args.length !== 3) throw "RGB values should be triple!"
+				if (func.args.length !== 3) console.error( "RGB values should be triple!");
 			
 				var r = Math.round(255*interpretate(func.args[0]));
 				var g = Math.round(255*interpretate(func.args[1]));
@@ -765,7 +765,7 @@
 			
 			case 'Opacity':
 				var o = interpretate(func.args[0]);
-				if (typeof o !== 'number') throw "Opacity must have number value!";
+				if (typeof o !== 'number') console.error( "Opacity must have number value!");
 				console.log(o);
 				params.opacity = o;
 			
@@ -787,7 +787,7 @@
 			case 'Tube':
 				var arr = interpretate(func.args[0]);
 				if (arr.length ==  1) arr = arr[0];
-				if (arr.length !== 2) throw "Tube must have 2 vectors!";
+				if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
 				
 				var points = [new THREE.Vector4(...arr[0], 1),
 							new THREE.Vector4(...arr[1], 1)];
@@ -840,7 +840,7 @@
 					});	
 				} else {
 					console.log(list);
-					throw "List of coords. for sphere object is less 1";
+					console.error( "List of coords. for sphere object is less 1");
 				}
 				
 				material.dispose();
@@ -871,7 +871,7 @@
 					//shift it
 					origin.add(diff.clone().divideScalar(2))
 				} else {
-					throw "Expected 2 or 1 arguments";
+					console.error( "Expected 2 or 1 arguments");
 				}
 				
 				
@@ -1006,7 +1006,7 @@
 					}
 				} else {
 					console.log(p);
-					throw "Unexpected length matrix: :: " + p;
+					console.error( "Unexpected length matrix: :: " + p);
 				}
 				
 				
@@ -1048,7 +1048,7 @@
 				
 				
 				interpretate(func.args[0]).forEach(function(el) {
-					if (typeof el[0] !== 'number') throw "not a triple of number"+el;
+					if (typeof el[0] !== 'number') console.error( "not a triple of number"+el);
 					copy.geometry.vertices.push(
 						new THREE.Vector3(el[0],el[1],el[2])
 					);
@@ -1091,7 +1091,7 @@
 							default:
 								console.log(c);
 								console.log(c.length);
-								throw "Cant produce complex polygons! at"+c;
+								console.error( "Cant produce complex polygons! at"+c);
 							
 						}
 					}
@@ -1118,7 +1118,7 @@
 					var points = interpretate(func.args[0]);
 				
 					points.forEach(function(el) {
-						if (typeof el[0] !== 'number') throw "not a triple of number"+el;
+						if (typeof el[0] !== 'number') console.error( "not a triple of number"+el);
 						geometry.vertices.push(
 							new THREE.Vector3(el[0],el[1],el[2])
 						);					
@@ -1145,7 +1145,7 @@
 						
 						default:
 							console.log(points);
-							throw "Cant build complex polygon ::";
+							console.error( "Cant build complex polygon ::");
 					}
 					
 				}
@@ -1210,7 +1210,7 @@
 				} else {
 					var arr = interpretate(func.args[0]);
 					if (arr.length ==  1) arr = arr[0];
-					//if (arr.length !== 2) throw "Tube must have 2 vectors!";
+					//if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
 					console.log("points: "+arr.length);
 				
 					var points = [];
@@ -1235,7 +1235,7 @@
 			break;
 			
 			default:
-				throw "Undefined function : "+func.name;
+				console.error( "Undefined function : "+func.name);
 				
 			break;
 			
