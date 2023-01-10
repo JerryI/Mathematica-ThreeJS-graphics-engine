@@ -10,6 +10,10 @@ Live example
 ----------
 https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/
 
+----------
+This project is a part of a bigger one https://github.com/JerryI/wolfram-js-interpreter
+----------
+
 Usage
 ----------
 1. Plot some graphics (used a low-poly mode for smaller code, see ``Example.nb``)
