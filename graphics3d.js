@@ -340,7 +340,7 @@ core.GeometricTransformation = function(args, env) {
 
             var matrix = new THREE.Matrix4();
             console.log("Apply matrix to group::");
-            matrix.set(...flatten(p));
+            matrix.set(...aflatten(p));
         }
     } else {
         console.log(p);
