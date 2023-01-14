@@ -132,7 +132,7 @@ core.Arrow = function(args, env) {
 
 core.Tube = function(args, env) {
     var arr = interpretate(args[0]);
-    if (arr.length ==  1) arr = arr[0];
+    if (arr.length ===  1) arr = arr[0];
     if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
     
     var points = [new THREE.Vector4(...arr[0], 1),
@@ -175,10 +175,10 @@ core.Sphere = function(args, env) {
 
     var list = interpretate(args[0]);
     
-    if (list.length == 1) list=list[0];
-    if (list.length == 1) list=list[0];
+    if (list.length === 1) list=list[0];
+    if (list.length === 1) list=list[0];
     
-    if (list.length == 3) {
+    if (list.length === 3) {
         addSphere(list);
     } else if (list.length > 3) {
         list.forEach(function(el) {
@@ -200,7 +200,7 @@ core.Cuboid = function(args, env) {
     console.log("Cuboid");
     var points, diff, origin;
     
-    if (args.length == 2) {
+    if (args.length === 2) {
     
         points = [new THREE.Vector4(...interpretate(args[0]), 1),
                 new THREE.Vector4(...interpretate(args[1]), 1)];			
@@ -208,7 +208,7 @@ core.Cuboid = function(args, env) {
         origin = points[0].clone().add(points[1].clone()).divideScalar(2);
         diff = points[0].clone().add(points[1].clone().negate());
     
-    } else if (args.length == 1) {
+    } else if (args.length === 1) {
         p = interpretate(args[0]);
         origin = new THREE.Vector4(...p, 1);
         diff = new THREE.Vector4(1,1,1, 1);
@@ -549,7 +549,7 @@ core.Line = function(args, env) {
         material.dispose();
     } else {
         var arr = interpretate(args[0]);
-        if (arr.length ==  1) arr = arr[0];
+        if (arr.length ===  1) arr = arr[0];
         //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
         console.log("points: "+arr.length);
     
