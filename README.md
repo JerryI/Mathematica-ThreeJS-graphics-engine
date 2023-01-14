@@ -11,7 +11,7 @@ Live example
 https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/
 
 ----------
-This project is a part of a bigger one https://github.com/JerryI/wolfram-js-interpreter
+This project is a part of a bigger one https://github.com/JerryI/wolfram-js-frontend
 ----------
 
 Usage
