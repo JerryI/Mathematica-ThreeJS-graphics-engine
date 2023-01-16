@@ -93,6 +93,13 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``Polygon`` - fully supported
 - ``Line`` - supported
 
+## Development
+
+download the type file for three js.
+
+```bash
+npm i
+```
 
 License
 -------
