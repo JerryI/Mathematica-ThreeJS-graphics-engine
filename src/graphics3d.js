@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 function computeGroupCenter(group) {
     var center = new THREE.Vector3();
@@ -176,6 +177,7 @@ core.Cuboid = function(args, env) {
         opacity:env.opacity,
         depthWrite: true
     });
+    
     //material.side = THREE.DoubleSide;
     
     var cube = new THREE.Mesh( geometry, material );
@@ -384,7 +386,6 @@ core.GraphicsComplex = function(args, env) {
     
     copy.geometry = new THREE.Geometry();
     
-    
     interpretate(args[0]).forEach(function(el) {
         if (typeof el[0] !== 'number') console.error( "not a triple of number"+el);
         copy.geometry.vertices.push(
@@ -392,7 +393,6 @@ core.GraphicsComplex = function(args, env) {
         );
     });
 
-    
     var group = new THREE.Group();
     
     
@@ -507,25 +507,34 @@ core.Polygon = function(args, env) {
 }
 
 core.Polyhedron = function(args, env) {
+  if(args[1][1].length > 4) {
+    //non-optimised variant to work with 4 vertex per face
+    interpretate([ "GraphicsComplex", args[0], [ "Polygon", args[1]] ], env);
+  } else {
+    //reguar one. gpu-fiendly
+    /**
+     * @type {number[]}
+     */
+    const indices = interpretate(args[1]).flat(4).map(i=>i-1);  
     /**
      * @type {number[]}
      */
     const vertices = interpretate(args[0]).flat(4);
-    /**
-     * @type {number[]}
-     */
-    const indices = interpretate(args[1]).flat(4).map(i=>i-1);
+
     const geometry = new THREE.PolyhedronGeometry(vertices, indices);
+
     var material = new THREE.MeshLambertMaterial({
       color:env.color,
       transparent:true,
       opacity:env.opacity,
       depthWrite: true
     });
+
     const mesh = new THREE.Mesh(geometry, material);
     env.mesh.add(mesh);
     geometry.dispose();
     material.dispose();
+  }
 }
 
 core.GrayLevel = function(args, env) {
@@ -698,7 +707,7 @@ core.Graphics3D = function(args, env) {
       camera.lookAt(focus);
     }
     
-    update_camera_position();
+    //update_camera_position();
     camera.up = new THREE.Vector3(0,0,1);
     
     scene.add(camera);
@@ -1272,6 +1281,7 @@ core.Graphics3D = function(args, env) {
     container.addEventListener('mousemove', onDocumentMouseMove, false);
     container.addEventListener('mousedown', onDocumentMouseDown, false);
     container.addEventListener('mouseup', onDocumentMouseUp, false);
+    container.addEventListener('touchmove', onDocumentMouseMove, false);
     onMouseDownPosition = new THREE.Vector2();
     var autoRescale = true;
     
