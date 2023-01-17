@@ -506,6 +506,28 @@ core.Polygon = function(args, env) {
     material.dispose();
 }
 
+core.Polyhedron = function(args, env) {
+    /**
+     * @type {number[]}
+     */
+    const vertices = interpretate(args[0]).flat(4);
+    /**
+     * @type {number[]}
+     */
+    const indices = interpretate(args[1]).flat(4).map(i=>i-1);
+    const geometry = new THREE.PolyhedronGeometry(vertices, indices);
+    var material = new THREE.MeshLambertMaterial({
+      color:env.color,
+      transparent:true,
+      opacity:env.opacity,
+      depthWrite: true
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    env.mesh.add(mesh);
+    geometry.dispose();
+    material.dispose();
+}
+
 core.GrayLevel = function(args, env) {
 
 }
@@ -884,7 +906,6 @@ core.Graphics3D = function(args, env) {
           tickgeom.vertices.push(new THREE.Vector3());
           ticks[i].push(new THREE.Line(tickgeom, tickmat));
           scene.add(ticks[i][j]);
-    
         }
         ticks_small[i] = [];
         for (var j = 0; j < data.axes.ticks[i][1].length; j++) {
