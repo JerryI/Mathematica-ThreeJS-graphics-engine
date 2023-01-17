@@ -112,6 +112,9 @@ to start dev server
 npm run dev
 ```
 
+and open you browser at `http://127.0.0.1:8090/dev.html`.
+The index files relies on CDN (and release folder) and will not show any changes. 
+
 the file watcher will automatically rebuild the all stuff on change in `src` dir.
 
 ## License
