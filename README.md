@@ -1,4 +1,4 @@
-3D Graphics drawer for Mathematica based on Three.js
+# 3D Graphics drawer for Mathematica based on Three.js
 ===================
 Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook. 
 Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at https://mathematica.stackexchange.com/a/215025/53728.
@@ -6,15 +6,15 @@ Unlike other build-in export functions it recreates pure Mathematica's functions
 Some parts of the code which is responsible for rotation, zoom, dragging objects and lighting system were taken from Mathics project.
 The home page of Mathics is http://mathics.github.io.
 
-Live example
+## Live example
 ----------
 https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/
 
 ----------
-This project is a part of a bigger one https://github.com/JerryI/wolfram-js-frontend
+## This project is a part of a bigger one https://github.com/JerryI/wolfram-js-frontend
 ----------
 
-Usage
+## Usage
 ----------
 1. Plot some graphics (used a low-poly mode for smaller code, see ``Example.nb``)
 
@@ -69,7 +69,7 @@ var JSONThree = [...
 
 
 
-Contributing
+## Contributing
 ------------
 
 Please feel encouraged to contribute and expand features.
@@ -93,6 +93,14 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``Polygon`` - fully supported
 - ``Line`` - supported
 
+Possible to implement as well
+------
+There are a lot of features of Three.JS, which can bring extra control over the graphics repesentating and are not a part of FrontEnd of Mathematica. 
+
+- ``FlatShading``, ``PhongShading``
+- ``PathTracing``
+- extended material properties
+
 ## Development
 
 download the type file for three js.
@@ -101,7 +109,7 @@ download the type file for three js.
 npm i
 ```
 
-License
+## License
 -------
 
 Project is released under the GNU General Public License (GPL).

@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine.git"
   },
-  "author": "Kirill Vasin",
+  "author": "Kirill Vasin, AsukaMinato",
   "license": "GPL",
   "bugs": {
     "url": "https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine/issues"
