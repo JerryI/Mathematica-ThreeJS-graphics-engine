@@ -1,17 +1,17 @@
-# 3D Graphics drawer for Mathematica based on Three.js
+3D Graphics drawer for Mathematica based on Three.js
 ===================
 Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook. 
-Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at https://mathematica.stackexchange.com/a/215025/53728.
+Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
 
 Some parts of the code which is responsible for rotation, zoom, dragging objects and lighting system were taken from Mathics project.
 The home page of Mathics is http://mathics.github.io.
 
 ## Live example
 ----------
-https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/
+[See](https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/)
 
 ----------
-## This project is a part of a bigger one https://github.com/JerryI/wolfram-js-frontend
+## This project is a part of a bigger one [Wolfram Engine JS Frontend](https://github.com/JerryI/wolfram-js-frontend)
 ----------
 
 ## Usage
@@ -54,20 +54,15 @@ ExportString[%//N, "ExpressionJSON"]
 				,...
 ```
 
-3. Copy and paste it to data.js (must be simplified!)
-```javascript
-//\data.js
+3. Run `index.html`
 
-var JSONThree = [...
-``` 
+4. Paste the JSON code as a plain text into the textarea
 
-4. Run ``index.html``
+5. Use
 
-``Drag`` - rotate;
-``Ctrl+Drag`` - zoom;
-``Shift+Drag`` - drag;
-
-
+``Drag`` - to rotate;
+``Ctrl+Drag`` - to zoom;
+``Shift+Drag`` - to drag;
 
 ## Contributing
 ------------
@@ -93,6 +88,9 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``Polygon`` - fully supported
 - ``Line`` - supported
 
+
+- ``THREE.Geometry`` is depricated in a new Three.JS version. Needed to be refactored.
+
 Possible to implement as well
 ------
 There are a lot of features of Three.JS, which can bring extra control over the graphics repesentating and are not a part of FrontEnd of Mathematica. 
@@ -108,6 +106,13 @@ download the type file for three js.
 ```bash
 npm i
 ```
+
+to start dev server
+```bash
+npm run dev
+```
+
+the file watcher will automatically rebuild the all stuff on change in `src` dir.
 
 ## License
 -------

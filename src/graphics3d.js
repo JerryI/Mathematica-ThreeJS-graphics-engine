@@ -1,59 +1,4 @@
-/*** the part of a code from http://mathics.github.io.  ***/
-Detector = {
-
-	canvas: !! window.CanvasRenderingContext2D,
-	webgl: ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )(),
-	workers: !! window.Worker,
-	fileapi: window.File && window.FileReader && window.FileList && window.Blob,
-
-	getWebGLErrorMessage: function () {
-
-		var element = document.createElement( 'div' );
-		element.id = 'webgl-error-message';
-		element.style.fontFamily = 'monospace';
-		element.style.fontSize = '13px';
-		element.style.fontWeight = 'normal';
-		element.style.textAlign = 'center';
-		element.style.background = '#fff';
-		element.style.color = '#000';
-		element.style.padding = '1.5em';
-		element.style.width = '400px';
-		element.style.margin = '5em auto 0';
-
-		if ( ! this.webgl ) {
-
-			element.innerHTML = window.WebGLRenderingContext ? [
-				'Your graphics card does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br />',
-				'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
-			].join( '\n' ) : [
-				'Your browser does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>.<br/>',
-				'Find out how to get it <a href="http://get.webgl.org/" style="color:#000">here</a>.'
-			].join( '\n' );
-
-		}
-
-		return element;
-
-	},
-
-	addGetWebGLMessage: function ( parameters ) {
-
-		var parent, id, element;
-
-		parameters = parameters || {};
-
-		parent = parameters.parent !== undefined ? parameters.parent : document.body;
-		id = parameters.id !== undefined ? parameters.id : 'oldie';
-
-		element = Detector.getWebGLErrorMessage();
-		element.id = id;
-
-		parent.appendChild( element );
-
-	}
-
-};
-/*** end ***/
+import * as THREE from 'three';
 
 function computeGroupCenter(group) {
     var center = new THREE.Vector3();
@@ -116,6 +61,10 @@ core.Opacity = function(args, env) {
     if (typeof o !== 'number') console.error( "Opacity must have number value!");
     console.log(o);
     env.opacity = o;
+} 
+
+core.ImageScaled = function(args, env) {
+
 }
 
 core.Thickness = function(args, env) {
@@ -198,7 +147,7 @@ core.Cuboid = function(args, env) {
     //				new THREE.Vector4(...interpretate(func.args[1]), 1)];				
     //}
     console.log("Cuboid");
-    var points, diff, origin;
+    var points, diff, origin, p;
     
     if (args.length === 2) {
     
@@ -1081,17 +1030,13 @@ core.Graphics3D = function(args, env) {
     
     // Renderer (set preserveDrawingBuffer to deal with issue
     // of weird canvas content after switching windows)
-    if (Detector.webgl) {
-      renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
-    } else { 
-      renderer = new THREE.CanvasRenderer({antialias: true, preserveDrawingBuffer: true});
-    
-      alert("Canvas Renderer support is experimental, please enable WebGL where possible.");
-    }
+  
+    renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true});
     
     renderer.setSize(400, 400);
     renderer.setClearColor( 0xffffff );
     container.appendChild(renderer.domElement);
+    renderer.domElement.style = "margin:auto";
     
     function render() {
       positionLights();
