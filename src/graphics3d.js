@@ -540,7 +540,9 @@ core.Graphics3D = function(args, env) {
                                 "position": [0, 2, 2]}],
      
                 "viewpoint":[1.3, -2.4, 2]};
-                
+    /**
+     * @type {HTMLElement}
+     */
     var container = env.element;
     
     var camera, scene, renderer, boundbox, hasaxes, viewpoint,
@@ -703,7 +705,7 @@ core.Graphics3D = function(args, env) {
     
     // BoundingBox
     boundbox = new THREE.Mesh(
-      new THREE.CubeGeometry(
+      new THREE.BoxGeometry(
         bbox.max.x - bbox.min.x,
         bbox.max.y - bbox.min.y,
         bbox.max.z - bbox.min.z),
@@ -711,7 +713,7 @@ core.Graphics3D = function(args, env) {
     );
     boundbox.position = center;
 
-    var geo = new THREE.EdgesGeometry( new THREE.CubeGeometry(
+    var geo = new THREE.EdgesGeometry( new THREE.BoxGeometry(
         bbox.max.x - bbox.min.x,
         bbox.max.y - bbox.min.y,
         bbox.max.z - bbox.min.z) ); // or WireframeGeometry( geometry )
@@ -724,16 +726,16 @@ core.Graphics3D = function(args, env) {
     //scene.add(wireframe);  
     
     // Draw the Axes
-    if (data.axes.hasaxes instanceof Array) {
-      hasaxes = new Array(data.axes.hasaxes[0], data.axes.hasaxes[1], data.axes.hasaxes[2]);
+    if (Array.isArray(data.axes.hasaxes)) {
+      hasaxes = [data.axes.hasaxes[0], data.axes.hasaxes[1], data.axes.hasaxes[2]];
     } else if (data.axes.hasaxes instanceof Boolean) {
       if (data.axes) {
-        hasaxes = new Array(true, true, true);
+        hasaxes = [true, true, true];
       } else {
-        hasaxes = new Array(false, false, false);
+        hasaxes = [false, false, false];
       }
     } else {
-      hasaxes = new Array(false, false, false);
+      hasaxes = [false, false, false];
     }
     var axesmat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth : 1.5 });
     var axesgeom = [];
@@ -742,7 +744,9 @@ core.Graphics3D = function(args, env) {
       [[0,2], [1,3], [4,6], [5,7]],
       [[0,1], [2,3], [4,5], [6,7]]
     ];
-    
+    /**
+     * @type {THREE.Geometry[]}
+     */
     var axesmesh = new Array(3);
     for (var i=0; i<3; i++) {
       if (hasaxes[i]) {
@@ -775,7 +779,7 @@ core.Graphics3D = function(args, env) {
       farj = null;
       farl = 0.0;
       
-      tmpv = new THREE.Vector3();
+      var tmpv = new THREE.Vector3();
       for (var j = 0; j < 8; j++) {
         tmpv.addVectors(boundbox.geometry.vertices[j], boundbox.position);
         tmpv.sub(camera.position);
@@ -811,7 +815,13 @@ core.Graphics3D = function(args, env) {
     
     // Axes Ticks
     var tickmat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth : 1.2 });
+    /**
+     * @type {THREE.Line[][]}
+     */
     var ticks = new Array(3);
+    /**
+     * @type {THREE.Line[][]}
+     */
     var ticks_small = new Array(3);
     var ticklength = 0.005*radius;
     
@@ -819,7 +829,7 @@ core.Graphics3D = function(args, env) {
       if (hasaxes[i]) {
         ticks[i] = [];
         for (var j = 0; j < data.axes.ticks[i][0].length; j++) {
-          tickgeom = new THREE.Geometry();
+          var tickgeom = new THREE.Geometry();
           tickgeom.vertices.push(new THREE.Vector3());
           tickgeom.vertices.push(new THREE.Vector3());
           ticks[i].push(new THREE.Line(tickgeom, tickmat));
@@ -828,7 +838,7 @@ core.Graphics3D = function(args, env) {
         }
         ticks_small[i] = [];
         for (var j = 0; j < data.axes.ticks[i][1].length; j++) {
-           tickgeom = new THREE.Geometry();
+           var tickgeom = new THREE.Geometry();
            tickgeom.vertices.push(new THREE.Vector3());
            tickgeom.vertices.push(new THREE.Vector3());
            ticks_small[i].push(new THREE.Line(tickgeom, tickmat));
@@ -888,11 +898,11 @@ core.Graphics3D = function(args, env) {
     function update_axes() {
       for (var i = 0; i < 3; i++) {
         if (hasaxes[i]) {
-          tickdir = getTickDir(i);
-          small_tickdir = tickdir.clone();
+          var tickdir = getTickDir(i);
+          var small_tickdir = tickdir.clone();
           small_tickdir.multiplyScalar(0.5);
           for (var j = 0; j < data.axes.ticks[i][0].length; j++) {
-            tmpval = data.axes.ticks[i][0][j];
+            var tmpval = data.axes.ticks[i][0][j];
     
             ticks[i][j].geometry.vertices[0].copy(axesgeom[i].vertices[0]);
             ticks[i][j].geometry.vertices[1].addVectors(axesgeom[i].vertices[0], tickdir);
@@ -1070,7 +1080,12 @@ core.Graphics3D = function(args, env) {
       camera.updateProjectionMatrix();
     }
     
-    // Mouse Interactions
+
+    /**
+     * 
+     * @param {MouseEvent} event 
+     * @description Mouse Interactions
+     */
     function onDocumentMouseDown( event ) {
       event.preventDefault();
     
@@ -1086,7 +1101,10 @@ core.Graphics3D = function(args, env) {
     
       onMouseDownFocus = new THREE.Vector3().copy(focus);
     }
-    
+    /**
+     * 
+     * @param {MouseEvent} event 
+     */
     function onDocumentMouseMove(event) {
       event.preventDefault();
     
@@ -1160,7 +1178,10 @@ core.Graphics3D = function(args, env) {
         container.style.cursor = "pointer";
       }
     }
-    
+    /**
+     * 
+     * @param {MouseEvent} event 
+     */
     function onDocumentMouseUp(event) {
       event.preventDefault();
     
