@@ -203,6 +203,56 @@ core.Center = function(args, env) {
     return 'Center';
 }
 
+core.Cylinder = function(args, env) {
+  //some troubles with positioning...
+  //fixme  
+  var radius = 1;
+  if (args.length > 1) radius = args[1];
+
+  var coordinates = interpretate(args[0]);
+
+  
+  let material = new THREE.MeshLambertMaterial({
+    color:env.color,
+    transparent:false,
+    opacity:env.opacity,
+  });  
+
+  //point 1
+  var p1 = new THREE.Vector4(...coordinates[0], 1);
+  //point 2 - 1
+  var dp = new THREE.Vector4(...coordinates[1], 1).addScaledVector(p1, -1);
+
+  var geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+
+  var cylinder = new THREE.Mesh( geometry, material );
+
+  //fethcing the angle of rotation of the cylider
+  let phi   = Math.atan2(dp.y, dp.x);
+  let theta = Math.acos(dp.z / dp.length());
+
+  console.log(phi + "   " + theta);
+
+  var euler = new THREE.Euler(phi, theta, 0, 'XYZ' );
+  var matrix = new THREE.Matrix4().makeRotationFromEuler(euler);
+
+  //some troubles with positioning...
+  //fixme
+  cylinder.position.x = p1.x; 
+  cylinder.position.y = p1.y; 
+  cylinder.position.z = p1.z; 
+  
+  let group = new THREE.Group();
+  group.add(cylinder);
+  group.applyMatrix4(matrix);
+
+  env.mesh.add(group);
+  
+  geometry.dispose();
+  material.dispose();
+
+}
+
 core.Tetrahedron = function(args, env) {
     var points = interpretate(args[0]);
     var faces = [];
