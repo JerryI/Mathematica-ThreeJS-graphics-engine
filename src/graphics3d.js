@@ -256,44 +256,44 @@ core.Cylinder = function(args, env) {
 }
 
 core.Tetrahedron = function(args, env) {
+    /**
+     * @type {number[]}
+     */
     var points = interpretate(args[0]);
-    var faces = [];
     console.log("Points of tetrahedron:");
     console.log(points);
-    
-    faces.push([points[0], points[1], points[2]]);
-    faces.push([points[0], points[1], points[3]]);
-    faces.push([points[1], points[2], points[3]]);
-    faces.push([points[0], points[3], points[2]]);
+    var faces=[
+					[points[0], points[1], points[2]],
+					[points[0], points[1], points[3]],
+					[points[1], points[2], points[3]],
+					[points[0], points[3], points[2]],
+				];
 
     var fake = ["List"];
     
-    var listVert = function(cord) {
-            return([
+    var listVert = (cord) => [
                     "List",
                     cord[0],
                     cord[1],
                     cord[2]
-                    ]);
-    }
-        
-    faces.forEach(function(fs) {
-
-        var struc = [
-                        "Polygon",
-                        [
-                            "List",
-                            listVert(fs[0]),
-                            listVert(fs[1]),
-                            listVert(fs[2])
-                        ]
                     ];
-        fake.push(struc);
+    
+        
+    faces.forEach((fs) => {
+        fake.push([
+          "Polygon",
+          [
+              "List",
+              listVert(fs[0]),
+              listVert(fs[1]),
+              listVert(fs[2])
+          ]
+      ]);
     });
     console.log(fake);
     interpretate(fake, env);
 }
-        
+
 
 core.GeometricTransformation = function(args, env) {
     
@@ -369,12 +369,12 @@ core.GeometricTransformation = function(args, env) {
         console.log(center);
         
         var	translate = new THREE.Matrix4().makeTranslation(-center.x,-center.y,-center.z,1);
-        group.applyMatrix(translate);
-        group.applyMatrix(matrix);
+        group.applyMatrix4(translate);
+        group.applyMatrix4(matrix);
             translate = new THREE.Matrix4().makeTranslation(center.x,center.y,center.z,1);
-        group.applyMatrix(translate);
+        group.applyMatrix4(translate);
     } else {
-        group.applyMatrix(matrix);
+        group.applyMatrix4(matrix);
     }
     
     env.mesh.add(group);
@@ -404,24 +404,28 @@ core.GraphicsComplex = function(args, env) {
 
 core.Polygon = function(args, env) {	
     if (env.hasOwnProperty('geometry')) {
+        /**
+         * @type {THREE.Geometry}
+         */
         var geometry = env.geometry.clone();
 
         var createFace = function(c) {
+            c = c.map(x=>x-1)
             
             switch(c.length) {
                 case 3:
-                    geometry.faces.push(new THREE.Face3(c[0]-1,c[1]-1,c[2]-1));
+                    geometry.faces.push(new THREE.Face3(c[0],c[1],c[2]));
                 break;
                 
                 case 4:
-                    geometry.faces.push(new THREE.Face3(c[0]-1,c[1]-1,c[2]-1));
-                    geometry.faces.push(new THREE.Face3(c[0]-1,c[2]-1,c[3]-1));
+                    geometry.faces.push(new THREE.Face3(c[0],c[1],c[2]),
+                                        new THREE.Face3(c[0],c[2],c[3]));
                 break;
                 
                 case 5:
-                    geometry.faces.push(new THREE.Face3(c[0]-1,c[1]-1,c[4]-1));
-                    geometry.faces.push(new THREE.Face3(c[1]-1,c[2]-1,c[3]-1));
-                    geometry.faces.push(new THREE.Face3(c[1]-1,c[3]-1,c[4]-1));
+                    geometry.faces.push(new THREE.Face3(c[0],c[1],c[4]),
+                                        new THREE.Face3(c[1],c[2],c[3]),
+                                        new THREE.Face3(c[1],c[3],c[4]));
                 break;
                 
                 default:
@@ -443,10 +447,7 @@ core.Polygon = function(args, env) {
         } else {
             console.log("Create multiple face");
             console.log(a);
-            a.forEach(function(el) {
-            
-                createFace(el);
-            });
+            a.forEach(createFace);
         }
     } else {
         
@@ -488,7 +489,7 @@ core.Polygon = function(args, env) {
     
     var material = new THREE.MeshLambertMaterial({
         color:env.color,
-        transparent: env.opacity < 0.9? true : false,
+        transparent: env.opacity < 0.9,
         opacity:env.opacity,
 
         //depthTest: false
@@ -626,13 +627,13 @@ core.Graphics3D = function(args, env) {
      */
     var container = env.element;
     
-    var camera, scene, renderer, boundbox, hasaxes, viewpoint,
+    var renderer, boundbox, hasaxes,
       isMouseDown = false, onMouseDownPosition,
       tmpx, tmpy, tmpz, 
       theta, onMouseDownTheta, phi, onMouseDownPhi;
 
     // Scene
-    scene = new THREE.Scene();
+    var scene = new THREE.Scene();
     
     var group = new THREE.Group();
     
@@ -674,7 +675,7 @@ core.Graphics3D = function(args, env) {
     var focus = new THREE.Vector3(center.x, center.y, center.z);
     
     // Viewpoint
-    viewpoint = new THREE.Vector3(data.viewpoint[0], data.viewpoint[1], data.viewpoint[2]).sub(focus);
+    var viewpoint = new THREE.Vector3(data.viewpoint[0], data.viewpoint[1], data.viewpoint[2]).sub(focus);
     
     var ln = new THREE.Vector3().addVectors(bbox.max,bbox.min.clone().negate()).length();
     
@@ -692,7 +693,7 @@ core.Graphics3D = function(args, env) {
     
     
     
-    camera = new THREE.PerspectiveCamera(
+    var camera = new THREE.PerspectiveCamera(
       35,             // Field of view
       1,            // Aspect ratio
       0.1*radius,     // Near plane
@@ -747,7 +748,7 @@ core.Graphics3D = function(args, env) {
     
     function getInitLightPos(l) {
       // Initial Light position in spherical polar coordinates
-      if (l.position instanceof Array) {
+      if (Array.isArray(l.position)) {
         var tmppos = new THREE.Vector3(l.position[0], l.position[1], l.position[2]);
         var result = {"radius": radius * tmppos.length()};
     
