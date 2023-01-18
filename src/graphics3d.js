@@ -627,9 +627,12 @@ core.Graphics3D = function (args, env) {
    */
   var container = env.element;
 
-  var renderer,
-    boundbox,
-    hasaxes,
+  var renderer;
+  /**
+  * @type {THREE.Mesh}
+  */
+  var boundbox;
+  var hasaxes,
     isMouseDown = false,
     onMouseDownPosition,
     tmpx,
@@ -652,7 +655,11 @@ core.Graphics3D = function (args, env) {
   envcopy.thickness = 1;
   envcopy.edgecolor = RGBtoColor(0, 0, 0);
 
-  envcopy.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+  envcopy.matrix.set(
+    1, 0, 0, 0,//
+    0, 1, 0, 0,//
+    0, 0, 1, 0,//
+    0, 0, 0, 1);
 
   envcopy.mesh = group;
 
@@ -854,6 +861,9 @@ core.Graphics3D = function (args, env) {
     color: 0x000000,
     linewidth: 1.5,
   });
+  /**
+   * @type {THREE.Geometry[]}
+   */
   var axesgeom = [];
   var axesindicies = [
     [
