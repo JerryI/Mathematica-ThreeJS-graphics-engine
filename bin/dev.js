@@ -2,7 +2,7 @@
 
 // NOTE: Don't require anything from node_modules here, since the
 // install script has to be able to run _before_ that exists.
-const child = require("child_process"), fs = require("fs"), path = require("path"), {join} = path
+const child = require("child_process"), fs = require("fs"), path = require("path"), { join } = path
 const chokidar = require('chokidar');
 
 let root = join(__dirname, "..")
@@ -26,15 +26,15 @@ function error(err) {
 }
 
 function run(cmd, args, wd = root, { shell = false } = {}) {
-  return child.execFileSync(cmd, args, {shell, cwd: wd, encoding: "utf8", stdio: ["ignore", "pipe", process.stderr]})
+  return child.execFileSync(cmd, args, { shell, cwd: wd, encoding: "utf8", stdio: ["ignore", "pipe", process.stderr] })
 }
 
 function replace(file, f) {
-  fs.writeFileSync(file, f(fs.readFileSync(file, "utf8")))
+  fs.writeFileSync(file, f(fs.readFileSync(file, { encoding: "utf8" })))
 }
 
 function build() {
-  runCmd("./node_modules/.bin/rollup","--config", "rollup.config.mjs");
+  runCmd("./node_modules/.bin/rollup", "--config", "rollup.config.mjs");
 }
 
 function startServer() {
@@ -42,18 +42,18 @@ function startServer() {
   var finalhandler = require('finalhandler')
   var http = require('http')
   var serveStatic = require('serve-static')
-  
+
   // Serve up public/ftp folder
   var serve = serveStatic(root, { index: ['index.html', 'index.htm'] })
-  
+
   // Create server
-  var server = http.createServer(function onRequest (req, res) {
+  var server = http.createServer(function onRequest(req, res) {
     serve(req, res, finalhandler(req, res))
   })
-  
+
   // Listen
-  server.listen(8090, process.env.OPEN ? undefined : "0.0.0.0")  
-  console.log("Dev server listening on 8090");
+  server.listen(8090, process.env.OPEN ? undefined : "0.0.0.0")
+  console.log("Dev server listening on 8090, goto http://localhost:8090/dev.html");
 }
 
 function devserver(...args) {
@@ -63,13 +63,13 @@ function devserver(...args) {
 function runCmd(cmd, ...args) {
 
 
-    try {
-      console.log(run(cmd, args))
-    } catch (e) {
-      console.log(e.toString())
-      process.exit(1)
-    }
-  
+  try {
+    console.log(run(cmd, args))
+  } catch (e) {
+    console.log(e.toString())
+    process.exit(1)
+  }
+
 }
 
 function rebuildAndRestart() {

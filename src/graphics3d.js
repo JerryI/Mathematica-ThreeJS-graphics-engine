@@ -27,6 +27,12 @@ core.Style = function (args, env) {
     interpretate(el, copy);
   });
 };
+/**
+ * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
+ */
+core.Dashing = (args, env) => {
+
+}
 
 core.Annotation = function (args, env) {
   args.forEach(function (el) {
@@ -113,12 +119,10 @@ core.Sphere = function (args, env) {
 
   function addSphere(cr) {
     var origin = new THREE.Vector4(...cr, 1);
-    var geometry = new THREE.SphereGeometry(radius, 20, 20);
+    var geometry = new THREE.SphereBufferGeometry(radius, 20, 20);
     var sphere = new THREE.Mesh(geometry, material);
 
-    sphere.position.x = origin.x;
-    sphere.position.y = origin.y;
-    sphere.position.z = origin.z;
+    sphere.position.set(origin.x, origin.y, origin.z);
 
     env.mesh.add(sphere);
     geometry.dispose();
@@ -149,17 +153,25 @@ core.Cuboid = function (args, env) {
   //				new THREE.Vector4(...interpretate(func.args[1]), 1)];
   //}
   console.log("Cuboid");
-  var points, diff, origin, p;
+  /**
+   * @type {THREE.Vector4}
+   */
+  var diff;
+  /**
+   * @type {THREE.Vector4}
+   */
+  var origin;
+  var p;
 
   if (args.length === 2) {
-    points = [
+    var points = [
       new THREE.Vector4(...interpretate(args[0]), 1),
       new THREE.Vector4(...interpretate(args[1]), 1),
     ];
 
     origin = points[0]
       .clone()
-      .add(points[1].clone())
+      .add(points[1])
       .divideScalar(2);
     diff = points[0].clone().add(points[1].clone().negate());
   } else if (args.length === 1) {
@@ -173,7 +185,7 @@ core.Cuboid = function (args, env) {
     console.error("Expected 2 or 1 arguments");
   }
 
-  var geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
+  var geometry = new THREE.BoxBufferGeometry(diff.x, diff.y, diff.z);
   var material = new THREE.MeshLambertMaterial({
     color: env.color,
     transparent: true,
@@ -190,9 +202,7 @@ core.Cuboid = function (args, env) {
 
   //cube.applyMatrix(params.matrix.clone().multiply(tr));
 
-  cube.position.x = origin.x;
-  cube.position.y = origin.y;
-  cube.position.z = origin.z;
+  cube.position.set(origin.x, origin.y, origin.z);
 
   env.mesh.add(cube);
 
@@ -207,42 +217,45 @@ core.Center = function (args, env) {
 core.Cylinder = function (args, env) {
   //some troubles with positioning...
   //fixme
-  var radius = 1;
+  let radius = 1;
   if (args.length > 1) radius = args[1];
+  /**
+   * @type {THREE.Vector3}}
+   */
+  const coordinates = interpretate(args[0]);
 
-  var coordinates = interpretate(args[0]);
-
-  let material = new THREE.MeshLambertMaterial({
+  const material = new THREE.MeshLambertMaterial({
     color: env.color,
     transparent: false,
     opacity: env.opacity,
   });
 
   //point 1
-  var p1 = new THREE.Vector4(...coordinates[0], 1);
+  const p1 = new THREE.Vector4(...coordinates[0], 1);
   //point 2 - 1
-  var dp = new THREE.Vector4(...coordinates[1], 1).addScaledVector(p1, -1);
+  const dp = new THREE.Vector4(...coordinates[1], 1).addScaledVector(p1, -1);
 
-  var geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+  const geometry = new THREE.CylinderBufferGeometry(radius, radius, dp.length(), 20, 1);
+  geometry.computeBoundingBox();
+  const position = geometry.boundingBox;
+  console.log("cylinder's default position", position);
 
-  var cylinder = new THREE.Mesh(geometry, material);
+  const cylinder = new THREE.Mesh(geometry, material);
 
   //fethcing the angle of rotation of the cylider
-  let phi = Math.atan2(dp.y, dp.x);
-  let theta = Math.acos(dp.z / dp.length());
+  const phi = Math.atan2(dp.y, dp.x);
+  const theta = Math.acos(dp.z / dp.length());
 
-  console.log(phi + "   " + theta);
+  console.log(`phi ${phi} theta ${theta}`);
 
-  var euler = new THREE.Euler(phi, theta, 0, "XYZ");
-  var matrix = new THREE.Matrix4().makeRotationFromEuler(euler);
+  const euler = new THREE.Euler(phi, theta, 0, "XYZ");
+  const matrix = new THREE.Matrix4().makeRotationFromEuler(euler);
 
   //some troubles with positioning...
   //fixme
-  cylinder.position.x = p1.x;
-  cylinder.position.y = p1.y;
-  cylinder.position.z = p1.z;
+  cylinder.position.set(p1.x, p1.y, p1.z);
 
-  let group = new THREE.Group();
+  const group = new THREE.Group();
   group.add(cylinder);
   group.applyMatrix4(matrix);
 
@@ -338,9 +351,7 @@ core.GeometricTransformation = function (args, env) {
     console.log("::CENTER::");
     var bbox = new THREE.Box3().setFromObject(group);
     console.log(bbox);
-    var center = new THREE.Vector3()
-      .addVectors(bbox.max, bbox.min)
-      .divideScalar(2);
+    var center = bbox.max.clone().add(bbox.min).divideScalar(2);
     if (centrans.length > 0) {
       console.log("CENTRANS");
       center = center.fromArray(centrans);
@@ -351,15 +362,13 @@ core.GeometricTransformation = function (args, env) {
       -center.x,
       -center.y,
       -center.z,
-      1,
     );
     group.applyMatrix4(translate);
     group.applyMatrix4(matrix);
     translate = new THREE.Matrix4().makeTranslation(
       center.x,
       center.y,
-      center.z,
-      1,
+      center.z
     );
     group.applyMatrix4(translate);
   } else {
@@ -456,14 +465,16 @@ core.Polygon = function (args, env) {
         break;
 
       case 4:
-        geometry.faces.push(new THREE.Face3(0, 1, 2));
-        geometry.faces.push(new THREE.Face3(0, 2, 3));
+        geometry.faces.push(
+          new THREE.Face3(0, 1, 2),
+          new THREE.Face3(0, 2, 3));
         break;
 
       case 5:
-        geometry.faces.push(new THREE.Face3(0, 1, 4));
-        geometry.faces.push(new THREE.Face3(1, 2, 3));
-        geometry.faces.push(new THREE.Face3(1, 3, 4));
+        geometry.faces.push(
+          new THREE.Face3(0, 1, 4),
+          new THREE.Face3(1, 2, 3),
+          new THREE.Face3(1, 3, 4));
         break;
 
       default:
@@ -472,7 +483,7 @@ core.Polygon = function (args, env) {
     }
   }
 
-  var material = new THREE.MeshLambertMaterial({
+  const material = new THREE.MeshLambertMaterial({
     color: env.color,
     transparent: env.opacity < 0.9,
     opacity: env.opacity,
@@ -485,7 +496,7 @@ core.Polygon = function (args, env) {
 
   geometry.computeFaceNormals();
   //complex.computeVertexNormals();
-  var poly = new THREE.Mesh(geometry, material);
+  const poly = new THREE.Mesh(geometry, material);
 
   //poly.frustumCulled = false;
   env.mesh.add(poly);
@@ -509,7 +520,7 @@ core.Polyhedron = function (args, env) {
      */
     const vertices = interpretate(args[0]).flat(4);
 
-    const geometry = new THREE.PolyhedronGeometry(vertices, indices);
+    const geometry = new THREE.PolyhedronBufferGeometry(vertices, indices);
 
     var material = new THREE.MeshLambertMaterial({
       color: env.color,
@@ -537,36 +548,36 @@ core.Directive = function (args, env) { };
 
 core.Line = function (args, env) {
   if (env.hasOwnProperty("geometry")) {
-    var geometry = new THREE.Geometry();
+    const geometry = new THREE.Geometry();
 
-    var points = interpretate(args[0]);
+    const points = interpretate(args[0]);
     points.forEach(function (el) {
-      geometry.vertices.push(
-        new THREE.Vector3().copy(env.geometry.vertices[el - 1]),
-      );
+      geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
     });
 
-    var material = new THREE.LineBasicMaterial({
+    const material = new THREE.LineBasicMaterial({
       linewidth: env.thickness,
       color: env.edgecolor,
     });
-    var line = new THREE.Line(geometry, material);
+    const line = new THREE.Line(geometry, material);
 
-    line.material.polygonOffset = true;
-    line.material.polygonOffsetFactor = 1;
-    line.material.polygonOffsetUnits = 1;
+    line.material.setValues({
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
+    })
 
     env.mesh.add(line);
 
     geometry.dispose();
     material.dispose();
   } else {
-    var arr = interpretate(args[0]);
+    let arr = interpretate(args[0]);
     if (arr.length === 1) arr = arr[0];
     //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
-    console.log("points: " + arr.length);
+    console.log("points: ", arr.length);
 
-    var points = [];
+    const points = [];
     arr.forEach(function (p) {
       points.push(new THREE.Vector4(...p, 1));
     });
@@ -888,19 +899,17 @@ core.Graphics3D = function (args, env) {
   /**
    * @type {THREE.Geometry[]}
    */
-  var axesmesh = new Array(3);
+  const axesmesh = new Array(3);
   for (var i = 0; i < 3; i++) {
     if (hasaxes[i]) {
       axesgeom[i] = new THREE.Geometry();
       axesgeom[i].vertices.push(
-        new THREE.Vector3().addVectors(
-          boundbox.geometry.vertices[axesindicies[i][0][0]],
+        boundbox.geometry.vertices[axesindicies[i][0][0]].clone().add(
           boundbox.position,
         ),
       );
       axesgeom[i].vertices.push(
-        new THREE.Vector3().addVectors(
-          boundbox.geometry.vertices[axesindicies[i][0][1]],
+        boundbox.geometry.vertices[axesindicies[i][0][1]].clone().add(
           boundbox.position,
         ),
       );
@@ -911,26 +920,26 @@ core.Graphics3D = function (args, env) {
   }
 
   function boxEdgeLength(i, j) {
-    edge = new THREE.Vector3().sub(
-      toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][0]]),
-      toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][1]]),
-    );
-    edge.z = 0;
+    var edge =
+      toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][0]])
+        .clone()
+        .sub(toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][1]]));
+    edge.setZ(0);
     return edge.length();
   }
 
   function positionAxes() {
     // Automatic axes placement
-    nearj = null;
-    nearl = 10 * radius;
-    farj = null;
-    farl = 0.0;
+    var nearj = null;
+    var nearl = 10 * radius;
+    var farj = null;
+    var farl = 0.0;
 
     var tmpv = new THREE.Vector3();
     for (var j = 0; j < 8; j++) {
       tmpv.addVectors(boundbox.geometry.vertices[j], boundbox.position);
       tmpv.sub(camera.position);
-      tmpl = tmpv.length();
+      var tmpl = tmpv.length();
       if (tmpl < nearl) {
         nearl = tmpl;
         nearj = j;
@@ -941,8 +950,8 @@ core.Graphics3D = function (args, env) {
     }
     for (var i = 0; i < 3; i++) {
       if (hasaxes[i]) {
-        maxj = null;
-        maxl = 0.0;
+        var maxj = null;
+        var maxl = 0.0;
         for (var j = 0; j < 4; j++) {
           if (
             axesindicies[i][j][0] !== nearj &&
@@ -991,16 +1000,14 @@ core.Graphics3D = function (args, env) {
       ticks[i] = [];
       for (var j = 0; j < data.axes.ticks[i][0].length; j++) {
         var tickgeom = new THREE.Geometry();
-        tickgeom.vertices.push(new THREE.Vector3());
-        tickgeom.vertices.push(new THREE.Vector3());
+        tickgeom.vertices.push(new THREE.Vector3(), new THREE.Vector3());
         ticks[i].push(new THREE.Line(tickgeom, tickmat));
         scene.add(ticks[i][j]);
       }
       ticks_small[i] = [];
       for (var j = 0; j < data.axes.ticks[i][1].length; j++) {
         var tickgeom = new THREE.Geometry();
-        tickgeom.vertices.push(new THREE.Vector3());
-        tickgeom.vertices.push(new THREE.Vector3());
+        tickgeom.vertices.push(new THREE.Vector3(), new THREE.Vector3());
         ticks_small[i].push(new THREE.Line(tickgeom, tickmat));
         scene.add(ticks_small[i][j]);
       }
