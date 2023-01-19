@@ -114,7 +114,7 @@ core.Sphere = function (args, env) {
   var material = new THREE.MeshLambertMaterial({
     color: env.color,
     transparent: false,
-    opacity: env.opacity,
+    opacity: env.opacity
   });
 
   function addSphere(cr) {
@@ -190,7 +190,7 @@ core.Cuboid = function (args, env) {
     color: env.color,
     transparent: true,
     opacity: env.opacity,
-    depthWrite: true,
+    depthWrite: true
   });
 
   //material.side = THREE.DoubleSide;
@@ -227,7 +227,7 @@ core.Cylinder = function (args, env) {
   const material = new THREE.MeshLambertMaterial({
     color: env.color,
     transparent: false,
-    opacity: env.opacity,
+    opacity: env.opacity
   });
 
   //points 1, 2
@@ -673,6 +673,8 @@ core.Graphics3D = function (args, env) {
   var group = new THREE.Group();
 
   var envcopy = Object.assign({}, env);
+
+  envcopy.numerical = true;
   envcopy.matrix = new THREE.Matrix4();
   envcopy.color = RGBtoColor(1, 1, 1);
   envcopy.opacity = 1;
