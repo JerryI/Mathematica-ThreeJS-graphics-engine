@@ -29,7 +29,7 @@ Graphics3D[{
 ```
 2. Export as a JSON string
 ```Mathematica
-ExportString[%//N, "ExpressionJSON"]
+ExportString[%, "ExpressionJSON"]
 ```
 ```Mathematica
 [
