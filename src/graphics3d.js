@@ -230,36 +230,49 @@ core.Cylinder = function (args, env) {
     opacity: env.opacity,
   });
 
-  //point 1
-  const p1 = new THREE.Vector4(...coordinates[0], 1);
-  //point 2 - 1
-  const dp = new THREE.Vector4(...coordinates[1], 1).addScaledVector(p1, -1);
+  //points 1, 2
+  const p1 = new THREE.Vector3(...coordinates[0]);
+  const p2 = new THREE.Vector3(...coordinates[1]);
+  //direction
+  const dp = p2.clone().addScaledVector(p1, -1);
 
   const geometry = new THREE.CylinderBufferGeometry(radius, radius, dp.length(), 20, 1);
+
+  //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
   geometry.computeBoundingBox();
   const position = geometry.boundingBox;
-  console.log("cylinder's default position", position);
 
+  const center = position.max.addScaledVector(position.min, -1); 
+
+  //default geometry
   const cylinder = new THREE.Mesh(geometry, material);
 
-  //fethcing the angle of rotation of the cylider
-  const phi = Math.atan2(dp.y, dp.x);
-  const theta = Math.acos(dp.z / dp.length());
+  //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
+  //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+  const v = new THREE.Vector3().set(0,1,0).cross(dp.normalize());
+  const theta = Math.asin(v.length() / dp.length());
+  const sc = Math.sin(theta);
+  const mcs = 1.0 - Math.cos(theta);
 
-  console.log(`phi ${phi} theta ${theta}`);
+  //Did not find how to write it using vectors
+  const matrix = new THREE.Matrix4().set( 1 - mcs*(v.y*v.y + v.z*v.z),  mcs*v.x*v.y - sc*v.z,         sc*v.y + mcs*v.x*v.z,         0,
+                                          mcs*v.x*v.y + sc*v.z,         1 - mcs*(v.x*v.x + v.z*v.z),  -(sc*v.x) + mcs*v.y*v.z,      0, 
+                                          -(sc*v.y) + mcs*v.x*v.z,      sc*v.x + mcs*v.y*v.z,         1 - mcs*(v.x*v.x + v.y*v.y),   0,
+                                          
+                                          0,0,0,1
+                                        );
 
-  const euler = new THREE.Euler(phi, theta, 0, "XYZ");
-  const matrix = new THREE.Matrix4().makeRotationFromEuler(euler);
+  //middle target point
+  const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5); 
 
-  //some troubles with positioning...
-  //fixme
-  cylinder.position.set(p1.x, p1.y, p1.z);
+  //shift to the center and rotate 
+  cylinder.position = center;
+  cylinder.applyMatrix4(matrix);
+  
+  //translate its center to the middle target point
+  cylinder.position.addScaledVector(middle,-1);
 
-  const group = new THREE.Group();
-  group.add(cylinder);
-  group.applyMatrix4(matrix);
-
-  env.mesh.add(group);
+  env.mesh.add(cylinder);
 
   geometry.dispose();
   material.dispose();
