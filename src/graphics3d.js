@@ -254,10 +254,10 @@ core.Cylinder = function (args, env) {
 
   //Did not find how to write it using vectors
   const matrix = new THREE.Matrix4().set(
-    1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z, sc * v.y + mcs * v.x * v.z, 0,//
-    mcs * v.x * v.y + sc * v.z, 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z, 0,//
-    -(sc * v.y) + mcs * v.x * v.z, sc * v.x + mcs * v.y * v.z, 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
-    0, 0, 0, 1
+    1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
+    mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
+    -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
+    0,/*                            */0,/*                            */ 0,/**                           */ 1
   );
 
   //middle target point
