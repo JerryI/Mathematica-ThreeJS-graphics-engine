@@ -12,14 +12,6 @@ function computeGroupCenter(group) {
   return center;
 }
 
-function RGBtoColor(i, k, j) {
-  var r = Math.round(255 * i);
-  var g = Math.round(255 * k);
-  var b = Math.round(255 * j);
-
-  return new THREE.Color("rgb(" + r + "," + g + "," + b + ")");
-}
-
 core.Style = function (args, env) {
   var copy = Object.assign({}, env);
 
@@ -31,7 +23,7 @@ core.Style = function (args, env) {
  * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
  */
 core.Dashing = (args, env) => {
-
+  console.log("Dashing not implemented");
 }
 
 core.Annotation = function (args, env) {
@@ -54,13 +46,18 @@ core.GraphicsGroup = function (args, env) {
 };
 
 core.RGBColor = function (args, env) {
-  if (args.length !== 3) console.error("RGB values should be triple!");
+  if (args.length !== 3 && args.length !== 1) {
+    console.log("RGB format not implemented", args);
+    console.error("RGB values should be triple!");
+  }
+  if (args.length === 1) {
+    args = interpretate(args[0]); // return [r, g, b] , 0<=r, g, b<=1
+  }
+  const r = interpretate(args[0]);
+  const g = interpretate(args[1]);
+  const b = interpretate(args[2]);
 
-  var r = Math.round(255 * interpretate(args[0]));
-  var g = Math.round(255 * interpretate(args[1]));
-  var b = Math.round(255 * interpretate(args[2]));
-
-  env.color = new THREE.Color("rgb(" + r + "," + g + "," + b + ")");
+  env.color = new THREE.Color(r, g, b);
 };
 
 core.Opacity = function (args, env) {
@@ -152,7 +149,6 @@ core.Cuboid = function (args, env) {
   //	var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
   //				new THREE.Vector4(...interpretate(func.args[1]), 1)];
   //}
-  console.log("Cuboid");
   /**
    * @type {THREE.Vector4}
    */
@@ -436,11 +432,23 @@ core.Polygon = function (args, env) {
             new THREE.Face3(c[1], c[3], c[4]),
           );
           break;
-
+        /**
+         * 0 1
+         *5    2
+         * 4  3
+         */
+        case 6:
+          geometry.faces.push(
+            new THREE.Face3(c[0], c[1], c[5]),
+            new THREE.Face3(c[1], c[2], c[5]),
+            new THREE.Face3(c[5], c[2], c[4]),
+            new THREE.Face3(c[2], c[3], c[4])
+          );
+          break;
         default:
           console.log(c);
           console.log(c.length);
-          console.error("Cant produce complex polygons! at" + c);
+          console.error("Cant produce complex polygons! at", c);
       }
     };
 
@@ -454,7 +462,6 @@ core.Polygon = function (args, env) {
       createFace(a);
     } else {
       console.log("Create multiple face");
-      console.log(a);
       a.forEach(createFace);
     }
   } else {
@@ -462,8 +469,10 @@ core.Polygon = function (args, env) {
     var points = interpretate(args[0]);
 
     points.forEach(function (el) {
-      if (typeof el[0] !== "number")
-        console.error("not a triple of number" + el);
+      if (typeof el[0] !== "number") {
+        console.error("not a triple of number", el);
+        return;
+      }
       geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
     });
 
@@ -480,14 +489,30 @@ core.Polygon = function (args, env) {
           new THREE.Face3(0, 1, 2),
           new THREE.Face3(0, 2, 3));
         break;
-
+      /**
+       *  0 1
+       * 4   2
+       *   3
+       */
       case 5:
         geometry.faces.push(
           new THREE.Face3(0, 1, 4),
           new THREE.Face3(1, 2, 3),
           new THREE.Face3(1, 3, 4));
         break;
-
+      /**
+       * 0  1
+       *5     2
+       * 4   3
+       */
+      case 6:
+        geometry.faces.push(
+          new THREE.Face3(0, 1, 5),
+          new THREE.Face3(1, 2, 5),
+          new THREE.Face3(5, 2, 4),
+          new THREE.Face3(2, 3, 4)
+        );
+        break;
       default:
         console.log(points);
         console.error("Cant build complex polygon ::");
@@ -674,10 +699,10 @@ core.Graphics3D = function (args, env) {
 
   envcopy.numerical = true;
   envcopy.matrix = new THREE.Matrix4();
-  envcopy.color = RGBtoColor(1, 1, 1);
+  envcopy.color = new THREE.Color(1, 1, 1);
   envcopy.opacity = 1;
   envcopy.thickness = 1;
-  envcopy.edgecolor = RGBtoColor(0, 0, 0);
+  envcopy.edgecolor = new THREE.Color(0, 0, 0);
 
   envcopy.matrix.set(
     1, 0, 0, 0,//
