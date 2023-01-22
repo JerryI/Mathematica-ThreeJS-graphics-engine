@@ -4,7 +4,7 @@
   "description": "3D Graphics drawer for Mathematica based on Three.js Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook.  Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at https://mathematica.stackexchange.com/a/215025/53728.",
   "main": "graphics3d.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "wolframscript -f ./buildtests.wls && echo goto http://127.0.0.1:8090/tests/_gallery.html",
     "dev": "node bin/dev.js devserver"
   },
   "repository": {
