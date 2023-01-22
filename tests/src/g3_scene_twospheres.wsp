@@ -1,0 +1,11 @@
+<?wsp
+    function = Graphics3D[{Yellow, Sphere[], {Blue, Sphere[{1, 0, 0}]}, 
+    Sphere[{2, 0, 0}]}];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Two colored spheres"  }] ?>
+<?wsp LoadPage["templates/signlepage.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

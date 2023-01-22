@@ -3,3 +3,6 @@
 node_modules/
 package-lock.json
 build/
+tests/*.html
+tests/js/*.js
+tests/imgs/*.png

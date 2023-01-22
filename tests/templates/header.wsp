@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<!-- created using OpenAI -->
+    <script src="https://cdn.jsdelivr.net/gh/JerryI/wolfram-js-frontend@master/src/core.js"></script>
+    <script src="../build/bundle.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <title><?wsp title?></title>
+  </head>
+  <body style="background-color: white;">
+    <div class="container">
+    <h2 class="text-center"><?wsp title?></h2>

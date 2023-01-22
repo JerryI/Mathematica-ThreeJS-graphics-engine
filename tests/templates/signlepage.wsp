@@ -1,0 +1,24 @@
+
+<div class="form-group">
+        <textarea id="target-json" class="form-control" rows="7" placeholder="Enter text here">
+          <?wsp data ?>
+		</textarea>
+      </div>
+      <div class="form-group text-center">
+        <div id="gfx" style="display:flex;">
+            <img src="./imgs/<?wsp FileBaseName[filename] ?>.png" width="400">
+            <div></div>
+        </div>
+      </div>
+      <div class="form-group text-center">
+        <button class="btn btn-light" onclick="render()">Update</button>
+      </div>
+
+<script>
+    function render() {
+      document.getElementById('gfx').lastChild.remove(); 
+      interpretate(JSON.parse(document.getElementById('target-json').value), {element: document.getElementById('gfx')});
+    }
+
+    render();
+  </script>

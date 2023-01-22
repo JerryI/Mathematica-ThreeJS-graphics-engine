@@ -1,0 +1,13 @@
+<?wsp
+    function = SphericalPlot3D[
+        1 + Sin[5 \[Phi]]/5, {\[Theta], 0, Pi}, {\[Phi], 0, 2 Pi}, 
+        PlotStyle -> Directive[Yellow, Opacity[0.7], Specularity[White, 20]],
+         Mesh -> None, PlotPoints -> 30];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Single Polygon Function"  }] ?>
+<?wsp LoadPage["templates/signlepage_nodom.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

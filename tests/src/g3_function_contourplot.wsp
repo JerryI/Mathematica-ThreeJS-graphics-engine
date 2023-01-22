@@ -1,0 +1,15 @@
+<?wsp
+    function = ContourPlot3D[ 
+        Cos[x] Sin[y] + Cos[y] Sin[z] + Cos[z] Sin[x] == 0, {x, -2 \[Pi], 
+         2 \[Pi]}, {y, -2 \[Pi], 2 \[Pi]}, {z, -2 \[Pi], 2 \[Pi]}, 
+        ContourStyle -> 
+         Directive[FaceForm[Orange, Red], Specularity[White, 30]], 
+        Mesh -> None];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "ContourPlot function"  }] ?>
+<?wsp LoadPage["templates/signlepage_nodom.wsp",   {}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

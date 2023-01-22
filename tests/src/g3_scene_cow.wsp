@@ -1,0 +1,10 @@
+<?wsp
+    function = ExampleData[{"Geometry3D", "Cow"}];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Single Polygon Function"  }] ?>
+<?wsp LoadPage["templates/signlepage_nodom.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

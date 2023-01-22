@@ -1,0 +1,12 @@
+<?wsp
+    function = Graphics3D[
+        Table[With[{p = {i, j, k}/5}, {RGBColor[p], Opacity[.75], 
+           Cuboid[p, p + .15]}], {i, 5}, {j, 5}, {k, 5}]];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Single Polygon Function"  }] ?>
+<?wsp LoadPage["templates/signlepage.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

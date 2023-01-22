@@ -1,0 +1,11 @@
+<?wsp
+    function = ParametricPlot3D[{(3 + Cos[v]) Cos[u], (3 + Cos[v]) Sin[u], 
+        Sin[v]}, {u, 0, 2 Pi}, {v, 0, 2 Pi}, Mesh -> None];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "ParametricPlot3D Function"  }] ?>
+<?wsp LoadPage["templates/signlepage.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

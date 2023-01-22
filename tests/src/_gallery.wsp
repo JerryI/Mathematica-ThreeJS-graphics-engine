@@ -1,0 +1,35 @@
+<?wsp
+    scenes = FileBaseName /@ FileNames["*.js", "tests/js"];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Gallery"  }] ?>
+
+<div>
+    <?wsp Table[ ?>
+
+        <div id="gfx-<?wsp i ?>" style="display:flex;">
+            <a href="./<?wsp i ?>.html">Go to the page</a>
+            <img src="./imgs/<?wsp i ?>.png" width="400">
+        </div>
+
+    <?wsp , {i, scenes}]  ?>
+</div>
+
+<?wsp Table[ ?>
+    <script src="./js/<?wsp i ?>.js"></script>
+<?wsp , {i, scenes}]  ?>
+
+<script>
+    var list = [ <?wsp Table[ "'"<>i<>"', ", {i, scenes}] ?> 'empty' ];
+    list.pop();
+
+    function render(a) {
+      console.log("creating "+a);
+      interpretate(window[a], {element: document.getElementById('gfx-'+a)});
+    }
+
+    list.forEach( f => render(f) );
+</script>
+
+<?wsp LoadPage["templates/footer.wsp"] ?>

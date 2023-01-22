@@ -120,6 +120,17 @@ The index files relies on CDN (and release folder) and will not show any changes
 
 the file watcher will automatically rebuild the all stuff on change in `src` dir.
 
+## Tests
+
+run 
+```bash
+wolframscript -f buildtests.wls
+```
+
+and open you browser at `http://127.0.0.1:8090/tests/_gallery.html`.
+you can easily add new scenes by adding files into `tests/src` dir. 
+For the complex scenes use `LoadPage["templates/signlepage_nodom.wsp"]` instead of `LoadPage["templates/signlepage.wsp",{data = json}]`.
+
 ## License
 -------
 

@@ -1,0 +1,11 @@
+<?wsp
+    function = Plot3D[Sin[x y], {x, 0, 3}, {y, 0, 3}, ColorFunction -> "Rainbow", 
+                Mesh -> None];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Plot3D Function"  }] ?>
+<?wsp LoadPage["templates/signlepage.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>

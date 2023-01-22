@@ -1,0 +1,10 @@
+<?wsp
+    function = Graphics3D[Polygon[{{0, 0, 0}, {1, 1, 1}, {0, 1, 1}, {1, 0, 0}}]];
+
+    json = ExportFunction[function];
+    ""
+?>
+
+<?wsp LoadPage["templates/header.wsp",       {title = "Single Polygon Function"  }] ?>
+<?wsp LoadPage["templates/signlepage.wsp",   {data = json}] ?>
+<?wsp LoadPage["templates/footer.wsp"] ?>
