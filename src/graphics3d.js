@@ -708,7 +708,7 @@ core.Graphics3D = (args, env) => {
   interpretate(args[0], envcopy);
 
   const bbox = new THREE.Box3().setFromObject(group);
-  if(!isFinite(bbox.min.x)){
+  if (!isFinite(bbox.min.x)) {
     bbox.set(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
   }
   const center = new THREE.Vector3();
@@ -767,23 +767,23 @@ core.Graphics3D = (args, env) => {
     var light;
 
     if (l.type === "Ambient") {
-      light = new THREE.AmbientLight(color.getHex());
+      light = new THREE.AmbientLight(color);
     } else if (l.type === "Directional") {
-      light = new THREE.DirectionalLight(color.getHex(), 1);
+      light = new THREE.DirectionalLight(color, 1);
     } else if (l.type === "Spot") {
-      light = new THREE.SpotLight(color.getHex());
-      light.position.set(l.position[0], l.position[1], l.position[2]);
-      light.target.position.set(l.target[0], l.target[1], l.target[2]);
+      light = new THREE.SpotLight(color);
+      light.position.fromArray(l.position);
+      light.target.position.fromArray(l.target);
       light.target.updateMatrixWorld(); // This fixes bug in THREE.js
       light.angle = l.angle;
     } else if (l.type === "Point") {
-      light = new THREE.PointLight(color.getHex());
-      light.position.set(l.position[0], l.position[1], l.position[2]);
+      light = new THREE.PointLight(color);
+      light.position.fromArray(l.position);
 
       // Add visible light sphere
-      var lightsphere = new THREE.Mesh(
+      const lightsphere = new THREE.Mesh(
         new THREE.SphereGeometry(0.007 * radius, 16, 8),
-        new THREE.MeshBasicMaterial({ color: color.getHex() }),
+        new THREE.MeshBasicMaterial({ color }),
       );
       lightsphere.position = light.position;
       scene.add(lightsphere);
