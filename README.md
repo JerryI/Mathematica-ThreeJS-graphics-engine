@@ -3,9 +3,6 @@
 Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook. 
 Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
 
-Some parts of the code which is responsible for rotation, zoom, dragging objects and lighting system were taken from Mathics project.
-The home page of Mathics is http://mathics.github.io.
-
 ## Live example
 ----------
 [See](https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/)
@@ -27,10 +24,13 @@ Graphics3D[{
   Tetrahedron[{{1, 1, 1}, {-1, -1, 1}, {1, -1, -1}, {-1, 1, -1}}]
   }]
 ```
+
 2. Export as a JSON string
+
 ```Mathematica
 ExportString[%, "ExpressionJSON"]
 ```
+
 ```Mathematica
 [
 	"Graphics3D",
@@ -58,11 +58,7 @@ ExportString[%, "ExpressionJSON"]
 
 4. Paste the JSON code as a plain text into the textarea
 
-5. Use
-
-``Drag`` - to rotate;
-``Ctrl+Drag`` - to zoom;
-``Shift+Drag`` - to drag;
+5. Use `Drag` - to rotate; `mouse wheel` - to zoom;
 
 ## Contributing
 ------------
@@ -79,7 +75,6 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``GraphicsGroup`` - supported
 - ``RGBColor`` - supported
 - ``Opacity`` - supported
-- ``RGBColor`` - supported
 - ``Tube`` - renders like arrows
 - ``Sphere`` - supported
 - ``Center`` - supported
@@ -104,13 +99,12 @@ There are a lot of features of Three.JS, which can bring extra control over the 
 
 ## Development
 
-download the type file for three js.
-
 ```bash
 npm i
 ```
 
 to start dev server
+
 ```bash
 npm run dev
 ```
@@ -122,9 +116,8 @@ the file watcher will automatically rebuild the all stuff on change in `src` dir
 
 ## Tests
 
-run 
 ```bash
-wolframscript -f buildtests.wls
+npm run test
 ```
 
 and open you browser at `http://127.0.0.1:8090/tests/_gallery.html`.
