@@ -54,14 +54,11 @@ ExportString[%, "ExpressionJSON"]
 				,...
 ```
 
-1. Run `index.html`
+3. Run `index.html`
 
-2. Paste the JSON code as a plain text into the textarea
+4. Paste the JSON code as a plain text into the textarea
 
-3. Use
-
-``Drag`` - to rotate;
-``mouse wheel`` - to zoom;
+5. Use `Drag` - to rotate; `mouse wheel` - to zoom;
 
 ## Contributing
 ------------
@@ -78,7 +75,6 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``GraphicsGroup`` - supported
 - ``RGBColor`` - supported
 - ``Opacity`` - supported
-- ``RGBColor`` - supported
 - ``Tube`` - renders like arrows
 - ``Sphere`` - supported
 - ``Center`` - supported
