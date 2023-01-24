@@ -395,7 +395,7 @@ core.GraphicsComplex = function (args, env) {
     copy.geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
   });
 
-  var group = new THREE.Group();
+  const group = new THREE.Group();
 
   interpretate(args[1], copy);
 
@@ -714,7 +714,7 @@ core.Graphics3D = function (args, env) {
 
   interpretate(args[0], envcopy);
 
-  var bbox = new THREE.Box3().setFromObject(group);
+  const bbox = new THREE.Box3().setFromObject(group);
 
   var center = new THREE.Vector3()
     .addVectors(bbox.max, bbox.min)
@@ -746,7 +746,7 @@ core.Graphics3D = function (args, env) {
     .addVectors(bbox.max, bbox.min.clone().negate())
     .length();
 
-  console.log("Radius is " + ln);
+  console.log("Radius is " , ln);
 
   viewpoint.x *= ln;
   viewpoint.y *= ln;
@@ -758,7 +758,7 @@ core.Graphics3D = function (args, env) {
   onMouseDownPhi = phi =
     (Math.atan2(viewpoint.y, viewpoint.x) + 2 * Math.PI) % (2 * Math.PI);
 
-  var camera = new THREE.PerspectiveCamera(
+  const camera = new THREE.PerspectiveCamera(
     35, // Field of view
     1, // Aspect ratio
     0.1 * radius, // Near plane
@@ -852,10 +852,10 @@ core.Graphics3D = function (args, env) {
     }
   }
 
-  var lights = new Array(data.lighting.length);
-  var initLightPos = new Array(data.lighting.length);
+  const lights = new Array(data.lighting.length);
+  const initLightPos = new Array(data.lighting.length);
 
-  for (var i = 0; i < data.lighting.length; i++) {
+  for (let i = 0; i < data.lighting.length; i++) {
     initLightPos[i] = getInitLightPos(data.lighting[i]);
 
     lights[i] = addLight(data.lighting[i]);
@@ -873,7 +873,7 @@ core.Graphics3D = function (args, env) {
   );
   boundbox.position = center;
 
-  var geo = new THREE.EdgesGeometry(
+  const geo = new THREE.EdgesGeometry(
     new THREE.BoxGeometry(
       bbox.max.x - bbox.min.x,
       bbox.max.y - bbox.min.y,
@@ -1197,9 +1197,9 @@ core.Graphics3D = function (args, env) {
   }
 
   function positionticknums() {
-    for (var i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       if (hasaxes[i]) {
-        for (var j = 0; j < ticknums[i].length; j++) {
+        for (let j = 0; j < ticknums[i].length; j++) {
           /**
            * @type {THREE.Vector3}}
            */
@@ -1217,8 +1217,8 @@ core.Graphics3D = function (args, env) {
           tickpos.x -= 10;
           tickpos.y += 8;
 
-          ticknums[i][j].style.left = tickpos.x.toString() + "px";
-          ticknums[i][j].style.top = tickpos.y.toString() + "px";
+          ticknums[i][j].style.left = `${tickpos.x.toString()}px`;
+          ticknums[i][j].style.top = `${tickpos.y.toString()}px`;
           if (
             tickpos.x < 5 ||
             tickpos.x > 395 ||
@@ -1235,232 +1235,26 @@ core.Graphics3D = function (args, env) {
   }
 
   scene.add(group);
-  //loader = new THREE.JSONLoader();
-
-  //loader.load( JSON.parse(str));
-  //loader.onLoadComplete=function(mesh){scene.add( mesh )}
-
-  // Plot the primatives
-  /*for (var indx = 0; indx < data.elements.length; indx++) {
-      var type = data.elements[indx].type;
-      switch(type) {
-        case "point":
-          scene.add(drawPoint(data.elements[indx]));
-          break;
-        case "line":
-          scene.add(drawLine(data.elements[indx]));
-          break;
-        case "polygon":
-          scene.add(drawPolygon(data.elements[indx]));
-          break;
-        case "sphere":
-          scene.add(drawSphere(data.elements[indx]));
-          break;
-        case "cube":
-          scene.add(drawCube(data.elements[indx]));
-          break;
-        default:
-          alert("Error: Unknown type passed to drawGraphics3D");
-      }
-    }*/
-
-  // Renderer (set preserveDrawingBuffer to deal with issue
-  // of weird canvas content after switching windows)
-
   renderer = new THREE.WebGLRenderer({
     antialias: true,
     preserveDrawingBuffer: true,
   });
-
+  new OrbitControls(camera, renderer.domElement);
   renderer.setSize(400, 400);
   renderer.setClearColor(0xffffff);
   container.appendChild(renderer.domElement);
   renderer.domElement.style = "margin:auto";
-
   function render() {
     positionLights();
     renderer.render(scene, camera);
   }
 
-  function toScreenCoords(position) {
-    return position.clone().applyMatrix3(camera.matrixWorldInverse);
-  }
-
-  function ScaleInView() {
-    var tmp_fov = 0.0;
-    //var proj2d = new THREE.Vector3();
-
-    /*for (var i=0; i<boundbox.geometry.vertices.length; i++) {
-          proj2d = proj2d.addVectors(boundbox.geometry.vertices[i], boundbox.position);
-          proj2d = toScreenCoords(proj2d);
-
-          angle = 114.59 * Math.max(
-             Math.abs(Math.atan(proj2d.x/proj2d.z) / camera.aspect),
-             Math.abs(Math.atan(proj2d.y/proj2d.z))
-          );
-          tmp_fov = Math.max(tmp_fov, angle);
-        }*/
-    //console.log(bbox);
-    var height = bbox.min.clone().sub(bbox.max).length();
-    var dist = center.clone().sub(camera.position).length();
-    tmp_fov = 2 * Math.atan(height / (2 * dist)) * (180 / Math.PI);
-
-    camera.fov = tmp_fov + 5;
-    camera.updateProjectionMatrix();
-  }
-
-  /**
-   *
-   * @param {MouseEvent} event
-   * @description Mouse Interactions
-   */
-  function onDocumentMouseDown(event) {
-    event.preventDefault();
-
-    isMouseDown = true;
-    isShiftDown = false;
-    isCtrlDown = false;
-
-    onMouseDownTheta = theta;
-    onMouseDownPhi = phi;
-
-    onMouseDownPosition.x = event.clientX;
-    onMouseDownPosition.y = event.clientY;
-
-    onMouseDownFocus = new THREE.Vector3().copy(focus);
-  }
-  /**
-   *
-   * @param {MouseEvent} event
-   */
-  function onDocumentMouseMove(event) {
-    event.preventDefault();
-
-    if (isMouseDown) {
-      positionticknums();
-
-      if (event.shiftKey) {
-        // console.log("Pan");
-        if (!isShiftDown) {
-          isShiftDown = true;
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          autoRescale = false;
-          container.style.cursor = "move";
-        }
-        var camz = new THREE.Vector3().sub(focus, camera.position);
-        camz.normalize();
-
-        var camx = new THREE.Vector3(
-          -radius *
-          Math.cos(theta) *
-          Math.sin(phi) *
-          (theta < 0.5 * Math.PI ? 1 : -1),
-          radius *
-          Math.cos(theta) *
-          Math.cos(phi) *
-          (theta < 0.5 * Math.PI ? 1 : -1),
-          0,
-        );
-        camx.normalize();
-
-        var camy = new THREE.Vector3();
-        camy.cross(camz, camx);
-
-        focus.x =
-          onMouseDownFocus.x +
-          (radius / 400) *
-          (camx.x * (onMouseDownPosition.x - event.clientX) +
-            camy.x * (onMouseDownPosition.y - event.clientY));
-        focus.y =
-          onMouseDownFocus.y +
-          (radius / 400) *
-          (camx.y * (onMouseDownPosition.x - event.clientX) +
-            camy.y * (onMouseDownPosition.y - event.clientY));
-        focus.z =
-          onMouseDownFocus.z +
-          (radius / 400) *
-          (camx.z * (onMouseDownPosition.x - event.clientX) +
-            camy.z * (onMouseDownPosition.y - event.clientY));
-
-        update_camera_position();
-      } else if (event.ctrlKey) {
-        // console.log("Zoom");
-        if (!isCtrlDown) {
-          isCtrlDown = true;
-          onCtrlDownFov = camera.fov;
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          autoRescale = false;
-          container.style.cursor = "crosshair";
-        }
-        camera.fov =
-          onCtrlDownFov +
-          20 * Math.atan((event.clientY - onMouseDownPosition.y) / 50);
-
-        camera.fov = Math.max(1, Math.min(camera.fov, 150));
-        //console.log("fov"+camera.fov);
-        camera.updateProjectionMatrix();
-        //console.log(JSON.stringify(camera));
-      } else {
-        // console.log("Spin");
-        if (isCtrlDown || isShiftDown) {
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          isShiftDown = false;
-          isCtrlDown = false;
-          container.style.cursor = "pointer";
-        }
-
-        phi =
-          (2 * Math.PI * (onMouseDownPosition.x - event.clientX)) / 400 +
-          onMouseDownPhi;
-        phi = (phi + 2 * Math.PI) % (2 * Math.PI);
-        theta =
-          (2 * Math.PI * (onMouseDownPosition.y - event.clientY)) / 400 +
-          onMouseDownTheta;
-        var epsilon = 1e-12; // Prevents spinnging from getting stuck
-        theta = Math.max(Math.min(Math.PI - epsilon, theta), epsilon);
-
-        update_camera_position();
-      }
-      render();
-    } else {
-      container.style.cursor = "pointer";
-    }
-  }
-  /**
-   *
-   * @param {MouseEvent} event
-   */
-  function onDocumentMouseUp(event) {
-    event.preventDefault();
-
-    isMouseDown = false;
-    container.style.cursor = "pointer";
-
-    if (autoRescale) {
-      ScaleInView();
-      render();
-    }
-    positionAxes();
+  function animate() {
+    requestAnimationFrame( animate );
     render();
-    positionticknums();
   }
-
-  // Bind Mouse events
-  container.addEventListener("mousemove", onDocumentMouseMove, false);
-  container.addEventListener("mousedown", onDocumentMouseDown, false);
-  container.addEventListener("mouseup", onDocumentMouseUp, false);
-  container.addEventListener("touchmove", onDocumentMouseMove, false);
-  onMouseDownPosition = new THREE.Vector2();
-  var autoRescale = true;
-
   update_camera_position();
   positionAxes();
-  render(); // Rendering twice updates camera.matrixWorldInverse so that ScaleInView works properly
-  ScaleInView();
-  render();
+  animate();
   positionticknums();
-  /*** the part of a code from http://mathics.github.io.  ***/
 };
