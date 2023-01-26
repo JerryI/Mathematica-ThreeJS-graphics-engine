@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<!-- created using OpenAI -->
+    <script src="https://cdn.jsdelivr.net/gh/JerryI/wolfram-js-frontend@master/src/core.js"></script>
+    <script src="release/bundle.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <title>Graphics3D Parser</title>
+  </head>
+  <body style="background-color: white;">
+    <div class="container">
+      <h2 class="text-center">Paste the content of "ExpressionJSON" here as a plain text</h2>
+      <div class="form-group">
+        <textarea id="target-json" class="form-control" rows="14" placeholder="Enter text here">
+          [
+          "Graphics3D",
+          [
+            "List",
+            [
+              "RGBColor",
+              0,
+              0,
+              1
+            ],
+            [
+              "Cylinder",
+              [
+                "List",
+                [
+                  "List",
+                  0,
+                  0,
+                  -1
+                ],
+                [
+                  "List",
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            ],
+            [
+              "RGBColor",
+              1,
+              0,
+              0
+            ],
+            [
+              "Sphere",
+              [
+                "List",
+                0,
+                0,
+                2
+              ]
+            ],
+            [
+              "GrayLevel",
+              0
+            ],
+            [
+              "Thickness",
+              "Large"
+            ],
+            [
+              "Dashing",
+              [
+                "List",
+                "Small",
+                "Small"
+              ]
+            ],
+            [
+              "Line",
+              [
+                "List",
+                [
+                  "List",
+                  -2,
+                  0,
+                  2
+                ],
+                [
+                  "List",
+                  2,
+                  0,
+                  2
+                ],
+                [
+                  "List",
+                  0,
+                  0,
+                  4
+                ],
+                [
+                  "List",
+                  -2,
+                  0,
+                  2
+                ]
+              ]
+            ],
+            [
+              "RGBColor",
+              1,
+              1,
+              0
+            ],
+            [
+              "Polygon",
+              [
+                "List",
+                [
+                  "List",
+                  -3,
+                  -3,
+                  -2
+                ],
+                [
+                  "List",
+                  -3,
+                  3,
+                  -2
+                ],
+                [
+                  "List",
+                  3,
+                  3,
+                  -2
+                ],
+                [
+                  "List",
+                  3,
+                  -3,
+                  -2
+                ]
+              ]
+            ],
+            [
+              "RGBColor",
+              0,
+              1,
+              0
+            ],
+            [
+              "Opacity",
+              0.3
+            ],
+            [
+              "Cuboid",
+              [
+                "List",
+                -2,
+                -2,
+                -2
+              ],
+              [
+                "List",
+                2,
+                2,
+                -1
+              ]
+            ]
+          ]
+        ]
+		</textarea>
+      </div>
+      <div class="form-group text-center">
+        <div id="gfx"><div></div></div>
+      </div>
+      <div class="form-group text-center">
+        <button class="btn btn-light" onclick="render()">Update</button>
+      </div>
+    </div>
+  </body>
+  <script>
+    function render() {
+      document.getElementById('gfx').lastChild.remove(); 
+      interpretate(JSON.parse(document.getElementById('target-json').value), {element: document.getElementById('gfx')});
+    }
+
+    render();
+  </script>
+</html>
