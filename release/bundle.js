@@ -29008,6 +29008,31 @@ class CylinderBufferGeometry extends BufferGeometry {
 
 }
 
+class CylinderGeometry extends Geometry {
+
+	constructor( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) {
+
+		super();
+		this.type = 'CylinderGeometry';
+
+		this.parameters = {
+			radiusTop: radiusTop,
+			radiusBottom: radiusBottom,
+			height: height,
+			radialSegments: radialSegments,
+			heightSegments: heightSegments,
+			openEnded: openEnded,
+			thetaStart: thetaStart,
+			thetaLength: thetaLength
+		};
+
+		this.fromBufferGeometry( new CylinderBufferGeometry( radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength ) );
+		this.mergeVertices();
+
+	}
+
+}
+
 class PolyhedronBufferGeometry extends BufferGeometry {
 
 	constructor( vertices, indices, radius = 1, detail = 0 ) {
@@ -31329,6 +31354,28 @@ function ParametricGeometry( func, slices, stacks ) {
 
 ParametricGeometry.prototype = Object.create( Geometry.prototype );
 ParametricGeometry.prototype.constructor = ParametricGeometry;
+
+class PolyhedronGeometry extends Geometry {
+
+	constructor( vertices, indices, radius, detail ) {
+
+		super();
+
+		this.type = 'PolyhedronGeometry';
+
+		this.parameters = {
+			vertices: vertices,
+			indices: indices,
+			radius: radius,
+			detail: detail
+		};
+
+		this.fromBufferGeometry( new PolyhedronBufferGeometry( vertices, indices, radius, detail ) );
+		this.mergeVertices();
+
+	}
+
+}
 
 class ShapeBufferGeometry extends BufferGeometry {
 
@@ -46691,18 +46738,10 @@ var MapControls = function ( object, domElement ) {
 MapControls.prototype = Object.create( EventDispatcher.prototype );
 MapControls.prototype.constructor = MapControls;
 
-function RGBtoColor(i, k, j) {
-  var r = Math.round(255 * i);
-  var g = Math.round(255 * k);
-  var b = Math.round(255 * j);
-
-  return new Color("rgb(" + r + "," + g + "," + b + ")");
-}
-
-core.Style = function (args, env) {
+core.Style = (args, env) => {
   var copy = Object.assign({}, env);
 
-  args.forEach(function (el) {
+  args.forEach((el) => {
     interpretate(el, copy);
   });
 };
@@ -46710,73 +46749,82 @@ core.Style = function (args, env) {
  * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
  */
 core.Dashing = (args, env) => {
-
+  console.log("Dashing not implemented");
 };
 
-core.Annotation = function (args, env) {
-  args.forEach(function (el) {
+core.Annotation = (args, env) => {
+  args.forEach((el) => {
     interpretate(el, env);
   });
 };
 
-core.GraphicsGroup = function (args, env) {
+core.GraphicsGroup = (args, env) => {
   var group = new Group();
   var copy = Object.assign({}, env);
 
   copy.mesh = group;
 
-  args.forEach(function (el) {
+  args.forEach((el) => {
     interpretate(el, copy);
   });
 
   env.mesh.add(group);
 };
 
-core.RGBColor = function (args, env) {
-  if (args.length !== 3) console.error("RGB values should be triple!");
+core.RGBColor = (args, env) => {
+  if (args.length !== 3 && args.length !== 1) {
+    console.log("RGB format not implemented", args);
+    console.error("RGB values should be triple!");
+    return;
+  }
+  if (args.length === 1) {
+    args = interpretate(args[0]); // return [r, g, b] , 0<=r, g, b<=1
+  }
+  const r = interpretate(args[0]);
+  const g = interpretate(args[1]);
+  const b = interpretate(args[2]);
 
-  var r = Math.round(255 * interpretate(args[0]));
-  var g = Math.round(255 * interpretate(args[1]));
-  var b = Math.round(255 * interpretate(args[2]));
-
-  env.color = new Color("rgb(" + r + "," + g + "," + b + ")");
+  env.color = new Color(r, g, b);
 };
 
-core.Opacity = function (args, env) {
+core.Opacity = (args, env) => {
   var o = interpretate(args[0]);
   if (typeof o !== "number") console.error("Opacity must have number value!");
   console.log(o);
   env.opacity = o;
 };
 
-core.ImageScaled = function (args, env) { };
+core.ImageScaled = (args, env) => { };
 
-core.Thickness = function (args, env) { };
+core.Thickness = (args, env) => { };
 
-core.Arrowheads = function (args, env) { };
+core.Arrowheads = (args, env) => { };
 
-core.Arrow = function (args, env) {
+core.Arrow = (args, env) => {
   interpretate(args[0], env);
 };
 
-core.Tube = function (args, env) {
+core.Tube = (args, env) => {
   var arr = interpretate(args[0]);
   if (arr.length === 1) arr = arr[0];
-  if (arr.length !== 2) console.error("Tube must have 2 vectors!");
+  if (arr.length !== 2) {
+    console.error("Tube must have 2 vectors!");
+    return;
+  }
 
-  var points = [
+  const points = [
     new Vector4(...arr[0], 1),
     new Vector4(...arr[1], 1),
   ];
 
-  points.forEach(function (p) {
+  points.forEach((p) => {
     p = p.applyMatrix4(env.matrix);
   });
 
-  var origin = points[0].clone();
-  var dir = points[1].add(points[0].negate());
+  const origin = points[0].clone();
+  const dir = points[1].add(points[0].negate());
 
-  var arrowHelper = new ArrowHelper(
+  const arrowHelper = new ArrowHelper(
     dir.normalize(),
     origin,
     dir.length(),
@@ -46786,20 +46834,20 @@ core.Tube = function (args, env) {
   arrowHelper.line.material.linewidth = env.thickness;
 };
 
-core.Sphere = function (args, env) {
+core.Sphere = (args, env) => {
   var radius = 1;
   if (args.length > 1) radius = args[1];
 
-  var material = new MeshLambertMaterial({
+  const material = new MeshLambertMaterial({
     color: env.color,
     transparent: false,
     opacity: env.opacity
   });
 
   function addSphere(cr) {
-    var origin = new Vector4(...cr, 1);
-    var geometry = new SphereBufferGeometry(radius, 20, 20);
-    var sphere = new Mesh(geometry, material);
+    const origin = new Vector4(...cr, 1);
+    const geometry = new SphereGeometry(radius, 20, 20);
+    const sphere = new Mesh(geometry, material);
 
     sphere.position.set(origin.x, origin.y, origin.z);
 
@@ -46807,7 +46855,7 @@ core.Sphere = function (args, env) {
     geometry.dispose();
   }
 
-  var list = interpretate(args[0]);
+  let list = interpretate(args[0]);
 
   if (list.length === 1) list = list[0];
   if (list.length === 1) list = list[0];
@@ -46815,23 +46863,23 @@ core.Sphere = function (args, env) {
   if (list.length === 3) {
     addSphere(list);
   } else if (list.length > 3) {
-    list.forEach(function (el) {
+    list.forEach((el) => {
       addSphere(el);
     });
   } else {
     console.log(list);
     console.error("List of coords. for sphere object is less 1");
+    return;
   }
 
   material.dispose();
 };
 
-core.Cuboid = function (args, env) {
+core.Cuboid = (args, env) => {
   //if (params.hasOwnProperty('geometry')) {
   //	var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
   //				new THREE.Vector4(...interpretate(func.args[1]), 1)];
   //}
-  console.log("Cuboid");
   /**
    * @type {THREE.Vector4}
    */
@@ -46862,10 +46910,11 @@ core.Cuboid = function (args, env) {
     origin.add(diff.clone().divideScalar(2));
   } else {
     console.error("Expected 2 or 1 arguments");
+    return;
   }
 
-  var geometry = new BoxBufferGeometry(diff.x, diff.y, diff.z);
-  var material = new MeshLambertMaterial({
+  const geometry = new BoxGeometry(diff.x, diff.y, diff.z);
+  const material = new MeshLambertMaterial({
     color: env.color,
     transparent: true,
     opacity: env.opacity,
@@ -46874,7 +46923,7 @@ core.Cuboid = function (args, env) {
 
   //material.side = THREE.DoubleSide;
 
-  var cube = new Mesh(geometry, material);
+  const cube = new Mesh(geometry, material);
 
   //var tr = new THREE.Matrix4();
   //	tr.makeTranslation(origin.x,origin.y,origin.z);
@@ -46889,11 +46938,11 @@ core.Cuboid = function (args, env) {
   material.dispose();
 };
 
-core.Center = function (args, env) {
+core.Center = (args, env) => {
   return "Center";
 };
 
-core.Cylinder = function (args, env) {
+core.Cylinder = (args, env) => {
   let radius = 1;
   if (args.length > 1) radius = args[1];
   /**
@@ -46913,7 +46962,7 @@ core.Cylinder = function (args, env) {
   //direction
   const dp = p2.clone().addScaledVector(p1, -1);
 
-  const geometry = new CylinderBufferGeometry(radius, radius, dp.length(), 20, 1);
+  const geometry = new CylinderGeometry(radius, radius, dp.length(), 20, 1);
 
   //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
   geometry.computeBoundingBox();
@@ -46955,7 +47004,7 @@ core.Cylinder = function (args, env) {
   material.dispose();
 };
 
-core.Tetrahedron = function (args, env) {
+core.Tetrahedron = (args, env) => {
   /**
    * @type {number[]}
    */
@@ -46983,7 +47032,7 @@ core.Tetrahedron = function (args, env) {
   interpretate(fake, env);
 };
 
-core.GeometricTransformation = function (args, env) {
+core.GeometricTransformation = (args, env) => {
   var group = new Group();
   //Если center, то наверное надо приметь matrix
   //к каждому объекту относительно родительской группы.
@@ -47016,7 +47065,7 @@ core.GeometricTransformation = function (args, env) {
       var matrix = new Matrix4().makeTranslation(...dir, 1);
     } else {
       //make it like Matrix4
-      p.forEach(function (el) {
+      p.forEach((el) => {
         el.push(0);
       });
       p.push([0, 0, 0, 1]);
@@ -47068,17 +47117,17 @@ core.GeometricTransformation = function (args, env) {
   env.mesh.add(group);
 };
 
-core.GraphicsComplex = function (args, env) {
+core.GraphicsComplex = (args, env) => {
   var copy = Object.assign({}, env);
 
   copy.geometry = new Geometry();
 
-  interpretate(args[0]).forEach(function (el) {
+  interpretate(args[0]).forEach((el) => {
     if (typeof el[0] !== "number") console.error("not a triple of number" + el);
     copy.geometry.vertices.push(new Vector3(el[0], el[1], el[2]));
   });
 
-  var group = new Group();
+  const group = new Group();
 
   interpretate(args[1], copy);
 
@@ -47086,14 +47135,14 @@ core.GraphicsComplex = function (args, env) {
   copy.geometry.dispose();
 };
 
-core.Polygon = function (args, env) {
+core.Polygon = (args, env) => {
   if (env.hasOwnProperty("geometry")) {
     /**
      * @type {THREE.Geometry}
      */
     var geometry = env.geometry.clone();
 
-    var createFace = function (c) {
+    var createFace = (c) => {
       c = c.map((x) => x - 1);
 
       switch (c.length) {
@@ -47115,11 +47164,23 @@ core.Polygon = function (args, env) {
             new Face3(c[1], c[3], c[4]),
           );
           break;
-
+        /**
+         * 0 1
+         *5    2
+         * 4  3
+         */
+        case 6:
+          geometry.faces.push(
+            new Face3(c[0], c[1], c[5]),
+            new Face3(c[1], c[2], c[5]),
+            new Face3(c[5], c[2], c[4]),
+            new Face3(c[2], c[3], c[4])
+          );
+          break;
         default:
           console.log(c);
           console.log(c.length);
-          console.error("Cant produce complex polygons! at" + c);
+          console.error("Cant produce complex polygons! at", c);
       }
     };
 
@@ -47133,16 +47194,17 @@ core.Polygon = function (args, env) {
       createFace(a);
     } else {
       console.log("Create multiple face");
-      console.log(a);
       a.forEach(createFace);
     }
   } else {
     var geometry = new Geometry();
     var points = interpretate(args[0]);
 
-    points.forEach(function (el) {
-      if (typeof el[0] !== "number")
-        console.error("not a triple of number" + el);
+    points.forEach((el) => {
+      if (typeof el[0] !== "number") {
+        console.error("not a triple of number", el);
+        return;
+      }
       geometry.vertices.push(new Vector3(el[0], el[1], el[2]));
     });
 
@@ -47159,14 +47221,30 @@ core.Polygon = function (args, env) {
           new Face3(0, 1, 2),
           new Face3(0, 2, 3));
         break;
-
+      /**
+       *  0 1
+       * 4   2
+       *   3
+       */
       case 5:
         geometry.faces.push(
           new Face3(0, 1, 4),
           new Face3(1, 2, 3),
           new Face3(1, 3, 4));
         break;
-
+      /**
+       * 0  1
+       *5     2
+       * 4   3
+       */
+      case 6:
+        geometry.faces.push(
+          new Face3(0, 1, 5),
+          new Face3(1, 2, 5),
+          new Face3(5, 2, 4),
+          new Face3(2, 3, 4)
+        );
+        break;
       default:
         console.log(points);
         console.error("Cant build complex polygon ::");
@@ -47193,7 +47271,7 @@ core.Polygon = function (args, env) {
   material.dispose();
 };
 
-core.Polyhedron = function (args, env) {
+core.Polyhedron = (args, env) => {
   if (args[1][1].length > 4) {
     //non-optimised variant to work with 4 vertex per face
     interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
@@ -47210,7 +47288,7 @@ core.Polyhedron = function (args, env) {
      */
     const vertices = interpretate(args[0]).flat(4);
 
-    const geometry = new PolyhedronBufferGeometry(vertices, indices);
+    const geometry = new PolyhedronGeometry(vertices, indices);
 
     var material = new MeshLambertMaterial({
       color: env.color,
@@ -47226,22 +47304,22 @@ core.Polyhedron = function (args, env) {
   }
 };
 
-core.GrayLevel = function (args, env) { };
+core.GrayLevel = (args, env) => { };
 
-core.EdgeForm = function (args, env) { };
+core.EdgeForm = (args, env) => { };
 
-core.Specularity = function (args, env) { };
+core.Specularity = (args, env) => { };
 
-core.Text = function (args, env) { };
+core.Text = (args, env) => { };
 
-core.Directive = function (args, env) { };
+core.Directive = (args, env) => { };
 
-core.Line = function (args, env) {
+core.Line = (args, env) => {
   if (env.hasOwnProperty("geometry")) {
     const geometry = new Geometry();
 
     const points = interpretate(args[0]);
-    points.forEach(function (el) {
+    points.forEach((el) => {
       geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
     });
 
@@ -47268,16 +47346,16 @@ core.Line = function (args, env) {
     console.log("points: ", arr.length);
 
     const points = [];
-    arr.forEach(function (p) {
+    arr.forEach((p) => {
       points.push(new Vector4(...p, 1));
     });
     //new THREE.Vector4(...arr[0], 1)
 
-    points.forEach(function (p) {
+    points.forEach((p) => {
       p = p.applyMatrix4(env.matrix);
     });
 
-    const geometry = new BufferGeometry().setFromPoints(points);
+    const geometry = new Geometry().setFromPoints(points);
     const material = new LineBasicMaterial({
       color: env.edgecolor,
       linewidth: env.thickness,
@@ -47287,7 +47365,7 @@ core.Line = function (args, env) {
   }
 };
 
-core.Graphics3D = function (args, env) {
+core.Graphics3D = (args, env) => {
   console.log("GRAPHICS3D");
 
   /*** the part of a code from http://mathics.github.io.  ***/
@@ -47327,89 +47405,68 @@ core.Graphics3D = function (args, env) {
    * @type {HTMLElement}
    */
   var container = env.element;
-
-  var renderer;
   /**
-  * @type {THREE.Mesh}
+  * @type {THREE.Mesh<THREE.Geometry>}
   */
   var boundbox;
-  var hasaxes,
-    isMouseDown = false,
-    onMouseDownPosition,
-    theta,
-    onMouseDownTheta,
-    phi,
-    onMouseDownPhi;
+  var hasaxes;
 
   // Scene
-  var scene = new Scene();
+  const scene = new Scene();
 
-  var group = new Group();
+  const group = new Group();
 
-  var envcopy = Object.assign({}, env);
-
-  envcopy.numerical = true;
-  envcopy.matrix = new Matrix4();
-  envcopy.color = RGBtoColor(1, 1, 1);
-  envcopy.opacity = 1;
-  envcopy.thickness = 1;
-  envcopy.edgecolor = RGBtoColor(0, 0, 0);
-
-  envcopy.matrix.set(
-    1, 0, 0, 0,//
-    0, 1, 0, 0,//
-    0, 0, 1, 0,//
-    0, 0, 0, 1);
-
-  envcopy.mesh = group;
+  const envcopy = {
+    ...env,
+    numerical: true,
+    matrix: new Matrix4().set(
+      1, 0, 0, 0,//
+      0, 1, 0, 0,//
+      0, 0, 1, 0,//
+      0, 0, 0, 1),
+    color: new Color(1, 1, 1),
+    opacity: 1,
+    thickness: 1,
+    edgecolor: new Color(0, 0, 0),
+    mesh: group,
+  };
 
   interpretate(args[0], envcopy);
 
-  var bbox = new Box3().setFromObject(group);
-
-  var center = new Vector3()
-    .addVectors(bbox.max, bbox.min)
-    .divideScalar(2);
-  console.log("BBOX CENTER");
-  console.log(center);
-  console.log(bbox);
-  //var	translate = new THREE.Matrix4().makeTranslation(-center.x,-center.y,-center.z,1);
-  //group.applyMatrix(translate);
+  const bbox = new Box3().setFromObject(group);
+  if (!isFinite(bbox.min.x)) {
+    bbox.set(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
+  }
+  const center = new Vector3();
+  console.log(
+    "BBOX CENTER",
+    center,
+    bbox);
   scene.position = center;
 
-  // Center of the scene
-  //var center = new THREE.Vector3(
-  //  0.5 * (data.extent.xmin + data.extent.xmax),
-  //  0.5 * (data.extent.ymin + data.extent.ymax),
-  //  0.5 * (data.extent.zmin + data.extent.zmax));
+  const focus = center.clone();
 
-  // Where the camera is looking
-  var focus = new Vector3(center.x, center.y, center.z);
+  const viewpoint = new Vector3()
+    .fromArray(data.viewpoint)
+    .sub(focus);
 
-  // Viewpoint
-  var viewpoint = new Vector3(
-    data.viewpoint[0],
-    data.viewpoint[1],
-    data.viewpoint[2],
-  ).sub(focus);
-
-  var ln = new Vector3()
-    .addVectors(bbox.max, bbox.min.clone().negate())
+  const ln = bbox
+    .max
+    .clone()
+    .add(bbox.min.clone().negate())
     .length();
 
-  console.log("Radius is " + ln);
+  console.log("Radius is ", ln);
 
-  viewpoint.x *= ln;
-  viewpoint.y *= ln;
-  viewpoint.z *= ln;
+  viewpoint.multiplyScalar(ln);
 
-  var radius = viewpoint.length();
+  const radius = viewpoint.length();
 
-  onMouseDownTheta = theta = Math.acos(viewpoint.z / radius);
-  onMouseDownPhi = phi =
+  let theta = Math.acos(viewpoint.z / radius);
+  let phi =
     (Math.atan2(viewpoint.y, viewpoint.x) + 2 * Math.PI) % (2 * Math.PI);
 
-  var camera = new PerspectiveCamera(
+  const camera = new PerspectiveCamera(
     35, // Field of view
     1, // Aspect ratio
     0.1 * radius, // Near plane
@@ -47417,9 +47474,10 @@ core.Graphics3D = function (args, env) {
   );
 
   function update_camera_position() {
-    camera.position.x = radius * Math.sin(theta) * Math.cos(phi);
-    camera.position.y = radius * Math.sin(theta) * Math.sin(phi);
-    camera.position.z = radius * Math.cos(theta);
+    camera.position.set(
+      radius * Math.sin(theta) * Math.cos(phi),
+      radius * Math.sin(theta) * Math.sin(phi),
+      radius * Math.cos(theta));
     camera.position.add(focus);
     camera.lookAt(focus);
   }
@@ -47435,23 +47493,23 @@ core.Graphics3D = function (args, env) {
     var light;
 
     if (l.type === "Ambient") {
-      light = new AmbientLight(color.getHex());
+      light = new AmbientLight(color);
     } else if (l.type === "Directional") {
-      light = new DirectionalLight(color.getHex(), 1);
+      light = new DirectionalLight(color, 1);
     } else if (l.type === "Spot") {
-      light = new SpotLight(color.getHex());
-      light.position.set(l.position[0], l.position[1], l.position[2]);
-      light.target.position.set(l.target[0], l.target[1], l.target[2]);
+      light = new SpotLight(color);
+      light.position.fromArray(l.position);
+      light.target.position.fromArray(l.target);
       light.target.updateMatrixWorld(); // This fixes bug in THREE.js
       light.angle = l.angle;
     } else if (l.type === "Point") {
-      light = new PointLight(color.getHex());
-      light.position.set(l.position[0], l.position[1], l.position[2]);
+      light = new PointLight(color);
+      light.position.fromArray(l.position);
 
       // Add visible light sphere
-      var lightsphere = new Mesh(
+      const lightsphere = new Mesh(
         new SphereGeometry(0.007 * radius, 16, 8),
-        new MeshBasicMaterial({ color: color.getHex() }),
+        new MeshBasicMaterial({ color }),
       );
       lightsphere.position = light.position;
       scene.add(lightsphere);
@@ -47486,27 +47544,27 @@ core.Graphics3D = function (args, env) {
   }
 
   function positionLights() {
-    for (var i = 0; i < lights.length; i++) {
+    for (let i = 0; i < lights.length; i++) {
       if (lights[i] instanceof DirectionalLight) {
-        lights[i].position.x =
+        lights[i].position.set(
           initLightPos[i].radius *
           Math.sin(theta + initLightPos[i].theta) *
-          Math.cos(phi + initLightPos[i].phi);
-        lights[i].position.y =
+          Math.cos(phi + initLightPos[i].phi),
           initLightPos[i].radius *
           Math.sin(theta + initLightPos[i].theta) *
-          Math.sin(phi + initLightPos[i].phi);
-        lights[i].position.z =
-          initLightPos[i].radius * Math.cos(theta + initLightPos[i].theta);
+          Math.sin(phi + initLightPos[i].phi),
+          initLightPos[i].radius *
+          Math.cos(theta + initLightPos[i].theta),
+        );
         lights[i].position.add(focus);
       }
     }
   }
 
-  var lights = new Array(data.lighting.length);
-  var initLightPos = new Array(data.lighting.length);
+  const lights = new Array(data.lighting.length);
+  const initLightPos = new Array(data.lighting.length);
 
-  for (var i = 0; i < data.lighting.length; i++) {
+  for (let i = 0; i < data.lighting.length; i++) {
     initLightPos[i] = getInitLightPos(data.lighting[i]);
 
     lights[i] = addLight(data.lighting[i]);
@@ -47524,7 +47582,7 @@ core.Graphics3D = function (args, env) {
   );
   boundbox.position = center;
 
-  var geo = new EdgesGeometry(
+  const geo = new EdgesGeometry(
     new BoxGeometry(
       bbox.max.x - bbox.min.x,
       bbox.max.y - bbox.min.y,
@@ -47603,18 +47661,16 @@ core.Graphics3D = function (args, env) {
         ),
       );
       axesmesh[i] = new Line(axesgeom[i], axesmat);
-      axesmesh[i].geometry.dynamic = true;
       scene.add(axesmesh[i]);
     }
   }
 
   function boxEdgeLength(i, j) {
-    var edge =
-      toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][0]])
-        .clone()
-        .sub(toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][1]]));
-    edge.setZ(0);
-    return edge.length();
+    return toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][0]])
+      .clone()
+      .sub(toCanvasCoords(boundbox.geometry.vertices[axesindicies[i][j][1]]))
+      .setZ(0)
+      .length();
   }
 
   function positionAxes() {
@@ -47624,7 +47680,7 @@ core.Graphics3D = function (args, env) {
     var farj = null;
     var farl = 0.0;
 
-    var tmpv = new Vector3();
+    const tmpv = new Vector3();
     for (var j = 0; j < 8; j++) {
       tmpv.addVectors(boundbox.geometry.vertices[j], boundbox.position);
       tmpv.sub(camera.position);
@@ -47655,15 +47711,15 @@ core.Graphics3D = function (args, env) {
             }
           }
         }
-        axesmesh[i].geometry.vertices[0].addVectors(
+        axesmesh[i].vertices[0].addVectors(
           boundbox.geometry.vertices[axesindicies[i][maxj][0]],
           boundbox.position,
         );
-        axesmesh[i].geometry.vertices[1].addVectors(
+        axesmesh[i].vertices[1].addVectors(
           boundbox.geometry.vertices[axesindicies[i][maxj][1]],
           boundbox.position,
         );
-        axesmesh[i].geometry.verticesNeedUpdate = true;
+        axesmesh[i].verticesNeedUpdate = true;
       }
     }
     update_axes();
@@ -47675,11 +47731,11 @@ core.Graphics3D = function (args, env) {
     linewidth: 1.2,
   });
   /**
-   * @type {THREE.Line[][]}
+   * @type {THREE.Line<THREE.Geometry>[][]}
    */
-  var ticks = new Array(3);
+  const ticks = new Array(3);
   /**
-   * @type {THREE.Line[][]}
+   * @type {THREE.Line<THREE.Geometry>[][]}
    */
   var ticks_small = new Array(3);
   var ticklength = 0.005 * radius;
@@ -47810,6 +47866,10 @@ core.Graphics3D = function (args, env) {
   update_axes();
 
   // Axes numbering using divs
+
+  /**
+   * @type {HTMLDivElement[][]}
+   */
   var ticknums = new Array(3);
   for (var i = 0; i < 3; i++) {
     if (hasaxes[i]) {
@@ -47848,9 +47908,9 @@ core.Graphics3D = function (args, env) {
   }
 
   function positionticknums() {
-    for (var i = 0; i < 3; i++) {
+    for (let i = 0; i < 3; i++) {
       if (hasaxes[i]) {
-        for (var j = 0; j < ticknums[i].length; j++) {
+        for (let j = 0; j < ticknums[i].length; j++) {
           /**
            * @type {THREE.Vector3}}
            */
@@ -47868,8 +47928,8 @@ core.Graphics3D = function (args, env) {
           tickpos.x -= 10;
           tickpos.y += 8;
 
-          ticknums[i][j].style.left = tickpos.x.toString() + "px";
-          ticknums[i][j].style.top = tickpos.y.toString() + "px";
+          ticknums[i][j].style.left = `${tickpos.x.toString()}px`;
+          ticknums[i][j].style.top = `${tickpos.y.toString()}px`;
           if (
             tickpos.x < 5 ||
             tickpos.x > 395 ||
@@ -47886,228 +47946,30 @@ core.Graphics3D = function (args, env) {
   }
 
   scene.add(group);
-  //loader = new THREE.JSONLoader();
-
-  //loader.load( JSON.parse(str));
-  //loader.onLoadComplete=function(mesh){scene.add( mesh )}
-
-  // Plot the primatives
-  /*for (var indx = 0; indx < data.elements.length; indx++) {
-      var type = data.elements[indx].type;
-      switch(type) {
-        case "point":
-          scene.add(drawPoint(data.elements[indx]));
-          break;
-        case "line":
-          scene.add(drawLine(data.elements[indx]));
-          break;
-        case "polygon":
-          scene.add(drawPolygon(data.elements[indx]));
-          break;
-        case "sphere":
-          scene.add(drawSphere(data.elements[indx]));
-          break;
-        case "cube":
-          scene.add(drawCube(data.elements[indx]));
-          break;
-        default:
-          alert("Error: Unknown type passed to drawGraphics3D");
-      }
-    }*/
-
-  // Renderer (set preserveDrawingBuffer to deal with issue
-  // of weird canvas content after switching windows)
-
-  renderer = new WebGLRenderer({
+  const renderer = new WebGLRenderer({
     antialias: true,
     preserveDrawingBuffer: true,
   });
+
+  new OrbitControls(camera, renderer.domElement);
+  //control.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+  //control.keys = { LEFT: 'ArrowLeft',  UP: 'ArrowUp',RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown'};
 
   renderer.setSize(400, 400);
   renderer.setClearColor(0xffffff);
   container.appendChild(renderer.domElement);
   renderer.domElement.style = "margin:auto";
-
   function render() {
     positionLights();
     renderer.render(scene, camera);
   }
 
-  function ScaleInView() {
-    var tmp_fov = 0.0;
-    //var proj2d = new THREE.Vector3();
-
-    /*for (var i=0; i<boundbox.geometry.vertices.length; i++) {
-          proj2d = proj2d.addVectors(boundbox.geometry.vertices[i], boundbox.position);
-          proj2d = toScreenCoords(proj2d);
-
-          angle = 114.59 * Math.max(
-             Math.abs(Math.atan(proj2d.x/proj2d.z) / camera.aspect),
-             Math.abs(Math.atan(proj2d.y/proj2d.z))
-          );
-          tmp_fov = Math.max(tmp_fov, angle);
-        }*/
-    //console.log(bbox);
-    var height = bbox.min.clone().sub(bbox.max).length();
-    var dist = center.clone().sub(camera.position).length();
-    tmp_fov = 2 * Math.atan(height / (2 * dist)) * (180 / Math.PI);
-
-    camera.fov = tmp_fov + 5;
-    camera.updateProjectionMatrix();
-  }
-
-  /**
-   *
-   * @param {MouseEvent} event
-   * @description Mouse Interactions
-   */
-  function onDocumentMouseDown(event) {
-    event.preventDefault();
-
-    isMouseDown = true;
-    isShiftDown = false;
-    isCtrlDown = false;
-
-    onMouseDownTheta = theta;
-    onMouseDownPhi = phi;
-
-    onMouseDownPosition.x = event.clientX;
-    onMouseDownPosition.y = event.clientY;
-
-    onMouseDownFocus = new Vector3().copy(focus);
-  }
-  /**
-   *
-   * @param {MouseEvent} event
-   */
-  function onDocumentMouseMove(event) {
-    event.preventDefault();
-
-    if (isMouseDown) {
-      positionticknums();
-
-      if (event.shiftKey) {
-        // console.log("Pan");
-        if (!isShiftDown) {
-          isShiftDown = true;
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          autoRescale = false;
-          container.style.cursor = "move";
-        }
-        var camz = new Vector3().sub(focus, camera.position);
-        camz.normalize();
-
-        var camx = new Vector3(
-          -radius *
-          Math.cos(theta) *
-          Math.sin(phi) *
-          (theta < 0.5 * Math.PI ? 1 : -1),
-          radius *
-          Math.cos(theta) *
-          Math.cos(phi) *
-          (theta < 0.5 * Math.PI ? 1 : -1),
-          0,
-        );
-        camx.normalize();
-
-        var camy = new Vector3();
-        camy.cross(camz, camx);
-
-        focus.x =
-          onMouseDownFocus.x +
-          (radius / 400) *
-          (camx.x * (onMouseDownPosition.x - event.clientX) +
-            camy.x * (onMouseDownPosition.y - event.clientY));
-        focus.y =
-          onMouseDownFocus.y +
-          (radius / 400) *
-          (camx.y * (onMouseDownPosition.x - event.clientX) +
-            camy.y * (onMouseDownPosition.y - event.clientY));
-        focus.z =
-          onMouseDownFocus.z +
-          (radius / 400) *
-          (camx.z * (onMouseDownPosition.x - event.clientX) +
-            camy.z * (onMouseDownPosition.y - event.clientY));
-
-        update_camera_position();
-      } else if (event.ctrlKey) {
-        // console.log("Zoom");
-        if (!isCtrlDown) {
-          isCtrlDown = true;
-          onCtrlDownFov = camera.fov;
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          autoRescale = false;
-          container.style.cursor = "crosshair";
-        }
-        camera.fov =
-          onCtrlDownFov +
-          20 * Math.atan((event.clientY - onMouseDownPosition.y) / 50);
-
-        camera.fov = Math.max(1, Math.min(camera.fov, 150));
-        //console.log("fov"+camera.fov);
-        camera.updateProjectionMatrix();
-        //console.log(JSON.stringify(camera));
-      } else {
-        // console.log("Spin");
-        if (isCtrlDown || isShiftDown) {
-          onMouseDownPosition.x = event.clientX;
-          onMouseDownPosition.y = event.clientY;
-          isShiftDown = false;
-          isCtrlDown = false;
-          container.style.cursor = "pointer";
-        }
-
-        phi =
-          (2 * Math.PI * (onMouseDownPosition.x - event.clientX)) / 400 +
-          onMouseDownPhi;
-        phi = (phi + 2 * Math.PI) % (2 * Math.PI);
-        theta =
-          (2 * Math.PI * (onMouseDownPosition.y - event.clientY)) / 400 +
-          onMouseDownTheta;
-        var epsilon = 1e-12; // Prevents spinnging from getting stuck
-        theta = Math.max(Math.min(Math.PI - epsilon, theta), epsilon);
-
-        update_camera_position();
-      }
-      render();
-    } else {
-      container.style.cursor = "pointer";
-    }
-  }
-  /**
-   *
-   * @param {MouseEvent} event
-   */
-  function onDocumentMouseUp(event) {
-    event.preventDefault();
-
-    isMouseDown = false;
-    container.style.cursor = "pointer";
-
-    if (autoRescale) {
-      ScaleInView();
-      render();
-    }
-    positionAxes();
+  function animate() {
+    requestAnimationFrame(animate);
     render();
-    positionticknums();
   }
-
-  // Bind Mouse events
-  container.addEventListener("mousemove", onDocumentMouseMove, false);
-  container.addEventListener("mousedown", onDocumentMouseDown, false);
-  container.addEventListener("mouseup", onDocumentMouseUp, false);
-  container.addEventListener("touchmove", onDocumentMouseMove, false);
-  onMouseDownPosition = new Vector2();
-  var autoRescale = true;
-
   update_camera_position();
   positionAxes();
-  render(); // Rendering twice updates camera.matrixWorldInverse so that ScaleInView works properly
-  ScaleInView();
-  render();
+  animate();
   positionticknums();
-  /*** the part of a code from http://mathics.github.io.  ***/
 };
