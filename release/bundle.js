@@ -46894,8 +46894,6 @@ core.Center = function (args, env) {
 };
 
 core.Cylinder = function (args, env) {
-  //some troubles with positioning...
-  //fixme
   let radius = 1;
   if (args.length > 1) radius = args[1];
   /**
@@ -46921,35 +46919,35 @@ core.Cylinder = function (args, env) {
   geometry.computeBoundingBox();
   const position = geometry.boundingBox;
 
-  const center = position.max.addScaledVector(position.min, -1); 
+  const center = position.max.addScaledVector(position.min, -1);
 
   //default geometry
   const cylinder = new Mesh(geometry, material);
 
   //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
   //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-  const v = new Vector3().set(0,1,0).cross(dp.normalize());
+  const v = new Vector3(0, 1, 0).cross(dp.normalize());
   const theta = Math.asin(v.length() / dp.length());
   const sc = Math.sin(theta);
   const mcs = 1.0 - Math.cos(theta);
 
   //Did not find how to write it using vectors
-  const matrix = new Matrix4().set( 1 - mcs*(v.y*v.y + v.z*v.z),  mcs*v.x*v.y - sc*v.z,         sc*v.y + mcs*v.x*v.z,         0,
-                                          mcs*v.x*v.y + sc*v.z,         1 - mcs*(v.x*v.x + v.z*v.z),  -(sc*v.x) + mcs*v.y*v.z,      0, 
-                                          -(sc*v.y) + mcs*v.x*v.z,      sc*v.x + mcs*v.y*v.z,         1 - mcs*(v.x*v.x + v.y*v.y),   0,
-                                          
-                                          0,0,0,1
-                                        );
+  const matrix = new Matrix4().set(
+    1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
+    mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
+    -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
+    0,/*                            */0,/*                            */ 0,/**                           */ 1
+  );
 
   //middle target point
-  const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5); 
+  const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5);
 
-  //shift to the center and rotate 
+  //shift to the center and rotate
   cylinder.position = center;
   cylinder.applyMatrix4(matrix);
-  
+
   //translate its center to the middle target point
-  cylinder.position.addScaledVector(middle,-1);
+  cylinder.position.addScaledVector(middle, -1);
 
   env.mesh.add(cylinder);
 
@@ -47349,6 +47347,8 @@ core.Graphics3D = function (args, env) {
   var group = new Group();
 
   var envcopy = Object.assign({}, env);
+
+  envcopy.numerical = true;
   envcopy.matrix = new Matrix4();
   envcopy.color = RGBtoColor(1, 1, 1);
   envcopy.opacity = 1;
