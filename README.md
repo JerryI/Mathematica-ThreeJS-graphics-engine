@@ -8,7 +8,8 @@ Unlike other build-in export functions it recreates pure Mathematica's functions
 [See](https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/)
 
 ----------
-## This project is a part of a bigger one [Wolfram Engine JS Frontend](https://github.com/JerryI/wolfram-js-frontend)
+## This project was merged to [Wolfram Engine JS Frontend](https://github.com/JerryI/wolfram-js-frontend)
+no more updates in this branch is expected 
 ----------
 
 ## Usage
