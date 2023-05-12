@@ -1,7 +1,7 @@
 <?wsp
     function = Graphics3D[
         Table[With[{p = {i, j, k}/5}, {RGBColor[p], Opacity[.75], 
-           Cuboid[p, p + .15]}], {i, 5}, {j, 5}, {k, 5}]];
+           Cuboid[p, p + .15]}], {i, 5}, {j, 5}, {k, 5}], Background->White];
 
     json = ExportFunction[function];
     ""

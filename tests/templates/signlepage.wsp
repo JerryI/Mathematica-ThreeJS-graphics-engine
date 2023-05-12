@@ -17,8 +17,10 @@
 <script>
     function render() {
       document.getElementById('gfx').lastChild.remove(); 
-      interpretate(JSON.parse(document.getElementById('target-json').value), {element: document.getElementById('gfx')});
+      let local = {};
+      let global = {};
+      interpretate(JSON.parse(document.getElementById('target-json').value), {global: global, local: local, element: document.getElementById('gfx')});
     }
 
-    render();
+    window.addEventListener("load", (event) => {render();});
   </script>

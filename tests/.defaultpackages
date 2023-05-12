@@ -1,0 +1,3 @@
+<| "wljs-interpreter" -> <|"name" -> "wljs-interpreter",
+   "repository" -> <|"type" -> "git", 
+     "url" -> "https://github.com/JerryI/wljs-interpreter"|>|> |>

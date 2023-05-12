@@ -1,5 +1,5 @@
 <?wsp
-    scenes = FileBaseName /@ FileNames["*.js", "tests/js"];
+    scenes = FileBaseName /@ FileNames["*.js", "tests/public/js"];
     ""
 ?>
 
@@ -26,10 +26,13 @@
 
     function render(a) {
       console.log("creating "+a);
-      interpretate(window[a], {element: document.getElementById('gfx-'+a)});
+      interpretate(window[a], {element: document.getElementById('gfx-'+a), local: {handlers: []}, global: {}});
     }
-
-    list.forEach( f => render(f) );
+    
+    window.addEventListener("load", (event) => {
+        list.forEach( f => render(f) );
+    });
+    
 </script>
 
 <?wsp LoadPage["templates/footer.wsp"] ?>

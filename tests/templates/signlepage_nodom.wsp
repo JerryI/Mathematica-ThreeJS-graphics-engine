@@ -17,8 +17,10 @@
 <script>
     function render() {
       document.getElementById('gfx').lastChild.remove(); 
-      interpretate(<?wsp FileBaseName[filename] ?>, {element: document.getElementById('gfx')});
+      let local = {};
+      let global = {};
+      interpretate(<?wsp FileBaseName[filename] ?>, {local:local, global:global, element: document.getElementById('gfx')});
     }
 
-    render();
+    window.addEventListener("load", (event) => {render();});
   </script>

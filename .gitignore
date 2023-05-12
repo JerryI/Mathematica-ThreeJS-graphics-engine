@@ -2,7 +2,8 @@
 .DS_Store
 node_modules/
 package-lock.json
-build/
+
 tests/*.html
-tests/js/*.js
-tests/imgs/*.png
+tests/public/
+tests/Packages/
+tests/.packages

@@ -1,65 +1,29 @@
-3D Graphics drawer for Mathematica based on Three.js
-===================
-Written in JS parser and drawer allow to export or embed to web pages 3D graphics from Wolfram notebook. 
-Unlike other build-in export functions it recreates pure Mathematica's functions like ``Sphere[]``, ``GraphicsComplex[]``, ``Polygon[]`` and etc. See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
+# Graphics3D Parser based on THREE.js
+*written with love in Javascript*
 
-## Live example
-----------
-[See](https://jerryi.github.io/Mathematica-ThreeJS-graphics-engine/)
+See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
 
-----------
-## This project was merged to [Wolfram Engine JS Frontend](https://github.com/JerryI/wolfram-js-frontend)
-no more updates in this branch is expected 
-----------
+__This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
+but one can use it independently as well
 
-## Usage
-----------
-1. Plot some graphics (used a low-poly mode for smaller code, see ``Example.nb``)
+__This package depends on [WLJS Interpreter](https://github.com/JerryI/wljs-interpreter)__ (will be downloaded automatically on startup)
 
-```Mathematica
-Graphics3D[{
-  SphericalPlot3D[
-    2 SphericalHarmonicY[2, 0, t, p], {t, 0, Pi}, {p, 0, 2 Pi}, 
-    PerformanceGoal -> "Speed"][[1]],
-  Opacity[0.6], 
-  Tetrahedron[{{1, 1, 1}, {-1, -1, 1}, {1, -1, -1}, {-1, 1, -1}}]
-  }]
+## Examples
+To run examples gallery, you need to have `nodejs` and `wolframscript` installed
+```bash
+git clone https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine
+cd Mathematica-ThreeJS-graphics-engine
+npm i
+```
+to generate gallery and install WL dependencies
+```bash
+npm run test
+```
+and run a dev server on your machine
+```bash
+npm run watch
 ```
 
-2. Export as a JSON string
-
-```Mathematica
-ExportString[%, "ExpressionJSON"]
-```
-
-```Mathematica
-[
-	"Graphics3D",
-	[
-		"List",
-		[
-			"GraphicsComplex",
-			[
-				"List",
-				["List",
-					0.0,
-					0.0,
-					1.2615662610100797
-				]
-				,
-				["List",
-					0.0,
-					0.0,
-					1.2615662610100797
-				]
-				,...
-```
-
-3. Run `index.html`
-
-4. Paste the JSON code as a plain text into the textarea
-
-5. Use `Drag` - to rotate; `mouse wheel` - to zoom;
 
 ## Contributing
 ------------
@@ -90,42 +54,20 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 
 - ``THREE.Geometry`` is depricated in a new Three.JS version. Needed to be refactored.
 
-Possible to implement as well
-------
-There are a lot of features of Three.JS, which can bring extra control over the graphics repesentating and are not a part of FrontEnd of Mathematica. 
-
-- ``FlatShading``, ``PhongShading``
-- ``PathTracing``
-- extended material properties
+### Extra features
+- ``Emissive[]`` - property fro the object to emitt light
+- ``IOR[]`` - specify the refractive index
+- ``Reflectivity[]`` - reflectivity of the material
+- ``SkyAndWater[]`` - apply shader to the scene with animated ocean and sun
+- subsurface scattering
+- bloom control from the menu
 
 ## Development
 
-```bash
-npm i
-```
-
-to start dev server
-
-```bash
-npm run dev
-```
-
-and open you browser at `http://127.0.0.1:8090/dev.html`.
-The index files relies on CDN (and release folder) and will not show any changes. 
-
-the file watcher will automatically rebuild the all stuff on change in `src` dir.
-
 ## Tests
-
-```bash
-npm run test
-```
-
-and open you browser at `http://127.0.0.1:8090/tests/_gallery.html`.
 you can easily add new scenes by adding files into `tests/src` dir. 
 For the complex scenes use `LoadPage["templates/signlepage_nodom.wsp"]` instead of `LoadPage["templates/signlepage.wsp",{data = json}]`.
 
 ## License
--------
 
 Project is released under the GNU General Public License (GPL).
