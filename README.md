@@ -1,6 +1,12 @@
 # Graphics3D Parser based on THREE.js
 *written with love in Javascript*
 
+![ocean](imgs/demo.gif)
+
+```mathematica
+Graphics3D[{Roughness[0], Reflectivity[1], IOR[2], Clearcoat[0.5], Table[{RGBColor[Normalize[i]], Sphere[i]}, {i, RandomReal[{-5,5}, {40,3}]}], SkyAndWater[]}, Background->None, Lighting->None]
+```
+
 See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
 
 __This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
