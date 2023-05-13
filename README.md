@@ -1,6 +1,8 @@
 # Graphics3D Parser based on THREE.js
 *written with love in Javascript*
 
+***Warning: Early Development Stage!***
+
 ![ocean](imgs/demo.gif)
 
 ```mathematica
