@@ -1,3 +1,33 @@
+function getAugmentedNamespace(n) {
+  if (n.__esModule) return n;
+  var f = n.default;
+	if (typeof f == "function") {
+		var a = function a () {
+			if (this instanceof a) {
+				var args = [null];
+				args.push.apply(args, arguments);
+				var Ctor = Function.bind.apply(f, args);
+				return new Ctor();
+			}
+			return f.apply(this, arguments);
+		};
+		a.prototype = f.prototype;
+  } else a = {};
+  Object.defineProperty(a, '__esModule', {value: true});
+	Object.keys(n).forEach(function (k) {
+		var d = Object.getOwnPropertyDescriptor(n, k);
+		Object.defineProperty(a, k, d.get ? d : {
+			enumerable: true,
+			get: function () {
+				return n[k];
+			}
+		});
+	});
+	return a;
+}
+
+var kernel = {};
+
 // threejs.org/license
 const REVISION = '123';
 const MOUSE = { LEFT: 0, MIDDLE: 1, RIGHT: 2, ROTATE: 0, DOLLY: 1, PAN: 2 };
@@ -295,7 +325,7 @@ for ( let i = 0; i < 256; i ++ ) {
 
 let _seed = 1234567;
 
-const MathUtils = {
+const MathUtils$1 = {
 
 	DEG2RAD: Math.PI / 180,
 	RAD2DEG: 180 / Math.PI,
@@ -413,13 +443,13 @@ const MathUtils = {
 
 	degToRad: function ( degrees ) {
 
-		return degrees * MathUtils.DEG2RAD;
+		return degrees * MathUtils$1.DEG2RAD;
 
 	},
 
 	radToDeg: function ( radians ) {
 
-		return radians * MathUtils.RAD2DEG;
+		return radians * MathUtils$1.RAD2DEG;
 
 	},
 
@@ -1378,7 +1408,7 @@ function Texture( image = Texture.DEFAULT_IMAGE, mapping = Texture.DEFAULT_MAPPI
 
 	Object.defineProperty( this, 'id', { value: textureId ++ } );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.name = '';
 
@@ -1536,7 +1566,7 @@ Texture.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
 
 			if ( image.uuid === undefined ) {
 
-				image.uuid = MathUtils.generateUUID(); // UGH
+				image.uuid = MathUtils$1.generateUUID(); // UGH
 
 			}
 
@@ -2870,7 +2900,7 @@ class Quaternion {
 
 	angleTo( q ) {
 
-		return 2 * Math.acos( Math.abs( MathUtils.clamp( this.dot( q ), - 1, 1 ) ) );
+		return 2 * Math.acos( Math.abs( MathUtils$1.clamp( this.dot( q ), - 1, 1 ) ) );
 
 	}
 
@@ -3684,7 +3714,7 @@ class Vector3 {
 
 		// clamp, to handle numerical problems
 
-		return Math.acos( MathUtils.clamp( theta, - 1, 1 ) );
+		return Math.acos( MathUtils$1.clamp( theta, - 1, 1 ) );
 
 	}
 
@@ -6041,7 +6071,7 @@ class Euler {
 
 	setFromRotationMatrix( m, order, update ) {
 
-		const clamp = MathUtils.clamp;
+		const clamp = MathUtils$1.clamp;
 
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -6336,7 +6366,7 @@ function Object3D() {
 
 	Object.defineProperty( this, 'id', { value: _object3DId ++ } );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.name = '';
 	this.type = 'Object3D';
@@ -7882,9 +7912,9 @@ class Color {
 	setHSL( h, s, l ) {
 
 		// h,s,l ranges are in 0.0 - 1.0
-		h = MathUtils.euclideanModulo( h, 1 );
-		s = MathUtils.clamp( s, 0, 1 );
-		l = MathUtils.clamp( l, 0, 1 );
+		h = MathUtils$1.euclideanModulo( h, 1 );
+		s = MathUtils$1.clamp( s, 0, 1 );
+		l = MathUtils$1.clamp( l, 0, 1 );
 
 		if ( s === 0 ) {
 
@@ -8288,9 +8318,9 @@ class Color {
 		this.getHSL( _hslA );
 		color.getHSL( _hslB );
 
-		const h = MathUtils.lerp( _hslA.h, _hslB.h, alpha );
-		const s = MathUtils.lerp( _hslA.s, _hslB.s, alpha );
-		const l = MathUtils.lerp( _hslA.l, _hslB.l, alpha );
+		const h = MathUtils$1.lerp( _hslA.h, _hslB.h, alpha );
+		const s = MathUtils$1.lerp( _hslA.s, _hslB.s, alpha );
+		const l = MathUtils$1.lerp( _hslA.l, _hslB.l, alpha );
 
 		this.setHSL( h, s, l );
 
@@ -8416,7 +8446,7 @@ function Material() {
 
 	Object.defineProperty( this, 'id', { value: materialId ++ } );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.name = '';
 	this.type = 'Material';
@@ -9791,7 +9821,7 @@ function BufferGeometry() {
 
 	Object.defineProperty( this, 'id', { value: _bufferGeometryId += 2 } );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.name = '';
 	this.type = 'BufferGeometry';
@@ -12030,7 +12060,7 @@ PerspectiveCamera.prototype = Object.assign( Object.create( Camera.prototype ), 
 		// see http://www.bobatkins.com/photography/technical/field_of_view.html
 		const vExtentSlope = 0.5 * this.getFilmHeight() / focalLength;
 
-		this.fov = MathUtils.RAD2DEG * 2 * Math.atan( vExtentSlope );
+		this.fov = MathUtils$1.RAD2DEG * 2 * Math.atan( vExtentSlope );
 		this.updateProjectionMatrix();
 
 	},
@@ -12040,7 +12070,7 @@ PerspectiveCamera.prototype = Object.assign( Object.create( Camera.prototype ), 
 	 */
 	getFocalLength: function () {
 
-		const vExtentSlope = Math.tan( MathUtils.DEG2RAD * 0.5 * this.fov );
+		const vExtentSlope = Math.tan( MathUtils$1.DEG2RAD * 0.5 * this.fov );
 
 		return 0.5 * this.getFilmHeight() / vExtentSlope;
 
@@ -12048,8 +12078,8 @@ PerspectiveCamera.prototype = Object.assign( Object.create( Camera.prototype ), 
 
 	getEffectiveFOV: function () {
 
-		return MathUtils.RAD2DEG * 2 * Math.atan(
-			Math.tan( MathUtils.DEG2RAD * 0.5 * this.fov ) / this.zoom );
+		return MathUtils$1.RAD2DEG * 2 * Math.atan(
+			Math.tan( MathUtils$1.DEG2RAD * 0.5 * this.fov ) / this.zoom );
 
 	},
 
@@ -12147,7 +12177,7 @@ PerspectiveCamera.prototype = Object.assign( Object.create( Camera.prototype ), 
 	updateProjectionMatrix: function () {
 
 		const near = this.near;
-		let top = near * Math.tan( MathUtils.DEG2RAD * 0.5 * this.fov ) / this.zoom;
+		let top = near * Math.tan( MathUtils$1.DEG2RAD * 0.5 * this.fov ) / this.zoom;
 		let height = 2 * top;
 		let width = this.aspect * height;
 		let left = - 0.5 * width;
@@ -20374,7 +20404,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 				( typeof HTMLCanvasElement !== 'undefined' && image instanceof HTMLCanvasElement ) ||
 				( typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap ) ) {
 
-				const floor = needsPowerOfTwo ? MathUtils.floorPowerOfTwo : Math.floor;
+				const floor = needsPowerOfTwo ? MathUtils$1.floorPowerOfTwo : Math.floor;
 
 				const width = floor( scale * image.width );
 				const height = floor( scale * image.height );
@@ -20415,7 +20445,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	function isPowerOfTwo( image ) {
 
-		return MathUtils.isPowerOfTwo( image.width ) && MathUtils.isPowerOfTwo( image.height );
+		return MathUtils$1.isPowerOfTwo( image.width ) && MathUtils$1.isPowerOfTwo( image.height );
 
 	}
 
@@ -24798,7 +24828,7 @@ function WebGLRenderer( parameters ) {
 
 
 						let size = Math.sqrt( bones.length * 4 ); // 4 pixels needed for 1 matrix
-						size = MathUtils.ceilPowerOfTwo( size );
+						size = MathUtils$1.ceilPowerOfTwo( size );
 						size = Math.max( size, 4 );
 
 						const boneMatrices = new Float32Array( size * size * 4 ); // 4 floats per RGBA pixel
@@ -25330,7 +25360,7 @@ function InterleavedBuffer( array, stride ) {
 
 	this.version = 0;
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 }
 
@@ -25402,7 +25432,7 @@ Object.assign( InterleavedBuffer.prototype, {
 
 		if ( this.array.buffer._uuid === undefined ) {
 
-			this.array.buffer._uuid = MathUtils.generateUUID();
+			this.array.buffer._uuid = MathUtils$1.generateUUID();
 
 		}
 
@@ -25441,7 +25471,7 @@ Object.assign( InterleavedBuffer.prototype, {
 
 		if ( this.array.buffer._uuid === undefined ) {
 
-			this.array.buffer._uuid = MathUtils.generateUUID();
+			this.array.buffer._uuid = MathUtils$1.generateUUID();
 
 		}
 
@@ -26325,7 +26355,7 @@ const _identityMatrix = new Matrix4();
 
 function Skeleton( bones = [], boneInverses = [] ) {
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.bones = bones.slice( 0 );
 	this.boneInverses = boneInverses;
@@ -27468,7 +27498,7 @@ function Geometry() {
 
 	Object.defineProperty( this, 'id', { value: _geometryId += 2 } );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.name = '';
 	this.type = 'Geometry';
@@ -29674,7 +29704,7 @@ class EdgesGeometry extends BufferGeometry {
 
 		const precisionPoints = 4;
 		const precision = Math.pow( 10, precisionPoints );
-		const thresholdDot = Math.cos( MathUtils.DEG2RAD * thresholdAngle );
+		const thresholdDot = Math.cos( MathUtils$1.DEG2RAD * thresholdAngle );
 
 		const indexAttr = geometry.getIndex();
 		const positionAttr = geometry.getAttribute( 'position' );
@@ -31591,7 +31621,7 @@ class LatheBufferGeometry extends BufferGeometry {
 
 		// clamp phiLength so it's in range of [ 0, 2PI ]
 
-		phiLength = MathUtils.clamp( phiLength, 0, Math.PI * 2 );
+		phiLength = MathUtils$1.clamp( phiLength, 0, Math.PI * 2 );
 
 		// buffers
 
@@ -33572,7 +33602,7 @@ function MeshPhysicalMaterial( parameters ) {
 		},
 		set: function ( ior ) {
 
-			this.reflectivity = MathUtils.clamp( 2.5 * ( ior - 1 ) / ( ior + 1 ), 0, 1 );
+			this.reflectivity = MathUtils$1.clamp( 2.5 * ( ior - 1 ) / ( ior + 1 ), 0, 1 );
 
 		}
 	} );
@@ -35772,7 +35802,7 @@ function AnimationClip( name, duration, tracks, blendMode ) {
 	this.duration = ( duration !== undefined ) ? duration : - 1;
 	this.blendMode = ( blendMode !== undefined ) ? blendMode : NormalAnimationBlendMode;
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	// this means it should figure out its duration by scanning the tracks
 	if ( this.duration < 0 ) {
@@ -37554,7 +37584,7 @@ Object.assign( Curve.prototype, {
 
 				vec.normalize();
 
-				const theta = Math.acos( MathUtils.clamp( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
+				const theta = Math.acos( MathUtils$1.clamp( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
 
 				normals[ i ].applyMatrix4( mat.makeRotationAxis( vec, theta ) );
 
@@ -37568,7 +37598,7 @@ Object.assign( Curve.prototype, {
 
 		if ( closed === true ) {
 
-			let theta = Math.acos( MathUtils.clamp( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
+			let theta = Math.acos( MathUtils$1.clamp( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
 			theta /= segments;
 
 			if ( tangents[ 0 ].dot( vec.crossVectors( normals[ 0 ], normals[ segments ] ) ) > 0 ) {
@@ -39117,7 +39147,7 @@ function Shape( points ) {
 
 	Path.call( this, points );
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	this.type = 'Shape';
 
@@ -39440,7 +39470,7 @@ SpotLightShadow.prototype = Object.assign( Object.create( LightShadow.prototype 
 
 		const camera = this.camera;
 
-		const fov = MathUtils.RAD2DEG * 2 * light.angle * this.focus;
+		const fov = MathUtils$1.RAD2DEG * 2 * light.angle * this.focus;
 		const aspect = this.mapSize.width / this.mapSize.height;
 		const far = light.distance || camera.far;
 
@@ -42723,7 +42753,7 @@ Object.assign( StereoCamera.prototype, {
 			const projectionMatrix = camera.projectionMatrix.clone();
 			const eyeSepHalf = cache.eyeSep / 2;
 			const eyeSepOnProjection = eyeSepHalf * cache.near / cache.focus;
-			const ymax = ( cache.near * Math.tan( MathUtils.DEG2RAD * cache.fov * 0.5 ) ) / cache.zoom;
+			const ymax = ( cache.near * Math.tan( MathUtils$1.DEG2RAD * cache.fov * 0.5 ) ) / cache.zoom;
 			let xmin, xmax;
 
 			// translate xOffset
@@ -44543,7 +44573,7 @@ Object.assign( PropertyBinding.prototype, {
 
 function AnimationObjectGroup() {
 
-	this.uuid = MathUtils.generateUUID();
+	this.uuid = MathUtils$1.generateUUID();
 
 	// cached objects followed by the active ones
 	this._objects = Array.prototype.slice.call( arguments );
@@ -46681,7 +46711,7 @@ class Spherical {
 		} else {
 
 			this.theta = Math.atan2( x, z );
-			this.phi = Math.acos( MathUtils.clamp( y / this.radius, - 1, 1 ) );
+			this.phi = Math.acos( MathUtils$1.clamp( y / this.radius, - 1, 1 ) );
 
 		}
 
@@ -47078,7 +47108,7 @@ class Line3 {
 
 		if ( clampToLine ) {
 
-			t = MathUtils.clamp( t, 0, 1 );
+			t = MathUtils$1.clamp( t, 0, 1 );
 
 		}
 
@@ -49657,7 +49687,7 @@ Line3.prototype.center = function ( optionalTarget ) {
 
 };
 
-Object.assign( MathUtils, {
+Object.assign( MathUtils$1, {
 
 	random16: function () {
 
@@ -49669,14 +49699,14 @@ Object.assign( MathUtils, {
 	nearestPowerOfTwo: function ( value ) {
 
 		console.warn( 'THREE.Math: .nearestPowerOfTwo() has been renamed to .floorPowerOfTwo().' );
-		return MathUtils.floorPowerOfTwo( value );
+		return MathUtils$1.floorPowerOfTwo( value );
 
 	},
 
 	nextPowerOfTwo: function ( value ) {
 
 		console.warn( 'THREE.Math: .nextPowerOfTwo() has been renamed to .ceilPowerOfTwo().' );
-		return MathUtils.ceilPowerOfTwo( value );
+		return MathUtils$1.ceilPowerOfTwo( value );
 
 	}
 
@@ -51369,4 +51399,1829 @@ if ( typeof __THREE_DEVTOOLS__ !== 'undefined' ) {
 
 }
 
-export { ACESFilmicToneMapping, AddEquation, AddOperation, AdditiveAnimationBlendMode, AdditiveBlending, AlphaFormat, AlwaysDepth, AlwaysStencilFunc, AmbientLight, AmbientLightProbe, AnimationClip, AnimationLoader, AnimationMixer, AnimationObjectGroup, AnimationUtils, ArcCurve, ArrayCamera, ArrowHelper, Audio, AudioAnalyser, AudioContext, AudioListener, AudioLoader, AxesHelper, AxisHelper, BackSide, BasicDepthPacking, BasicShadowMap, BinaryTextureLoader, Bone, BooleanKeyframeTrack, BoundingBoxHelper, Box2, Box3, Box3Helper, BoxBufferGeometry, BoxGeometry, BoxHelper, BufferAttribute, BufferGeometry, BufferGeometryLoader, ByteType, Cache, Camera, CameraHelper, CanvasRenderer, CanvasTexture, CatmullRomCurve3, CineonToneMapping, CircleBufferGeometry, CircleGeometry, ClampToEdgeWrapping, Clock, ClosedSplineCurve3, Color, ColorKeyframeTrack, CompressedTexture, CompressedTextureLoader, ConeBufferGeometry, ConeGeometry, CubeCamera, BoxGeometry as CubeGeometry, CubeReflectionMapping, CubeRefractionMapping, CubeTexture, CubeTextureLoader, CubeUVReflectionMapping, CubeUVRefractionMapping, CubicBezierCurve, CubicBezierCurve3, CubicInterpolant, CullFaceBack, CullFaceFront, CullFaceFrontBack, CullFaceNone, Curve, CurvePath, CustomBlending, CustomToneMapping, CylinderBufferGeometry, CylinderGeometry, Cylindrical, DataTexture, DataTexture2DArray, DataTexture3D, DataTextureLoader, DataUtils, DecrementStencilOp, DecrementWrapStencilOp, DefaultLoadingManager, DepthFormat, DepthStencilFormat, DepthTexture, DirectionalLight, DirectionalLightHelper, DiscreteInterpolant, DodecahedronBufferGeometry, DodecahedronGeometry, DoubleSide, DstAlphaFactor, DstColorFactor, DynamicBufferAttribute, DynamicCopyUsage, DynamicDrawUsage, DynamicReadUsage, EdgesGeometry, EdgesHelper, EllipseCurve, EqualDepth, EqualStencilFunc, EquirectangularReflectionMapping, EquirectangularRefractionMapping, Euler, EventDispatcher, ExtrudeBufferGeometry, ExtrudeGeometry, Face3, Face4, FaceColors, FileLoader, FlatShading, Float16BufferAttribute, Float32Attribute, Float32BufferAttribute, Float64Attribute, Float64BufferAttribute, FloatType, Fog, FogExp2, Font, FontLoader, FrontSide, Frustum, GLBufferAttribute, GLSL1, GLSL3, GammaEncoding, Geometry, GeometryUtils, GreaterDepth, GreaterEqualDepth, GreaterEqualStencilFunc, GreaterStencilFunc, GridHelper, Group, HalfFloatType, HemisphereLight, HemisphereLightHelper, HemisphereLightProbe, IcosahedronBufferGeometry, IcosahedronGeometry, ImageBitmapLoader, ImageLoader, ImageUtils, ImmediateRenderObject, IncrementStencilOp, IncrementWrapStencilOp, InstancedBufferAttribute, InstancedBufferGeometry, InstancedInterleavedBuffer, InstancedMesh, Int16Attribute, Int16BufferAttribute, Int32Attribute, Int32BufferAttribute, Int8Attribute, Int8BufferAttribute, IntType, InterleavedBuffer, InterleavedBufferAttribute, Interpolant, InterpolateDiscrete, InterpolateLinear, InterpolateSmooth, InvertStencilOp, JSONLoader, KeepStencilOp, KeyframeTrack, LOD, LatheBufferGeometry, LatheGeometry, Layers, LensFlare, LessDepth, LessEqualDepth, LessEqualStencilFunc, LessStencilFunc, Light, LightProbe, Line, Line3, LineBasicMaterial, LineCurve, LineCurve3, LineDashedMaterial, LineLoop, LinePieces, LineSegments, LineStrip, LinearEncoding, LinearFilter, LinearInterpolant, LinearMipMapLinearFilter, LinearMipMapNearestFilter, LinearMipmapLinearFilter, LinearMipmapNearestFilter, LinearToneMapping, Loader, LoaderUtils, LoadingManager, LogLuvEncoding, LoopOnce, LoopPingPong, LoopRepeat, LuminanceAlphaFormat, LuminanceFormat, MOUSE, Material, MaterialLoader, MathUtils as Math, MathUtils, Matrix3, Matrix4, MaxEquation, Mesh, MeshBasicMaterial, MeshDepthMaterial, MeshDistanceMaterial, MeshFaceMaterial, MeshLambertMaterial, MeshMatcapMaterial, MeshNormalMaterial, MeshPhongMaterial, MeshPhysicalMaterial, MeshStandardMaterial, MeshToonMaterial, MinEquation, MirroredRepeatWrapping, MixOperation, MultiMaterial, MultiplyBlending, MultiplyOperation, NearestFilter, NearestMipMapLinearFilter, NearestMipMapNearestFilter, NearestMipmapLinearFilter, NearestMipmapNearestFilter, NeverDepth, NeverStencilFunc, NoBlending, NoColors, NoToneMapping, NormalAnimationBlendMode, NormalBlending, NotEqualDepth, NotEqualStencilFunc, NumberKeyframeTrack, Object3D, ObjectLoader, ObjectSpaceNormalMap, OctahedronBufferGeometry, OctahedronGeometry, OneFactor, OneMinusDstAlphaFactor, OneMinusDstColorFactor, OneMinusSrcAlphaFactor, OneMinusSrcColorFactor, OrthographicCamera, PCFShadowMap, PCFSoftShadowMap, PMREMGenerator, ParametricBufferGeometry, ParametricGeometry, Particle, ParticleBasicMaterial, ParticleSystem, ParticleSystemMaterial, Path, PerspectiveCamera, Plane, PlaneBufferGeometry, PlaneGeometry, PlaneHelper, PointCloud, PointCloudMaterial, PointLight, PointLightHelper, Points, PointsMaterial, PolarGridHelper, PolyhedronBufferGeometry, PolyhedronGeometry, PositionalAudio, PropertyBinding, PropertyMixer, QuadraticBezierCurve, QuadraticBezierCurve3, Quaternion, QuaternionKeyframeTrack, QuaternionLinearInterpolant, REVISION, RGBADepthPacking, RGBAFormat, RGBAIntegerFormat, RGBA_ASTC_10x10_Format, RGBA_ASTC_10x5_Format, RGBA_ASTC_10x6_Format, RGBA_ASTC_10x8_Format, RGBA_ASTC_12x10_Format, RGBA_ASTC_12x12_Format, RGBA_ASTC_4x4_Format, RGBA_ASTC_5x4_Format, RGBA_ASTC_5x5_Format, RGBA_ASTC_6x5_Format, RGBA_ASTC_6x6_Format, RGBA_ASTC_8x5_Format, RGBA_ASTC_8x6_Format, RGBA_ASTC_8x8_Format, RGBA_BPTC_Format, RGBA_ETC2_EAC_Format, RGBA_PVRTC_2BPPV1_Format, RGBA_PVRTC_4BPPV1_Format, RGBA_S3TC_DXT1_Format, RGBA_S3TC_DXT3_Format, RGBA_S3TC_DXT5_Format, RGBDEncoding, RGBEEncoding, RGBEFormat, RGBFormat, RGBIntegerFormat, RGBM16Encoding, RGBM7Encoding, RGB_ETC1_Format, RGB_ETC2_Format, RGB_PVRTC_2BPPV1_Format, RGB_PVRTC_4BPPV1_Format, RGB_S3TC_DXT1_Format, RGFormat, RGIntegerFormat, RawShaderMaterial, Ray, Raycaster, RectAreaLight, RedFormat, RedIntegerFormat, ReinhardToneMapping, RepeatWrapping, ReplaceStencilOp, ReverseSubtractEquation, RingBufferGeometry, RingGeometry, SRGB8_ALPHA8_ASTC_10x10_Format, SRGB8_ALPHA8_ASTC_10x5_Format, SRGB8_ALPHA8_ASTC_10x6_Format, SRGB8_ALPHA8_ASTC_10x8_Format, SRGB8_ALPHA8_ASTC_12x10_Format, SRGB8_ALPHA8_ASTC_12x12_Format, SRGB8_ALPHA8_ASTC_4x4_Format, SRGB8_ALPHA8_ASTC_5x4_Format, SRGB8_ALPHA8_ASTC_5x5_Format, SRGB8_ALPHA8_ASTC_6x5_Format, SRGB8_ALPHA8_ASTC_6x6_Format, SRGB8_ALPHA8_ASTC_8x5_Format, SRGB8_ALPHA8_ASTC_8x6_Format, SRGB8_ALPHA8_ASTC_8x8_Format, Scene, SceneUtils, ShaderChunk, ShaderLib, ShaderMaterial, ShadowMaterial, Shape, ShapeBufferGeometry, ShapeGeometry, ShapePath, ShapeUtils, ShortType, Skeleton, SkeletonHelper, SkinnedMesh, SmoothShading, Sphere, SphereBufferGeometry, SphereGeometry, Spherical, SphericalHarmonics3, Spline, SplineCurve, SplineCurve3, SpotLight, SpotLightHelper, Sprite, SpriteMaterial, SrcAlphaFactor, SrcAlphaSaturateFactor, SrcColorFactor, StaticCopyUsage, StaticDrawUsage, StaticReadUsage, StereoCamera, StreamCopyUsage, StreamDrawUsage, StreamReadUsage, StringKeyframeTrack, SubtractEquation, SubtractiveBlending, TOUCH, TangentSpaceNormalMap, TetrahedronBufferGeometry, TetrahedronGeometry, TextBufferGeometry, TextGeometry, Texture, TextureLoader, TorusBufferGeometry, TorusGeometry, TorusKnotBufferGeometry, TorusKnotGeometry, Triangle, TriangleFanDrawMode, TriangleStripDrawMode, TrianglesDrawMode, TubeBufferGeometry, TubeGeometry, UVMapping, Uint16Attribute, Uint16BufferAttribute, Uint32Attribute, Uint32BufferAttribute, Uint8Attribute, Uint8BufferAttribute, Uint8ClampedAttribute, Uint8ClampedBufferAttribute, Uniform, UniformsLib, UniformsUtils, UnsignedByteType, UnsignedInt248Type, UnsignedIntType, UnsignedShort4444Type, UnsignedShort5551Type, UnsignedShort565Type, UnsignedShortType, VSMShadowMap, Vector2, Vector3, Vector4, VectorKeyframeTrack, Vertex, VertexColors, VideoTexture, WebGL1Renderer, WebGLCubeRenderTarget, WebGLMultisampleRenderTarget, WebGLRenderTarget, WebGLRenderTargetCube, WebGLRenderer, WebGLUtils, WireframeGeometry, WireframeHelper, WrapAroundEnding, XHRLoader, ZeroCurvatureEnding, ZeroFactor, ZeroSlopeEnding, ZeroStencilOp, sRGBEncoding };
+var three_module = /*#__PURE__*/Object.freeze({
+	__proto__: null,
+	ACESFilmicToneMapping: ACESFilmicToneMapping,
+	AddEquation: AddEquation,
+	AddOperation: AddOperation,
+	AdditiveAnimationBlendMode: AdditiveAnimationBlendMode,
+	AdditiveBlending: AdditiveBlending,
+	AlphaFormat: AlphaFormat,
+	AlwaysDepth: AlwaysDepth,
+	AlwaysStencilFunc: AlwaysStencilFunc,
+	AmbientLight: AmbientLight,
+	AmbientLightProbe: AmbientLightProbe,
+	AnimationClip: AnimationClip,
+	AnimationLoader: AnimationLoader,
+	AnimationMixer: AnimationMixer,
+	AnimationObjectGroup: AnimationObjectGroup,
+	AnimationUtils: AnimationUtils,
+	ArcCurve: ArcCurve,
+	ArrayCamera: ArrayCamera,
+	ArrowHelper: ArrowHelper,
+	Audio: Audio,
+	AudioAnalyser: AudioAnalyser,
+	AudioContext: AudioContext,
+	AudioListener: AudioListener,
+	AudioLoader: AudioLoader,
+	AxesHelper: AxesHelper,
+	AxisHelper: AxisHelper,
+	BackSide: BackSide,
+	BasicDepthPacking: BasicDepthPacking,
+	BasicShadowMap: BasicShadowMap,
+	BinaryTextureLoader: BinaryTextureLoader,
+	Bone: Bone,
+	BooleanKeyframeTrack: BooleanKeyframeTrack,
+	BoundingBoxHelper: BoundingBoxHelper,
+	Box2: Box2,
+	Box3: Box3,
+	Box3Helper: Box3Helper,
+	BoxBufferGeometry: BoxBufferGeometry,
+	BoxGeometry: BoxGeometry,
+	BoxHelper: BoxHelper,
+	BufferAttribute: BufferAttribute,
+	BufferGeometry: BufferGeometry,
+	BufferGeometryLoader: BufferGeometryLoader,
+	ByteType: ByteType,
+	Cache: Cache,
+	Camera: Camera,
+	CameraHelper: CameraHelper,
+	CanvasRenderer: CanvasRenderer,
+	CanvasTexture: CanvasTexture,
+	CatmullRomCurve3: CatmullRomCurve3,
+	CineonToneMapping: CineonToneMapping,
+	CircleBufferGeometry: CircleBufferGeometry,
+	CircleGeometry: CircleGeometry,
+	ClampToEdgeWrapping: ClampToEdgeWrapping,
+	Clock: Clock,
+	ClosedSplineCurve3: ClosedSplineCurve3,
+	Color: Color,
+	ColorKeyframeTrack: ColorKeyframeTrack,
+	CompressedTexture: CompressedTexture,
+	CompressedTextureLoader: CompressedTextureLoader,
+	ConeBufferGeometry: ConeBufferGeometry,
+	ConeGeometry: ConeGeometry,
+	CubeCamera: CubeCamera,
+	CubeGeometry: BoxGeometry,
+	CubeReflectionMapping: CubeReflectionMapping,
+	CubeRefractionMapping: CubeRefractionMapping,
+	CubeTexture: CubeTexture,
+	CubeTextureLoader: CubeTextureLoader,
+	CubeUVReflectionMapping: CubeUVReflectionMapping,
+	CubeUVRefractionMapping: CubeUVRefractionMapping,
+	CubicBezierCurve: CubicBezierCurve,
+	CubicBezierCurve3: CubicBezierCurve3,
+	CubicInterpolant: CubicInterpolant,
+	CullFaceBack: CullFaceBack,
+	CullFaceFront: CullFaceFront,
+	CullFaceFrontBack: CullFaceFrontBack,
+	CullFaceNone: CullFaceNone,
+	Curve: Curve,
+	CurvePath: CurvePath,
+	CustomBlending: CustomBlending,
+	CustomToneMapping: CustomToneMapping,
+	CylinderBufferGeometry: CylinderBufferGeometry,
+	CylinderGeometry: CylinderGeometry,
+	Cylindrical: Cylindrical,
+	DataTexture: DataTexture,
+	DataTexture2DArray: DataTexture2DArray,
+	DataTexture3D: DataTexture3D,
+	DataTextureLoader: DataTextureLoader,
+	DataUtils: DataUtils,
+	DecrementStencilOp: DecrementStencilOp,
+	DecrementWrapStencilOp: DecrementWrapStencilOp,
+	DefaultLoadingManager: DefaultLoadingManager,
+	DepthFormat: DepthFormat,
+	DepthStencilFormat: DepthStencilFormat,
+	DepthTexture: DepthTexture,
+	DirectionalLight: DirectionalLight,
+	DirectionalLightHelper: DirectionalLightHelper,
+	DiscreteInterpolant: DiscreteInterpolant,
+	DodecahedronBufferGeometry: DodecahedronBufferGeometry,
+	DodecahedronGeometry: DodecahedronGeometry,
+	DoubleSide: DoubleSide,
+	DstAlphaFactor: DstAlphaFactor,
+	DstColorFactor: DstColorFactor,
+	DynamicBufferAttribute: DynamicBufferAttribute,
+	DynamicCopyUsage: DynamicCopyUsage,
+	DynamicDrawUsage: DynamicDrawUsage,
+	DynamicReadUsage: DynamicReadUsage,
+	EdgesGeometry: EdgesGeometry,
+	EdgesHelper: EdgesHelper,
+	EllipseCurve: EllipseCurve,
+	EqualDepth: EqualDepth,
+	EqualStencilFunc: EqualStencilFunc,
+	EquirectangularReflectionMapping: EquirectangularReflectionMapping,
+	EquirectangularRefractionMapping: EquirectangularRefractionMapping,
+	Euler: Euler,
+	EventDispatcher: EventDispatcher,
+	ExtrudeBufferGeometry: ExtrudeBufferGeometry,
+	ExtrudeGeometry: ExtrudeGeometry,
+	Face3: Face3,
+	Face4: Face4,
+	FaceColors: FaceColors,
+	FileLoader: FileLoader,
+	FlatShading: FlatShading,
+	Float16BufferAttribute: Float16BufferAttribute,
+	Float32Attribute: Float32Attribute,
+	Float32BufferAttribute: Float32BufferAttribute,
+	Float64Attribute: Float64Attribute,
+	Float64BufferAttribute: Float64BufferAttribute,
+	FloatType: FloatType,
+	Fog: Fog,
+	FogExp2: FogExp2,
+	Font: Font,
+	FontLoader: FontLoader,
+	FrontSide: FrontSide,
+	Frustum: Frustum,
+	GLBufferAttribute: GLBufferAttribute,
+	GLSL1: GLSL1,
+	GLSL3: GLSL3,
+	GammaEncoding: GammaEncoding,
+	Geometry: Geometry,
+	GeometryUtils: GeometryUtils,
+	GreaterDepth: GreaterDepth,
+	GreaterEqualDepth: GreaterEqualDepth,
+	GreaterEqualStencilFunc: GreaterEqualStencilFunc,
+	GreaterStencilFunc: GreaterStencilFunc,
+	GridHelper: GridHelper,
+	Group: Group,
+	HalfFloatType: HalfFloatType,
+	HemisphereLight: HemisphereLight,
+	HemisphereLightHelper: HemisphereLightHelper,
+	HemisphereLightProbe: HemisphereLightProbe,
+	IcosahedronBufferGeometry: IcosahedronBufferGeometry,
+	IcosahedronGeometry: IcosahedronGeometry,
+	ImageBitmapLoader: ImageBitmapLoader,
+	ImageLoader: ImageLoader,
+	ImageUtils: ImageUtils,
+	ImmediateRenderObject: ImmediateRenderObject,
+	IncrementStencilOp: IncrementStencilOp,
+	IncrementWrapStencilOp: IncrementWrapStencilOp,
+	InstancedBufferAttribute: InstancedBufferAttribute,
+	InstancedBufferGeometry: InstancedBufferGeometry,
+	InstancedInterleavedBuffer: InstancedInterleavedBuffer,
+	InstancedMesh: InstancedMesh,
+	Int16Attribute: Int16Attribute,
+	Int16BufferAttribute: Int16BufferAttribute,
+	Int32Attribute: Int32Attribute,
+	Int32BufferAttribute: Int32BufferAttribute,
+	Int8Attribute: Int8Attribute,
+	Int8BufferAttribute: Int8BufferAttribute,
+	IntType: IntType,
+	InterleavedBuffer: InterleavedBuffer,
+	InterleavedBufferAttribute: InterleavedBufferAttribute,
+	Interpolant: Interpolant,
+	InterpolateDiscrete: InterpolateDiscrete,
+	InterpolateLinear: InterpolateLinear,
+	InterpolateSmooth: InterpolateSmooth,
+	InvertStencilOp: InvertStencilOp,
+	JSONLoader: JSONLoader,
+	KeepStencilOp: KeepStencilOp,
+	KeyframeTrack: KeyframeTrack,
+	LOD: LOD,
+	LatheBufferGeometry: LatheBufferGeometry,
+	LatheGeometry: LatheGeometry,
+	Layers: Layers,
+	LensFlare: LensFlare,
+	LessDepth: LessDepth,
+	LessEqualDepth: LessEqualDepth,
+	LessEqualStencilFunc: LessEqualStencilFunc,
+	LessStencilFunc: LessStencilFunc,
+	Light: Light,
+	LightProbe: LightProbe,
+	Line: Line,
+	Line3: Line3,
+	LineBasicMaterial: LineBasicMaterial,
+	LineCurve: LineCurve,
+	LineCurve3: LineCurve3,
+	LineDashedMaterial: LineDashedMaterial,
+	LineLoop: LineLoop,
+	LinePieces: LinePieces,
+	LineSegments: LineSegments,
+	LineStrip: LineStrip,
+	LinearEncoding: LinearEncoding,
+	LinearFilter: LinearFilter,
+	LinearInterpolant: LinearInterpolant,
+	LinearMipMapLinearFilter: LinearMipMapLinearFilter,
+	LinearMipMapNearestFilter: LinearMipMapNearestFilter,
+	LinearMipmapLinearFilter: LinearMipmapLinearFilter,
+	LinearMipmapNearestFilter: LinearMipmapNearestFilter,
+	LinearToneMapping: LinearToneMapping,
+	Loader: Loader,
+	LoaderUtils: LoaderUtils,
+	LoadingManager: LoadingManager,
+	LogLuvEncoding: LogLuvEncoding,
+	LoopOnce: LoopOnce,
+	LoopPingPong: LoopPingPong,
+	LoopRepeat: LoopRepeat,
+	LuminanceAlphaFormat: LuminanceAlphaFormat,
+	LuminanceFormat: LuminanceFormat,
+	MOUSE: MOUSE,
+	Material: Material,
+	MaterialLoader: MaterialLoader,
+	Math: MathUtils$1,
+	MathUtils: MathUtils$1,
+	Matrix3: Matrix3,
+	Matrix4: Matrix4,
+	MaxEquation: MaxEquation,
+	Mesh: Mesh,
+	MeshBasicMaterial: MeshBasicMaterial,
+	MeshDepthMaterial: MeshDepthMaterial,
+	MeshDistanceMaterial: MeshDistanceMaterial,
+	MeshFaceMaterial: MeshFaceMaterial,
+	MeshLambertMaterial: MeshLambertMaterial,
+	MeshMatcapMaterial: MeshMatcapMaterial,
+	MeshNormalMaterial: MeshNormalMaterial,
+	MeshPhongMaterial: MeshPhongMaterial,
+	MeshPhysicalMaterial: MeshPhysicalMaterial,
+	MeshStandardMaterial: MeshStandardMaterial,
+	MeshToonMaterial: MeshToonMaterial,
+	MinEquation: MinEquation,
+	MirroredRepeatWrapping: MirroredRepeatWrapping,
+	MixOperation: MixOperation,
+	MultiMaterial: MultiMaterial,
+	MultiplyBlending: MultiplyBlending,
+	MultiplyOperation: MultiplyOperation,
+	NearestFilter: NearestFilter,
+	NearestMipMapLinearFilter: NearestMipMapLinearFilter,
+	NearestMipMapNearestFilter: NearestMipMapNearestFilter,
+	NearestMipmapLinearFilter: NearestMipmapLinearFilter,
+	NearestMipmapNearestFilter: NearestMipmapNearestFilter,
+	NeverDepth: NeverDepth,
+	NeverStencilFunc: NeverStencilFunc,
+	NoBlending: NoBlending,
+	NoColors: NoColors,
+	NoToneMapping: NoToneMapping,
+	NormalAnimationBlendMode: NormalAnimationBlendMode,
+	NormalBlending: NormalBlending,
+	NotEqualDepth: NotEqualDepth,
+	NotEqualStencilFunc: NotEqualStencilFunc,
+	NumberKeyframeTrack: NumberKeyframeTrack,
+	Object3D: Object3D,
+	ObjectLoader: ObjectLoader,
+	ObjectSpaceNormalMap: ObjectSpaceNormalMap,
+	OctahedronBufferGeometry: OctahedronBufferGeometry,
+	OctahedronGeometry: OctahedronGeometry,
+	OneFactor: OneFactor,
+	OneMinusDstAlphaFactor: OneMinusDstAlphaFactor,
+	OneMinusDstColorFactor: OneMinusDstColorFactor,
+	OneMinusSrcAlphaFactor: OneMinusSrcAlphaFactor,
+	OneMinusSrcColorFactor: OneMinusSrcColorFactor,
+	OrthographicCamera: OrthographicCamera,
+	PCFShadowMap: PCFShadowMap,
+	PCFSoftShadowMap: PCFSoftShadowMap,
+	PMREMGenerator: PMREMGenerator,
+	ParametricBufferGeometry: ParametricBufferGeometry,
+	ParametricGeometry: ParametricGeometry,
+	Particle: Particle,
+	ParticleBasicMaterial: ParticleBasicMaterial,
+	ParticleSystem: ParticleSystem,
+	ParticleSystemMaterial: ParticleSystemMaterial,
+	Path: Path,
+	PerspectiveCamera: PerspectiveCamera,
+	Plane: Plane,
+	PlaneBufferGeometry: PlaneBufferGeometry,
+	PlaneGeometry: PlaneGeometry,
+	PlaneHelper: PlaneHelper,
+	PointCloud: PointCloud,
+	PointCloudMaterial: PointCloudMaterial,
+	PointLight: PointLight,
+	PointLightHelper: PointLightHelper,
+	Points: Points,
+	PointsMaterial: PointsMaterial,
+	PolarGridHelper: PolarGridHelper,
+	PolyhedronBufferGeometry: PolyhedronBufferGeometry,
+	PolyhedronGeometry: PolyhedronGeometry,
+	PositionalAudio: PositionalAudio,
+	PropertyBinding: PropertyBinding,
+	PropertyMixer: PropertyMixer,
+	QuadraticBezierCurve: QuadraticBezierCurve,
+	QuadraticBezierCurve3: QuadraticBezierCurve3,
+	Quaternion: Quaternion,
+	QuaternionKeyframeTrack: QuaternionKeyframeTrack,
+	QuaternionLinearInterpolant: QuaternionLinearInterpolant,
+	REVISION: REVISION,
+	RGBADepthPacking: RGBADepthPacking,
+	RGBAFormat: RGBAFormat,
+	RGBAIntegerFormat: RGBAIntegerFormat,
+	RGBA_ASTC_10x10_Format: RGBA_ASTC_10x10_Format,
+	RGBA_ASTC_10x5_Format: RGBA_ASTC_10x5_Format,
+	RGBA_ASTC_10x6_Format: RGBA_ASTC_10x6_Format,
+	RGBA_ASTC_10x8_Format: RGBA_ASTC_10x8_Format,
+	RGBA_ASTC_12x10_Format: RGBA_ASTC_12x10_Format,
+	RGBA_ASTC_12x12_Format: RGBA_ASTC_12x12_Format,
+	RGBA_ASTC_4x4_Format: RGBA_ASTC_4x4_Format,
+	RGBA_ASTC_5x4_Format: RGBA_ASTC_5x4_Format,
+	RGBA_ASTC_5x5_Format: RGBA_ASTC_5x5_Format,
+	RGBA_ASTC_6x5_Format: RGBA_ASTC_6x5_Format,
+	RGBA_ASTC_6x6_Format: RGBA_ASTC_6x6_Format,
+	RGBA_ASTC_8x5_Format: RGBA_ASTC_8x5_Format,
+	RGBA_ASTC_8x6_Format: RGBA_ASTC_8x6_Format,
+	RGBA_ASTC_8x8_Format: RGBA_ASTC_8x8_Format,
+	RGBA_BPTC_Format: RGBA_BPTC_Format,
+	RGBA_ETC2_EAC_Format: RGBA_ETC2_EAC_Format,
+	RGBA_PVRTC_2BPPV1_Format: RGBA_PVRTC_2BPPV1_Format,
+	RGBA_PVRTC_4BPPV1_Format: RGBA_PVRTC_4BPPV1_Format,
+	RGBA_S3TC_DXT1_Format: RGBA_S3TC_DXT1_Format,
+	RGBA_S3TC_DXT3_Format: RGBA_S3TC_DXT3_Format,
+	RGBA_S3TC_DXT5_Format: RGBA_S3TC_DXT5_Format,
+	RGBDEncoding: RGBDEncoding,
+	RGBEEncoding: RGBEEncoding,
+	RGBEFormat: RGBEFormat,
+	RGBFormat: RGBFormat,
+	RGBIntegerFormat: RGBIntegerFormat,
+	RGBM16Encoding: RGBM16Encoding,
+	RGBM7Encoding: RGBM7Encoding,
+	RGB_ETC1_Format: RGB_ETC1_Format,
+	RGB_ETC2_Format: RGB_ETC2_Format,
+	RGB_PVRTC_2BPPV1_Format: RGB_PVRTC_2BPPV1_Format,
+	RGB_PVRTC_4BPPV1_Format: RGB_PVRTC_4BPPV1_Format,
+	RGB_S3TC_DXT1_Format: RGB_S3TC_DXT1_Format,
+	RGFormat: RGFormat,
+	RGIntegerFormat: RGIntegerFormat,
+	RawShaderMaterial: RawShaderMaterial,
+	Ray: Ray,
+	Raycaster: Raycaster,
+	RectAreaLight: RectAreaLight,
+	RedFormat: RedFormat,
+	RedIntegerFormat: RedIntegerFormat,
+	ReinhardToneMapping: ReinhardToneMapping,
+	RepeatWrapping: RepeatWrapping,
+	ReplaceStencilOp: ReplaceStencilOp,
+	ReverseSubtractEquation: ReverseSubtractEquation,
+	RingBufferGeometry: RingBufferGeometry,
+	RingGeometry: RingGeometry,
+	SRGB8_ALPHA8_ASTC_10x10_Format: SRGB8_ALPHA8_ASTC_10x10_Format,
+	SRGB8_ALPHA8_ASTC_10x5_Format: SRGB8_ALPHA8_ASTC_10x5_Format,
+	SRGB8_ALPHA8_ASTC_10x6_Format: SRGB8_ALPHA8_ASTC_10x6_Format,
+	SRGB8_ALPHA8_ASTC_10x8_Format: SRGB8_ALPHA8_ASTC_10x8_Format,
+	SRGB8_ALPHA8_ASTC_12x10_Format: SRGB8_ALPHA8_ASTC_12x10_Format,
+	SRGB8_ALPHA8_ASTC_12x12_Format: SRGB8_ALPHA8_ASTC_12x12_Format,
+	SRGB8_ALPHA8_ASTC_4x4_Format: SRGB8_ALPHA8_ASTC_4x4_Format,
+	SRGB8_ALPHA8_ASTC_5x4_Format: SRGB8_ALPHA8_ASTC_5x4_Format,
+	SRGB8_ALPHA8_ASTC_5x5_Format: SRGB8_ALPHA8_ASTC_5x5_Format,
+	SRGB8_ALPHA8_ASTC_6x5_Format: SRGB8_ALPHA8_ASTC_6x5_Format,
+	SRGB8_ALPHA8_ASTC_6x6_Format: SRGB8_ALPHA8_ASTC_6x6_Format,
+	SRGB8_ALPHA8_ASTC_8x5_Format: SRGB8_ALPHA8_ASTC_8x5_Format,
+	SRGB8_ALPHA8_ASTC_8x6_Format: SRGB8_ALPHA8_ASTC_8x6_Format,
+	SRGB8_ALPHA8_ASTC_8x8_Format: SRGB8_ALPHA8_ASTC_8x8_Format,
+	Scene: Scene,
+	SceneUtils: SceneUtils,
+	ShaderChunk: ShaderChunk,
+	ShaderLib: ShaderLib,
+	ShaderMaterial: ShaderMaterial,
+	ShadowMaterial: ShadowMaterial,
+	Shape: Shape,
+	ShapeBufferGeometry: ShapeBufferGeometry,
+	ShapeGeometry: ShapeGeometry,
+	ShapePath: ShapePath,
+	ShapeUtils: ShapeUtils,
+	ShortType: ShortType,
+	Skeleton: Skeleton,
+	SkeletonHelper: SkeletonHelper,
+	SkinnedMesh: SkinnedMesh,
+	SmoothShading: SmoothShading,
+	Sphere: Sphere,
+	SphereBufferGeometry: SphereBufferGeometry,
+	SphereGeometry: SphereGeometry,
+	Spherical: Spherical,
+	SphericalHarmonics3: SphericalHarmonics3,
+	Spline: Spline,
+	SplineCurve: SplineCurve,
+	SplineCurve3: SplineCurve3,
+	SpotLight: SpotLight,
+	SpotLightHelper: SpotLightHelper,
+	Sprite: Sprite,
+	SpriteMaterial: SpriteMaterial,
+	SrcAlphaFactor: SrcAlphaFactor,
+	SrcAlphaSaturateFactor: SrcAlphaSaturateFactor,
+	SrcColorFactor: SrcColorFactor,
+	StaticCopyUsage: StaticCopyUsage,
+	StaticDrawUsage: StaticDrawUsage,
+	StaticReadUsage: StaticReadUsage,
+	StereoCamera: StereoCamera,
+	StreamCopyUsage: StreamCopyUsage,
+	StreamDrawUsage: StreamDrawUsage,
+	StreamReadUsage: StreamReadUsage,
+	StringKeyframeTrack: StringKeyframeTrack,
+	SubtractEquation: SubtractEquation,
+	SubtractiveBlending: SubtractiveBlending,
+	TOUCH: TOUCH,
+	TangentSpaceNormalMap: TangentSpaceNormalMap,
+	TetrahedronBufferGeometry: TetrahedronBufferGeometry,
+	TetrahedronGeometry: TetrahedronGeometry,
+	TextBufferGeometry: TextBufferGeometry,
+	TextGeometry: TextGeometry,
+	Texture: Texture,
+	TextureLoader: TextureLoader,
+	TorusBufferGeometry: TorusBufferGeometry,
+	TorusGeometry: TorusGeometry,
+	TorusKnotBufferGeometry: TorusKnotBufferGeometry,
+	TorusKnotGeometry: TorusKnotGeometry,
+	Triangle: Triangle,
+	TriangleFanDrawMode: TriangleFanDrawMode,
+	TriangleStripDrawMode: TriangleStripDrawMode,
+	TrianglesDrawMode: TrianglesDrawMode,
+	TubeBufferGeometry: TubeBufferGeometry,
+	TubeGeometry: TubeGeometry,
+	UVMapping: UVMapping,
+	Uint16Attribute: Uint16Attribute,
+	Uint16BufferAttribute: Uint16BufferAttribute,
+	Uint32Attribute: Uint32Attribute,
+	Uint32BufferAttribute: Uint32BufferAttribute,
+	Uint8Attribute: Uint8Attribute,
+	Uint8BufferAttribute: Uint8BufferAttribute,
+	Uint8ClampedAttribute: Uint8ClampedAttribute,
+	Uint8ClampedBufferAttribute: Uint8ClampedBufferAttribute,
+	Uniform: Uniform,
+	UniformsLib: UniformsLib,
+	UniformsUtils: UniformsUtils,
+	UnsignedByteType: UnsignedByteType,
+	UnsignedInt248Type: UnsignedInt248Type,
+	UnsignedIntType: UnsignedIntType,
+	UnsignedShort4444Type: UnsignedShort4444Type,
+	UnsignedShort5551Type: UnsignedShort5551Type,
+	UnsignedShort565Type: UnsignedShort565Type,
+	UnsignedShortType: UnsignedShortType,
+	VSMShadowMap: VSMShadowMap,
+	Vector2: Vector2,
+	Vector3: Vector3,
+	Vector4: Vector4,
+	VectorKeyframeTrack: VectorKeyframeTrack,
+	Vertex: Vertex,
+	VertexColors: VertexColors,
+	VideoTexture: VideoTexture,
+	WebGL1Renderer: WebGL1Renderer,
+	WebGLCubeRenderTarget: WebGLCubeRenderTarget,
+	WebGLMultisampleRenderTarget: WebGLMultisampleRenderTarget,
+	WebGLRenderTarget: WebGLRenderTarget,
+	WebGLRenderTargetCube: WebGLRenderTargetCube,
+	WebGLRenderer: WebGLRenderer,
+	WebGLUtils: WebGLUtils,
+	WireframeGeometry: WireframeGeometry,
+	WireframeHelper: WireframeHelper,
+	WrapAroundEnding: WrapAroundEnding,
+	XHRLoader: XHRLoader,
+	ZeroCurvatureEnding: ZeroCurvatureEnding,
+	ZeroFactor: ZeroFactor,
+	ZeroSlopeEnding: ZeroSlopeEnding,
+	ZeroStencilOp: ZeroStencilOp,
+	sRGBEncoding: sRGBEncoding
+});
+
+var require$$0 = /*@__PURE__*/getAugmentedNamespace(three_module);
+
+const { MathUtils } = require$$0;
+
+{
+
+  let g3d = {};
+  g3d.name = "WebObjects/Graphics3D";
+  interpretate.contextExpand(g3d);
+
+  /**
+  * @type {import('three')}
+  */
+  let THREE;
+
+  g3d.Style = core.List;
+
+  /**
+   * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
+   */
+  g3d.Dashing = (args, env) => {
+    console.log("Dashing not implemented");
+  };
+
+  g3d.Annotation = core.List;
+
+  g3d.GraphicsGroup = async (args, env) => {
+    const group = new THREE.Group();
+    let copy = Object.assign({}, env);
+
+    copy.mesh = group;
+
+    for (const a of args) {
+      await interpretate(a, copy);
+    }
+
+    env.mesh.add(group);
+  };
+
+  g3d.Metalness = (args, env) => {
+    env.metalness = interpretate(args[0], env);
+  };
+
+  g3d.Emissive = (args, env) => {
+    interpretate(args[0], {...env});
+    env.emissive = copy.color;
+  };
+
+  g3d.RGBColor = async (args, env) => {
+    if (args.length !== 3 && args.length !== 1) {
+      console.log("RGB format not implemented", args);
+      console.error("RGB values should be triple!");
+      return;
+    }
+
+    let a = [...args];
+
+    if (args.length === 1) {
+      a = await interpretate(args[0], env); // return [r, g, b] , 0<=r, g, b<=1
+    }
+
+    const r = await interpretate(a[0], env);
+    const g = await interpretate(a[1], env);
+    const b = await interpretate(a[2], env);
+
+    env.color = new THREE.Color(r, g, b);
+  };
+
+  g3d.Roughness = (args, env) => {
+    const o = interpretate(args[0], env);
+    if (typeof o !== "number") console.error("Opacity must have number value!");
+    console.log(o);
+    env.roughness = o;  
+  };
+
+  g3d.Opacity = (args, env) => {
+    var o = interpretate(args[0], env);
+    if (typeof o !== "number") console.error("Opacity must have number value!");
+    console.log(o);
+    env.opacity = o;
+  };
+
+  g3d.ImageScaled = (args, env) => { };
+
+  g3d.Thickness = (args, env) => { env.thickness = interpretate(args[0], env);};
+
+  g3d.Arrowheads = (args, env) => {
+    if (args.length == 1) {
+      env.arrowRadius = interpretate(args[0], env);
+    } else {
+      env.arrowHeight = interpretate(args[1], env);
+      env.arrowRadius = interpretate(args[0], env);
+    }
+  };
+
+  g3d.TubeArrow = async (args, env) => {
+    console.log('Context test');
+    console.log(undefined);
+
+    let radius = 1;
+    if (args.length > 1) radius = await interpretate(args[1], env);
+    /**
+     * @type {THREE.Vector3}}
+     */
+    const coordinates = await interpretate(args[0], env);
+
+    /**
+     * @type {THREE.MeshPhysicalMaterial}}
+     */  
+    const material = new THREE.MeshPhysicalMaterial({
+      color: env.color,
+      transparent: false,
+      roughness: env.roughness,
+      opacity: env.opacity,
+      metalness: env.metalness,
+      emissive: env.emissive,
+      reflectivity: env.reflectivity,
+      clearcoat: env.clearcoat,
+      ior: env.ior
+    });
+
+    //points 1, 2
+    const p1 = new THREE.Vector3(...coordinates[0]);
+    const p2 = new THREE.Vector3(...coordinates[1]);
+    //direction
+    const dp = p2.clone().addScaledVector(p1, -1);
+
+    const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+
+    //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
+    geometry.computeBoundingBox();
+    let position = geometry.boundingBox;
+
+    position.max.addScaledVector(position.min, -1);
+
+    //default geometry
+    const cylinder = new THREE.Mesh(geometry, material);
+
+    //cone
+    const conegeometry = new THREE.ConeBufferGeometry(env.arrowRadius, env.arrowHeight, 32 );
+    const cone = new THREE.Mesh(conegeometry, material);
+    cone.position.y = dp.length()/2 + env.arrowHeight/2;
+
+    let group = new THREE.Group();
+    group.add(cylinder, cone);
+
+    //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
+    //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    const v = new THREE.Vector3(0, 1, 0).cross(dp.normalize());
+    const theta = Math.asin(v.length() / dp.length());
+    const sc = Math.sin(theta);
+    const mcs = 1.0 - Math.cos(theta);
+
+    //Did not find how to write it using vectors
+    const matrix = new THREE.Matrix4().set(
+      1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
+      mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
+      -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
+      0,/*                            */0,/*                            */ 0,/**                           */ 1
+    );
+
+    //middle target point
+    const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5);
+
+    //shift to the center and rotate
+    //group.position = center;
+    group.applyMatrix4(matrix);
+
+    //translate its center to the middle target point
+    group.position.addScaledVector(middle, -1);
+
+    env.mesh.add(group);
+
+    geometry.dispose();
+    conegeometry.dispose();
+    material.dispose();
+  };
+
+  g3d.Arrow = async (args, env) => {
+    let arr = await interpretate(args[0], env);
+    if (arr.length === 1) arr = arr[0];
+    if (arr.length !== 2) {
+      console.error("Tube must have 2 vectors!");
+      return;
+    }
+
+    const points = [
+      new THREE.Vector4(...arr[0], 1),
+      new THREE.Vector4(...arr[1], 1),
+    ];
+
+    points.forEach((p) => {
+      p = p.applyMatrix4(env.matrix);
+    });
+
+    const origin = points[0].clone();
+    const dir = points[1].add(points[0].negate());
+
+    const arrowHelper = new THREE.ArrowHelper(
+      dir.normalize(),
+      origin,
+      dir.length(),
+      env.color,
+    );
+    env.mesh.add(arrowHelper);
+    arrowHelper.line.material.linewidth = env.thickness;
+  };
+
+  g3d.Sphere = async (args, env) => {
+    var radius = 1;
+    if (args.length > 1) radius = await interpretate(args[1], env);
+
+    const material = new THREE.MeshPhysicalMaterial({
+      color: env.color,
+      roughness: env.roughness,
+      opacity: env.opacity,
+      metalness: env.metalness,
+      emissive: env.emissive,
+      reflectivity: env.reflectivity,
+      clearcoat: env.clearcoat,
+      ior: env.ior
+    });
+
+    function addSphere(cr) {
+      const origin = new THREE.Vector4(...cr, 1);
+      const geometry = new THREE.SphereGeometry(radius, 20, 20);
+      const sphere = new THREE.Mesh(geometry, material);
+
+      sphere.position.set(origin.x, origin.y, origin.z);
+
+      env.mesh.add(sphere);
+      geometry.dispose();
+      return sphere;
+    }
+
+    let list = await interpretate(args[0], env);
+
+    if (list.length === 1) list = list[0];
+    if (list.length === 1) list = list[0];
+
+    if (list.length === 3) {
+      env.local.object = addSphere(list);
+    } else if (list.length > 3) {
+
+      env.local.multiple = true;
+      env.local.object = [];
+
+      list.forEach((el) => {
+        env.local.object.push(addSphere(el));
+      });
+    } else {
+      console.log(list);
+      console.error("List of coords. for sphere object is less 1");
+      return;
+    }
+
+    material.dispose();
+  };
+
+  g3d.Sphere.update = async (args, env) => {
+    console.log('Sphere: updating the data!');
+    console.log(args);
+    console.log(env);
+
+    if (env.local.multiple) {
+      const data = await interpretate(args[0], env);
+      let i = 0;
+      data.forEach((c)=>{
+        env.local.object[i].position.set(...c);
+        ++i;
+      });
+
+      return;
+    }
+
+    const c = await interpretate(args[0], env);
+    env.local.object.position.set(...c);
+
+  };
+
+  g3d.Sphere.destroy = (args, env) => {
+    console.log('Sphere: destroy');
+    console.log(args);
+    console.log(env);
+
+  };
+
+  g3d.Sphere.virtual = true;
+
+  g3d.Sky = (args, env) => {
+    const sky = new Sky();
+  	sky.scale.setScalar( 10000 );
+  	env.mesh.add( sky );
+    env.sky = sky;
+    env.sun = new THREE.Vector3();
+
+  	const skyUniforms = sky.material.uniforms;
+
+  	skyUniforms[ 'turbidity' ].value = 10;
+  	skyUniforms[ 'rayleigh' ].value = 2;
+  	skyUniforms[ 'mieCoefficient' ].value = 0.005;
+  	skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+  };
+
+  g3d.Water = (args, env) => {
+    const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+
+  	const water = new Water(
+  		waterGeometry,
+  		{
+  			textureWidth: 512,
+  			textureHeight: 512,
+  			waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  			} ),
+
+        sunDirection: new THREE.Vector3(),
+  			sunColor: 0xffffff,
+  			waterColor: 0x001e0f,
+  			distortionScale: 3.7,
+  			fog: true
+  		}
+  		);
+
+  		water.rotation.x = - Math.PI / 2;
+
+  		env.mesh.add( water );
+      env.water = water;
+  };
+
+  g3d.Cuboid = async (args, env) => {
+    //if (params.hasOwnProperty('geometry')) {
+    //	var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
+    //				new THREE.Vector4(...interpretate(func.args[1]), 1)];
+    //}
+    /**
+     * @type {THREE.Vector4}
+     */
+    var diff;
+    /**
+     * @type {THREE.Vector4}
+     */
+    var origin;
+    var p;
+
+    if (args.length === 2) {
+      var points = [
+        new THREE.Vector4(...(await interpretate(args[0], env)), 1),
+        new THREE.Vector4(...(await interpretate(args[1], env)), 1),
+      ];
+
+      origin = points[0]
+        .clone()
+        .add(points[1])
+        .divideScalar(2);
+      diff = points[0].clone().add(points[1].clone().negate());
+    } else if (args.length === 1) {
+      p = await interpretate(args[0], env);
+      origin = new THREE.Vector4(...p, 1);
+      diff = new THREE.Vector4(1, 1, 1, 1);
+
+      //shift it
+      origin.add(diff.clone().divideScalar(2));
+    } else {
+      console.error("Expected 2 or 1 arguments");
+      return;
+    }
+
+    const geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
+    const material = new THREE.MeshPhysicalMaterial({
+      color: env.color,
+      transparent: true,
+      opacity: env.opacity,
+      roughness: env.roughness,
+      depthWrite: true,
+      metalness: env.metalness,
+      emissive: env.emissive,
+      reflectivity: env.reflectivity,
+      clearcoat: env.clearcoat,
+      ior: env.ior
+    });
+
+    //material.side = THREE.DoubleSide;
+
+    const cube = new THREE.Mesh(geometry, material);
+
+    //var tr = new THREE.Matrix4();
+    //	tr.makeTranslation(origin.x,origin.y,origin.z);
+
+    //cube.applyMatrix(params.matrix.clone().multiply(tr));
+
+    cube.position.set(origin.x, origin.y, origin.z);
+
+    env.mesh.add(cube);
+
+    geometry.dispose();
+    material.dispose();
+  };
+
+  g3d.Center = (args, env) => {
+    return "Center";
+  };
+
+  g3d.Cylinder = async (args, env) => {
+    let radius = 1;
+    if (args.length > 1) radius = await interpretate(args[1], env);
+    /**
+     * @type {THREE.Vector3}}
+     */
+    let coordinates = await interpretate(args[0], env);
+    if (coordinates.length === 1) {
+      coordinates = coordinates[0];
+    }
+
+    coordinates[0] = new THREE.Vector3(...coordinates[0]);
+    coordinates[1] = new THREE.Vector3(...coordinates[1]);
+
+    const material = new THREE.MeshPhysicalMaterial({
+      color: env.color,
+      transparent: false,
+      roughness: env.roughness,
+      opacity: env.opacity,
+      metalness: env.metalness,
+      emissive: env.emissive,
+      reflectivity: env.reflectivity,
+      clearcoat: env.clearcoat,
+      ior: env.ior
+    });
+
+    console.log(coordinates);
+
+    // edge from X to Y
+    var direction = new THREE.Vector3().subVectors(coordinates[1], coordinates[0]);
+
+    console.log(direction);
+  
+    // Make the geometry (of "direction" length)
+    var geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), 6, 4, false);
+    // shift it so one end rests on the origin
+    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
+    // rotate it the right way for lookAt to work
+    geometry.applyMatrix4(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(90)));
+    // Make a mesh with the geometry
+    var mesh = new THREE.Mesh(geometry, material);
+    // Position it where we want
+
+    mesh.position.copy(coordinates[0]);
+    // And make it point to where we want
+    mesh.lookAt(coordinates[1]); 
+
+    env.mesh.add(mesh);
+
+    //geometry.dispose();
+    //material.dispose();
+  };
+
+  g3d.Tetrahedron = async (args, env) => {
+    /**
+     * @type {number[]}
+     */
+    var points = await interpretate(args[0], env);
+    console.log("Points of tetrahedron:");
+    console.log(points);
+    var faces = [
+      [points[0], points[1], points[2]],
+      [points[0], points[1], points[3]],
+      [points[1], points[2], points[3]],
+      [points[0], points[3], points[2]],
+    ];
+
+    var fake = ["List"];
+
+    var listVert = (cord) => ["List", cord[0], cord[1], cord[2]];
+
+    faces.forEach((fs) => {
+      fake.push([
+        "Polygon",
+        ["List", listVert(fs[0]), listVert(fs[1]), listVert(fs[2])],
+      ]);
+    });
+    console.log(fake);
+    await interpretate(fake, env);
+  };
+
+  g3d.Translate = async (args, env) => {
+    let group = new THREE.Group();
+
+    let p = await interpretate(args[1], env);
+
+    //Backup of params
+    let copy = Object.assign({}, env);
+    copy.mesh = group;
+    await interpretate(args[0], copy);
+
+    group.translateX(p[0]);
+    group.translateY(p[1]);
+    group.translateZ(p[2]);
+
+    env.local.mesh = group;
+
+    env.mesh.add(group);
+  };
+
+  g3d.Translate.update = async (args, env) => {
+    const p = await interpretate(args[1], env);
+    const group = env.local.mesh;
+
+    if (env.Lerp) {
+
+      if (!env.local.lerp) {
+        console.log('creating worker for lerp of movements..');
+        const worker = {
+          alpha: 0.05,
+          target: new THREE.Vector3(...p),
+          eval: () => {
+            group.position.lerp(worker.target, 0.05);
+          }
+        };
+
+        env.local.lerp = worker;  
+
+        env.Handlers.push(worker);
+      }
+
+      env.local.lerp.target.fromArray(p);
+      return;
+    }
+
+    group.translateX(p[0]);
+    group.translateY(p[1]);
+    group.translateZ(p[2]);
+  };
+
+  g3d.Translate.virtual = true;  
+
+  g3d.LookAt = async (args, env) => {
+    const group = new THREE.Group();
+    const dir = await interpretate(args[1], env);
+
+
+
+    await interpretate(args[0], {...env, mesh:group});
+
+    let bbox = new THREE.Box3().setFromObject(group);
+    let center = bbox.max.clone().add(bbox.min).divideScalar(2);
+
+    console.log('center: ');
+    console.log(center);
+
+    let translate = new THREE.Matrix4().makeTranslation(
+      -center.x,
+      -center.y,
+      -center.z,
+    );
+
+    group.applyMatrix4(translate);
+
+    group.lookAt(...dir);
+    group.rotation.x = MathUtils.PI/2;
+
+    translate = new THREE.Matrix4().makeTranslation(
+      center.x,
+      center.y,
+      center.z,
+    );
+
+    group.applyMatrix4(translate);
+
+    env.local.group = group;
+
+    env.mesh.add(group);
+  };
+
+  g3d.LookAt.update = async (args, env) => {
+    const dir = await interpretate(args[1], env);
+    env.local.group.lookAt(...dir);
+  };  
+
+  g3d.LookAt.virtual = true;
+
+  g3d.GeometricTransformation = async (args, env) => {
+    var group = new THREE.Group();
+    //Если center, то наверное надо приметь matrix
+    //к каждому объекту относительно родительской группы.
+    var p = [...(await interpretate(args[1], {...env, hold:false}))];
+    console.log(p);
+    var centering = false;
+    var centrans = [];
+
+    if (p.length === 1) {
+      p = p[0];
+    }
+    if (p.length === 1) {
+      p = p[0];
+    } else if (p.length === 2) {
+      console.log(p);
+      if (p[1] === "Center") {
+        centering = true;
+      } else {
+        console.log("NON CENTERING ISSUE!!!");
+        console.log(p);
+        centrans = p[1];
+        console.log("???");
+      }
+      //return;
+      p = p[0];
+    }
+
+    if (p.length === 3) {
+      if (typeof p[0] === "number") {
+        var dir = p;
+        var matrix = new THREE.Matrix4().makeTranslation(...dir, 1);
+      } else {
+        //make it like Matrix4
+        p.forEach((el) => {
+          el.push(0);
+        });
+        p.push([0, 0, 0, 1]);
+
+        var matrix = new THREE.Matrix4();
+        console.log("Apply matrix to group::");
+        matrix.set(...aflatten(p));
+      }
+    } else {
+      console.log(p);
+      console.error("Unexpected length matrix: :: " + p);
+    }
+
+    //Backup of params
+    var copy = Object.assign({}, env);
+    copy.mesh = group;
+    await interpretate(args[0], copy);
+    console.log('MATRIX');
+    console.log(matrix);
+
+    if (centering || centrans.length > 0) {
+      console.log("::CENTER::");
+      var bbox = new THREE.Box3().setFromObject(group);
+      console.log(bbox);
+      var center = bbox.max.clone().add(bbox.min).divideScalar(2);
+      if (centrans.length > 0) {
+        console.log("CENTRANS");
+        center = center.fromArray(centrans);
+      }
+      console.log(center);
+
+      var translate = new THREE.Matrix4().makeTranslation(
+        -center.x,
+        -center.y,
+        -center.z,
+      );
+      group.applyMatrix4(translate);
+      group.applyMatrix4(matrix);
+      translate = new THREE.Matrix4().makeTranslation(
+        center.x,
+        center.y,
+        center.z
+      );
+      group.applyMatrix4(translate);
+    } else {
+      group.applyMatrix4(matrix);
+    }
+
+    env.mesh.add(group);
+  };
+
+  g3d.GraphicsComplex = async (args, env) => {
+    var copy = Object.assign({}, env);
+
+    copy.geometry = new THREE.Geometry();
+
+    (await interpretate(args[0], copy)).forEach((el) => {
+      if (typeof el[0] !== "number") console.error("not a triple of number" + el);
+      copy.geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
+    });
+
+    const group = new THREE.Group();
+
+    await interpretate(args[1], copy);
+
+    env.mesh.add(group);
+    copy.geometry.dispose();
+  };
+
+  g3d.AbsoluteThickness = (args, env) => {};
+
+  g3d.Polygon = async (args, env) => {
+    if (env.hasOwnProperty("geometry")) {
+      /**
+       * @type {THREE.Geometry}
+       */
+      var geometry = env.geometry.clone();
+
+      var createFace = (c) => {
+        c = c.map((x) => x - 1);
+
+        switch (c.length) {
+          case 3:
+            geometry.faces.push(new THREE.Face3(c[0], c[1], c[2]));
+            break;
+
+          case 4:
+            geometry.faces.push(
+              new THREE.Face3(c[0], c[1], c[2]),
+              new THREE.Face3(c[0], c[2], c[3]),
+            );
+            break;
+
+          case 5:
+            geometry.faces.push(
+              new THREE.Face3(c[0], c[1], c[4]),
+              new THREE.Face3(c[1], c[2], c[3]),
+              new THREE.Face3(c[1], c[3], c[4]),
+            );
+            break;
+          /**
+           * 0 1
+           *5    2
+           * 4  3
+           */
+          case 6:
+            geometry.faces.push(
+              new THREE.Face3(c[0], c[1], c[5]),
+              new THREE.Face3(c[1], c[2], c[5]),
+              new THREE.Face3(c[5], c[2], c[4]),
+              new THREE.Face3(c[2], c[3], c[4])
+            );
+            break;
+          default:
+            console.log(c);
+            console.log(c.length);
+            console.error("Cant produce complex polygons! at", c);
+        }
+      };
+
+      let a = await interpretate(args[0], env);
+      if (a.length === 1) {
+        a = a[0];
+      }
+
+      if (typeof a[0] === "number") {
+        console.log("Create single face");
+        createFace(a);
+      } else {
+        console.log("Create multiple face");
+        a.forEach(createFace);
+      }
+    } else { 
+      var geometry = new THREE.Geometry();
+      let points = await interpretate(args[0], env);
+
+      points.forEach((el) => {
+        if (typeof el[0] !== "number") {
+          console.error("not a triple of number", el);
+          return;
+        }
+        geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
+      });
+
+      console.log("points");
+      console.log(points);
+
+      switch (points.length) {
+        case 3:
+          geometry.faces.push(new THREE.Face3(0, 1, 2));
+          break;
+
+        case 4:
+          geometry.faces.push(
+            new THREE.Face3(0, 1, 2),
+            new THREE.Face3(0, 2, 3));
+          break;
+        /**
+         *  0 1
+         * 4   2
+         *   3
+         */
+        case 5:
+          geometry.faces.push(
+            new THREE.Face3(0, 1, 4),
+            new THREE.Face3(1, 2, 3),
+            new THREE.Face3(1, 3, 4));
+          break;
+        /**
+         * 0  1
+         *5     2
+         * 4   3
+         */
+        case 6:
+          geometry.faces.push(
+            new THREE.Face3(0, 1, 5),
+            new THREE.Face3(1, 2, 5),
+            new THREE.Face3(5, 2, 4),
+            new THREE.Face3(2, 3, 4)
+          );
+          break;
+        default:
+          console.log(points);
+          console.error("Cant build complex polygon ::");
+      }
+    }
+
+    const material = new THREE.MeshPhysicalMaterial({
+      color: env.color,
+      transparent: env.opacity < 0.9,
+      opacity: env.opacity,
+      roughness: env.roughness,
+      metalness: env.metalness,
+      emissive: env.emissive,
+      reflectivity: env.reflectivity,
+      clearcoat: env.clearcoat,
+      ior: env.ior
+      //depthTest: false
+      //depthWrite: false
+    });
+    console.log(env.opacity);
+    material.side = THREE.DoubleSide;
+
+    geometry.computeFaceNormals();
+    geometry.computeVertexNormals(true);
+    const poly = new THREE.Mesh(geometry, material);
+
+    //poly.frustumCulled = false;
+    env.mesh.add(poly);
+    material.dispose();
+  };
+
+  g3d.Polyhedron = async (args, env) => {
+    if (args[1][1].length > 4) {
+      //non-optimised variant to work with 4 vertex per face
+      await interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
+    } else {
+      //reguar one. gpu-fiendly
+      /**
+       * @type {number[]}
+       */
+      const indices = await interpretate(args[1], env)
+        .flat(4)
+        .map((i) => i - 1);
+      /**
+       * @type {number[]}
+       */
+      const vertices = await interpretate(args[0], env).flat(4);
+
+      const geometry = new THREE.PolyhedronGeometry(vertices, indices);
+
+      var material = new THREE.MeshPhysicalMaterial({
+        color: env.color,
+        transparent: true,
+        opacity: env.opacity,
+        depthWrite: true,
+        roughness: env.roughness,
+        metalness: env.metalness,
+        emissive: env.emissive,
+        reflectivity: env.reflectivity,
+        clearcoat: env.clearcoat,
+        ior: env.ior
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+      env.mesh.add(mesh);
+      geometry.dispose();
+      material.dispose();
+    }
+  };
+
+  g3d.GrayLevel = (args, env) => { };
+
+  g3d.EdgeForm = (args, env) => { };
+
+  g3d.Specularity = (args, env) => { };
+
+  g3d.Text = (args, env) => { };
+
+  g3d.Directive = (args, env) => { };
+
+  g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
+
+  g3d.Line = async (args, env) => {
+    if (env.hasOwnProperty("geometry")) {
+      const geometry = new THREE.Geometry();
+
+      const points = await interpretate(args[0], env);
+      points.forEach((el) => {
+        geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
+      });
+
+      const material = new THREE.LineBasicMaterial({
+        linewidth: env.thickness,
+        color: env.edgecolor,
+      });
+      const line = new THREE.Line(geometry, material);
+
+      line.material.setValues({
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1
+      });
+
+      env.mesh.add(line);
+
+      geometry.dispose();
+      material.dispose();
+    } else {
+      let arr = await interpretate(args[0], env);
+      if (arr.length === 1) arr = arr[0];
+      //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
+      console.log("points: ", arr.length);
+
+      const points = [];
+      arr.forEach((p) => {
+        points.push(new THREE.Vector4(...p, 1));
+      });
+      //new THREE.Vector4(...arr[0], 1)
+
+      points.forEach((p) => {
+        p = p.applyMatrix4(env.matrix);
+      });
+
+      const geometry = new THREE.Geometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({
+        color: env.edgecolor,
+        linewidth: env.thickness,
+      });
+
+      env.mesh.add(new THREE.Line(geometry, material));
+    }
+  };
+
+  let OrbitControls;
+
+  let EffectComposer;
+  let RenderPass; 
+  let UnrealBloomPass;
+
+  let GUI;
+
+
+  g3d.Graphics3D = async (args, env) => {
+    /* lazy loading */
+
+    if (!THREE) {
+      console.log('not there...');
+      THREE         = (await Promise.resolve().then(function () { return three_module; }));
+      OrbitControls = (await import('./OrbitControls-0994c16c.js')).OrbitControls;
+      EffectComposer= (await import('./EffectComposer-6eee9ec6.js')).EffectComposer;
+      RenderPass    = (await import('./RenderPass-51c8c2d2.js')).RenderPass;
+      UnrealBloomPass=(await import('./UnrealBloomPass-924dc1c2.js')).UnrealBloomPass;
+      GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
+    }
+
+    /**
+     * @type {Object}
+     */   
+    env.local.handlers = [];
+    env.local.prolog   = [];
+
+    const Handlers = [];
+
+    /**
+     * @type {Object}
+     */  
+    const options = core._getRules(args, env);
+    console.log(options);
+
+    /**
+     * @type {HTMLElement}
+     */
+    var container = env.element;
+
+    /**
+     * @type {[Number, Number]}
+     */
+    let ImageSize = options.ImageSize || [core.DefaultWidth, core.DefaultWidth*0.618034];
+
+    let background = options.Background || new THREE.Color(0xffffff);
+
+    const lighting = options.Lighting || "Default";
+
+    const aspectratio = options.AspectRatio || 0.618034;
+
+    //if only the width is specified
+    if (!(ImageSize instanceof Array)) ImageSize = [ImageSize, ImageSize*aspectratio];
+    console.log('Image size');
+    console.log(ImageSize);
+
+    //path tracing engine
+    if (options.RTX) ;
+
+    if (options.Controls) {
+      console.log('controld');
+      console.log(options);
+      if (options.Controls === 'FirstPersonControls') {
+        (await import('./FirstPersonControls-7ae03915.js')).FirstPersonControls;
+      }
+    }
+
+    /**
+    * @type {THREE.Mesh<THREE.Geometry>}
+    */
+
+    let camera, scene, renderer, composer;
+    let controls;
+
+    const params = {
+      exposure: 1,
+      bloomStrength: 0.1,
+      bloomThreshold: 0.5,
+      bloomRadius: 0.11
+    };
+
+    await init();
+    animate();
+
+    async function init() {
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 1, 20000 );
+      
+
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize(ImageSize[0], ImageSize[1]);
+      //renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.domElement.style = "margin:auto";
+      container.appendChild( renderer.domElement );
+
+      /* postprocess */
+  		const renderScene = new RenderPass( scene, camera );
+
+  		const bloomPass = new UnrealBloomPass( new THREE.Vector2( ImageSize[0], ImageSize[1] ), 1.5, 0.4, 0.85 );
+  		bloomPass.threshold = params.bloomThreshold;
+  		bloomPass.strength = params.bloomStrength;
+  		bloomPass.radius = params.bloomRadius;
+
+      composer = new EffectComposer( renderer );
+  		composer.addPass( renderScene );
+  		composer.addPass( bloomPass );
+
+      composer.setSize(ImageSize[0], ImageSize[1]);
+
+      function takeScheenshot() {
+        //renderer.render( scene, camera );
+        composer.render();
+        renderer.domElement.toBlob(function(blob){
+          var a = document.createElement('a');
+          var url = URL.createObjectURL(blob);
+          a.href = url;
+          a.download = 'screenshot.png';
+          a.click();
+        }, 'image/png', 1.0);
+      }
+
+      const gui = new GUI({ autoPlace: false });
+      const button = { Save:function(){ takeScheenshot(); }};
+      gui.add(button, 'Save');
+
+      const bloomFolder = gui.addFolder('Bloom');
+
+  		bloomFolder.add( params, 'exposure', 0.1, 2 ).onChange( function ( value ) {
+  			renderer.toneMappingExposure = Math.pow( value, 4.0 );
+  		} );
+
+  		bloomFolder.add( params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
+  			bloomPass.threshold = Number( value );
+  		} );
+
+  		bloomFolder.add( params, 'bloomStrength', 0.0, 3.0 ).onChange( function ( value ) {
+  			bloomPass.strength = Number( value );
+  		} );
+
+  		bloomFolder.add( params, 'bloomRadius', 0.0, 1.0 ).step( 0.01 ).onChange( function ( value ) {
+  			bloomPass.radius = Number( value );
+  		} );
+
+      if (background instanceof THREE.Color) scene.background = background;
+
+
+      const guiContainer = document.createElement('div');
+      guiContainer.classList.add('graphics3d-controller');
+      guiContainer.appendChild(gui.domElement);
+      container.appendChild( guiContainer );    
+
+      env.local.renderer = renderer;
+      env.local.scene    = scene;
+      env.local.camera = camera;
+
+      if (lighting === "Default") g3d.DefaultLighting([], env);
+
+      const group = new THREE.Group();
+
+      const cameraMesh = {
+        mesh: scene,
+        pos: [3, 3, 10],
+        set: (mesh, pos) => {
+          cameraMesh.mesh = mesh;
+          cameraMesh.pos = pos;
+        }
+      };
+
+      const envcopy = {
+        ...env,
+        context: g3d,
+        numerical: true,
+        tostring: false,
+        matrix: new THREE.Matrix4().set(
+          1, 0, 0, 0,//
+          0, 1, 0, 0,//
+          0, 0, 1, 0,//
+          0, 0, 0, 1),
+        color: new THREE.Color(1, 1, 1),
+        opacity: 1,
+        thickness: 1,
+        roughness: 0.5,
+        edgecolor: new THREE.Color(0, 0, 0),
+        mesh: group,
+        metalness: 0,
+        emissive: new THREE.Color(0, 0, 0),
+        arrowHeight: 20,
+        arrowRadius: 5,
+        reflectivity: 0.5,
+        clearcoat: 0,
+        ior: 1.5,
+        Lerp: options.Lerp,
+
+        Handlers: Handlers,
+
+        cameraMesh: cameraMesh
+      };
+    
+      await interpretate(args[0], envcopy);
+
+      envcopy.cameraMesh.mesh.add(camera);
+      camera.position.set(...envcopy.cameraMesh.pos);
+
+      group.applyMatrix4(new THREE.Matrix4().set(
+        1, 0, 0, 0,
+        0, 0, 1, 0,
+        0,-1, 0, 0,
+        0, 0, 0, 1));
+
+      scene.add(group);
+
+      
+      
+      controls = new OrbitControls( camera, renderer.domElement );
+      controls.target.set( 0, 1, 0 );
+      controls.update();
+    }
+
+
+    function animate() {
+      //added loop-handlers, void
+      for (let i=0; i<Handlers.length; ++i) {
+        Handlers[i].eval();
+      }
+
+      render();
+      env.local.aid = requestAnimationFrame( animate );
+    }
+
+    function render() {
+      //added loop-handlers, void
+      env.local.handlers.forEach((f)=>{
+        f();
+      });
+
+      //renderer.render( scene, camera );
+      composer.render();
+    }
+
+
+  }; 
+
+  let Water = false;
+  let Sky   = false;
+
+  g3d.Camera = (args, env) => {
+    let pos = args;
+    if (args.length === 0) pos = [3,3,1];
+    env.cameraMesh.set(env.mesh, pos);
+  };
+
+  g3d.Reflectivity = (args, env) => {
+    env.reflectivity = interpretate(args[0], env);
+  };
+
+  g3d.IOR = (args, env) => {
+    env.ior = interpretate(args[0], env);
+  };
+
+  g3d.Clearcoat = (args, env) => {
+    env.clearcoat = interpretate(args[0], env);
+  };
+
+  g3d.LightProbe = (args, env) => {
+    //THREE.js light probe irradiance
+  };
+
+  g3d.DefaultLighting = (args, env) => {
+    const lighting = [
+      { type: "Ambient", color: [0.3, 0.2, 0.4] },
+      {
+        type: "Directional",
+        color: [0.8, 0, 0],
+        position: [2, 0, 2]
+      },
+      {
+        type: "Directional",
+        color: [0, 0.8, 0],
+        position: [2, 2, 2]
+      },
+      {
+        type: "Directional",
+        color: [0, 0, 0.8],
+        position: [0, 2, 2]
+      }
+    ];
+
+    function addLight(l) {
+      var color = new THREE.Color().setRGB(l.color[0], l.color[1], l.color[2]);
+      var light;
+
+      if (l.type === "Ambient") {
+        light = new THREE.AmbientLight(color, 0.5);
+      } else if (l.type === "Directional") {
+        console.log('adding direction light');
+        console.log(l);
+        light = new THREE.DirectionalLight(color, 1);
+        light.position.fromArray(l.position);
+
+      } else if (l.type === "Spot") {
+        light = new THREE.SpotLight(color);
+        light.position.fromArray(l.position);
+        light.target.position.fromArray(l.target);
+        //light.target.updateMatrixWorld(); // This fixes bug in THREE.js
+        light.angle = l.angle;
+      } else if (l.type === "Point") {
+        light = new THREE.PointLight(color);
+        light.position.fromArray(l.position);
+
+      } else {
+        alert("Error: Internal Light Error", l.type);
+        return;
+      }
+      return light;
+    } 
+
+    lighting.forEach((el) => env.local.camera.add(addLight(el)) );
+
+  };
+
+  g3d.SkyAndWater = async (args, env) => {
+    if (!Water) {
+      Water         = (await import('./Water-f02ff057.js')).Water;
+      Sky           = (await import('./Sky-acce91a1.js')).Sky;  
+    }
+
+    let options = core._getRules(args, env);
+    console.log('options:');
+    options.dims = options.dims || [10000, 10000];
+    options.skyscale = options.skyscale || 10000;
+    options.elevation = options.elevation ||  8;
+    options.azimuth = options.azimuth || 180;
+
+
+    console.log(options);
+
+    let sun = new THREE.Vector3();
+    let water;
+    // Water
+
+    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
+
+    water = new Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        sunDirection: new THREE.Vector3(),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: true
+      }
+    );
+
+    water.rotation.x = - Math.PI / 2;
+    
+    env.local.water = water;
+
+    // Skybox
+
+    const sky = new Sky();
+    sky.scale.setScalar( options.skyscale );
+
+    env.local.sky = sky;  
+
+    const skyUniforms = sky.material.uniforms;
+
+    skyUniforms[ 'turbidity' ].value = 10;
+    skyUniforms[ 'rayleigh' ].value = 2;
+    skyUniforms[ 'mieCoefficient' ].value = 0.005;
+    skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+
+    const parameters = {
+      elevation: options.elevation,
+      azimuth: options.azimuth
+    };
+
+
+
+    env.local.scene.add( water );
+    env.local.scene.add( sky );
+
+    const pmremGenerator = new THREE.PMREMGenerator( env.local.renderer );
+    let renderTarget;
+
+    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
+    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
+
+    sun.setFromSphericalCoords( 1, phi, theta );
+
+    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
+    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+
+    if ( renderTarget !== undefined ) renderTarget.dispose();
+
+    renderTarget = pmremGenerator.fromScene( sky );
+
+    env.local.scene.environment = renderTarget.texture;  
+
+    //every frame
+    env.local.handlers.push(
+      function() {
+        env.local.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+      }
+    );
+  };
+
+  g3d.Graphics3D.destroy = (args, env) => {
+    console.log('Graphics3D was removed');
+    console.log('env global:'); console.log(env.global);
+    console.log('env local:'); console.log(env.local);
+    cancelAnimationFrame(env.local.aid);
+  };
+}
+
+export { AdditiveBlending as A, BackSide as B, Clock as C, EventDispatcher as E, FrontSide as F, LinearFilter as L, MOUSE as M, NoToneMapping as N, OrthographicCamera as O, PlaneBufferGeometry as P, Quaternion as Q, RGBAFormat as R, Spherical as S, TOUCH as T, UniformsUtils as U, Vector3 as V, WebGLRenderTarget as W, Vector2 as a, ShaderMaterial as b, Mesh as c, Color as d, MeshBasicMaterial as e, MathUtils$1 as f, Plane as g, Matrix4 as h, Vector4 as i, PerspectiveCamera as j, UniformsLib as k, LinearEncoding as l, RGBFormat as m, BoxBufferGeometry as n, kernel as o };

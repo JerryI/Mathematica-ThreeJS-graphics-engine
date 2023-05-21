@@ -1,13 +1,18 @@
+const { MathUtils } = require('three');
+
 {
 
   let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
   interpretate.contextExpand(g3d);
 
-  let three = false
+  /**
+  * @type {import('three')}
+  */
+  let THREE;
 
   function computeGroupCenter(group) {
-    var center = new three.Vector3();
+    var center = new THREE.Vector3();
     var children = group.children;
     var count = children.length;
     for (var i = 0; i < count; i++) {
@@ -17,13 +22,8 @@
     return center;
   }
 
-  g3d.Style = (args, env) => {
-    var copy = Object.assign({}, env);
+  g3d.Style = core.List
 
-    args.forEach((el) => {
-      interpretate(el, copy);
-    });
-  };
   /**
    * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
    */
@@ -31,21 +31,17 @@
     console.log("Dashing not implemented");
   }
 
-  g3d.Annotation = (args, env) => {
-    args.forEach((el) => {
-      interpretate(el, env);
-    });
-  };
+  g3d.Annotation = core.List
 
-  g3d.GraphicsGroup = (args, env) => {
-    var group = new three.Group();
-    var copy = Object.assign({}, env);
+  g3d.GraphicsGroup = async (args, env) => {
+    const group = new THREE.Group();
+    let copy = Object.assign({}, env);
 
     copy.mesh = group;
 
-    args.forEach((el) => {
-      interpretate(el, copy);
-    });
+    for (const a of args) {
+      await interpretate(a, copy);
+    }
 
     env.mesh.add(group);
   };
@@ -55,25 +51,28 @@
   }
 
   g3d.Emissive = (args, env) => {
-    var copy = Object.assign({}, env);
-    interpretate(args[0], copy);
+    interpretate(args[0], {...env});
     env.emissive = copy.color;
   }
 
-  g3d.RGBColor = (args, env) => {
+  g3d.RGBColor = async (args, env) => {
     if (args.length !== 3 && args.length !== 1) {
       console.log("RGB format not implemented", args);
       console.error("RGB values should be triple!");
       return;
     }
-    if (args.length === 1) {
-      args = interpretate(args[0], env); // return [r, g, b] , 0<=r, g, b<=1
-    }
-    const r = interpretate(args[0], env);
-    const g = interpretate(args[1], env);
-    const b = interpretate(args[2], env);
 
-    env.color = new three.Color(r, g, b);
+    let a = [...args];
+
+    if (args.length === 1) {
+      a = await interpretate(args[0], env); // return [r, g, b] , 0<=r, g, b<=1
+    }
+
+    const r = await interpretate(a[0], env);
+    const g = await interpretate(a[1], env);
+    const b = await interpretate(a[2], env);
+
+    env.color = new THREE.Color(r, g, b);
   };
 
   g3d.Roughness = (args, env) => {
@@ -103,21 +102,21 @@
     }
   };
 
-  g3d.TubeArrow = (args, env) => {
+  g3d.TubeArrow = async (args, env) => {
     console.log('Context test');
     console.log(this);
 
     let radius = 1;
-    if (args.length > 1) radius = args[1];
+    if (args.length > 1) radius = await interpretate(args[1], env);
     /**
-     * @type {three.Vector3}}
+     * @type {THREE.Vector3}}
      */
-    const coordinates = interpretate(args[0], env);
+    const coordinates = await interpretate(args[0], env);
 
     /**
      * @type {THREE.MeshPhysicalMaterial}}
      */  
-    const material = new three.MeshPhysicalMaterial({
+    const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
       transparent: false,
       roughness: env.roughness,
@@ -130,12 +129,12 @@
     });
 
     //points 1, 2
-    const p1 = new three.Vector3(...coordinates[0]);
-    const p2 = new three.Vector3(...coordinates[1]);
+    const p1 = new THREE.Vector3(...coordinates[0]);
+    const p2 = new THREE.Vector3(...coordinates[1]);
     //direction
     const dp = p2.clone().addScaledVector(p1, -1);
 
-    const geometry = new three.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+    const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
 
     //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
     geometry.computeBoundingBox();
@@ -144,25 +143,25 @@
     let center = position.max.addScaledVector(position.min, -1);
 
     //default geometry
-    const cylinder = new three.Mesh(geometry, material);
+    const cylinder = new THREE.Mesh(geometry, material);
 
     //cone
-    const conegeometry = new three.ConeBufferGeometry(env.arrowRadius, env.arrowHeight, 32 );
-    const cone = new three.Mesh(conegeometry, material);
+    const conegeometry = new THREE.ConeBufferGeometry(env.arrowRadius, env.arrowHeight, 32 );
+    const cone = new THREE.Mesh(conegeometry, material);
     cone.position.y = dp.length()/2 + env.arrowHeight/2;
 
-    let group = new three.Group();
+    let group = new THREE.Group();
     group.add(cylinder, cone);
 
     //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
     //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-    const v = new three.Vector3(0, 1, 0).cross(dp.normalize());
+    const v = new THREE.Vector3(0, 1, 0).cross(dp.normalize());
     const theta = Math.asin(v.length() / dp.length());
     const sc = Math.sin(theta);
     const mcs = 1.0 - Math.cos(theta);
 
     //Did not find how to write it using vectors
-    const matrix = new three.Matrix4().set(
+    const matrix = new THREE.Matrix4().set(
       1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
       mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
       -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
@@ -186,8 +185,8 @@
     material.dispose();
   };
 
-  g3d.Arrow = (args, env) => {
-    var arr = interpretate(args[0], env);
+  g3d.Arrow = async (args, env) => {
+    let arr = await interpretate(args[0], env);
     if (arr.length === 1) arr = arr[0];
     if (arr.length !== 2) {
       console.error("Tube must have 2 vectors!");
@@ -195,8 +194,8 @@
     }
 
     const points = [
-      new three.Vector4(...arr[0], 1),
-      new three.Vector4(...arr[1], 1),
+      new THREE.Vector4(...arr[0], 1),
+      new THREE.Vector4(...arr[1], 1),
     ];
 
     points.forEach((p) => {
@@ -206,7 +205,7 @@
     const origin = points[0].clone();
     const dir = points[1].add(points[0].negate());
 
-    const arrowHelper = new three.ArrowHelper(
+    const arrowHelper = new THREE.ArrowHelper(
       dir.normalize(),
       origin,
       dir.length(),
@@ -220,7 +219,7 @@
     var radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
 
-    const material = new three.MeshPhysicalMaterial({
+    const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
       roughness: env.roughness,
       opacity: env.opacity,
@@ -232,9 +231,9 @@
     });
 
     function addSphere(cr) {
-      const origin = new three.Vector4(...cr, 1);
-      const geometry = new three.SphereGeometry(radius, 20, 20);
-      const sphere = new three.Mesh(geometry, material);
+      const origin = new THREE.Vector4(...cr, 1);
+      const geometry = new THREE.SphereGeometry(radius, 20, 20);
+      const sphere = new THREE.Mesh(geometry, material);
 
       sphere.position.set(origin.x, origin.y, origin.z);
 
@@ -302,7 +301,7 @@
   	sky.scale.setScalar( 10000 );
   	env.mesh.add( sky );
     env.sky = sky;
-    env.sun = new three.Vector3();
+    env.sun = new THREE.Vector3();
 
   	const skyUniforms = sky.material.uniforms;
 
@@ -313,19 +312,19 @@
   }
 
   g3d.Water = (args, env) => {
-    const waterGeometry = new three.PlaneGeometry( 10000, 10000 );
+    const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
 
   	const water = new Water(
   		waterGeometry,
   		{
   			textureWidth: 512,
   			textureHeight: 512,
-  			waterNormals: new three.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+  			waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
 
-          texture.wrapS = texture.wrapT = three.RepeatWrapping;
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   			} ),
 
-        sunDirection: new three.Vector3(),
+        sunDirection: new THREE.Vector3(),
   			sunColor: 0xffffff,
   			waterColor: 0x001e0f,
   			distortionScale: 3.7,
@@ -339,25 +338,25 @@
       env.water = water;
   }
 
-  g3d.Cuboid = (args, env) => {
+  g3d.Cuboid = async (args, env) => {
     //if (params.hasOwnProperty('geometry')) {
-    //	var points = [new three.Vector4(...interpretate(func.args[0]), 1),
-    //				new three.Vector4(...interpretate(func.args[1]), 1)];
+    //	var points = [new THREE.Vector4(...interpretate(func.args[0]), 1),
+    //				new THREE.Vector4(...interpretate(func.args[1]), 1)];
     //}
     /**
-     * @type {three.Vector4}
+     * @type {THREE.Vector4}
      */
     var diff;
     /**
-     * @type {three.Vector4}
+     * @type {THREE.Vector4}
      */
     var origin;
     var p;
 
     if (args.length === 2) {
       var points = [
-        new three.Vector4(...interpretate(args[0], env), 1),
-        new three.Vector4(...interpretate(args[1], env), 1),
+        new THREE.Vector4(...(await interpretate(args[0], env)), 1),
+        new THREE.Vector4(...(await interpretate(args[1], env)), 1),
       ];
 
       origin = points[0]
@@ -366,9 +365,9 @@
         .divideScalar(2);
       diff = points[0].clone().add(points[1].clone().negate());
     } else if (args.length === 1) {
-      p = interpretate(args[0], env);
-      origin = new three.Vector4(...p, 1);
-      diff = new three.Vector4(1, 1, 1, 1);
+      p = await interpretate(args[0], env);
+      origin = new THREE.Vector4(...p, 1);
+      diff = new THREE.Vector4(1, 1, 1, 1);
 
       //shift it
       origin.add(diff.clone().divideScalar(2));
@@ -377,8 +376,8 @@
       return;
     }
 
-    const geometry = new three.BoxGeometry(diff.x, diff.y, diff.z);
-    const material = new three.MeshPhysicalMaterial({
+    const geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
+    const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
       transparent: true,
       opacity: env.opacity,
@@ -391,11 +390,11 @@
       ior: env.ior
     });
 
-    //material.side = three.DoubleSide;
+    //material.side = THREE.DoubleSide;
 
-    const cube = new three.Mesh(geometry, material);
+    const cube = new THREE.Mesh(geometry, material);
 
-    //var tr = new three.Matrix4();
+    //var tr = new THREE.Matrix4();
     //	tr.makeTranslation(origin.x,origin.y,origin.z);
 
     //cube.applyMatrix(params.matrix.clone().multiply(tr));
@@ -412,15 +411,21 @@
     return "Center";
   };
 
-  g3d.Cylinder = (args, env) => {
+  g3d.Cylinder = async (args, env) => {
     let radius = 1;
-    if (args.length > 1) radius = args[1];
+    if (args.length > 1) radius = await interpretate(args[1], env);
     /**
-     * @type {three.Vector3}}
+     * @type {THREE.Vector3}}
      */
-    const coordinates = interpretate(args[0], env);
+    let coordinates = await interpretate(args[0], env);
+    if (coordinates.length === 1) {
+      coordinates = coordinates[0];
+    }
 
-    const material = new three.MeshPhysicalMaterial({
+    coordinates[0] = new THREE.Vector3(...coordinates[0]);
+    coordinates[1] = new THREE.Vector3(...coordinates[1]);
+
+    const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
       transparent: false,
       roughness: env.roughness,
@@ -432,59 +437,38 @@
       ior: env.ior
     });
 
-    //points 1, 2
-    const p1 = new three.Vector3(...coordinates[0]);
-    const p2 = new three.Vector3(...coordinates[1]);
-    //direction
-    const dp = p2.clone().addScaledVector(p1, -1);
+    console.log(coordinates);
 
-    const geometry = new three.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+    // edge from X to Y
+    var direction = new THREE.Vector3().subVectors(coordinates[1], coordinates[0]);
 
-    //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
-    geometry.computeBoundingBox();
-    const position = geometry.boundingBox;
+    console.log(direction);
+  
+    // Make the geometry (of "direction" length)
+    var geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), 6, 4, false);
+    // shift it so one end rests on the origin
+    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
+    // rotate it the right way for lookAt to work
+    geometry.applyMatrix4(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(90)));
+    // Make a mesh with the geometry
+    var mesh = new THREE.Mesh(geometry, material);
+    // Position it where we want
 
-    const center = position.max.addScaledVector(position.min, -1);
+    mesh.position.copy(coordinates[0]);
+    // And make it point to where we want
+    mesh.lookAt(coordinates[1]); 
 
-    //default geometry
-    const cylinder = new three.Mesh(geometry, material);
+    env.mesh.add(mesh);
 
-    //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
-    //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-    const v = new three.Vector3(0, 1, 0).cross(dp.normalize());
-    const theta = Math.asin(v.length() / dp.length());
-    const sc = Math.sin(theta);
-    const mcs = 1.0 - Math.cos(theta);
-
-    //Did not find how to write it using vectors
-    const matrix = new three.Matrix4().set(
-      1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
-      mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
-      -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
-      0,/*                            */0,/*                            */ 0,/**                           */ 1
-    );
-
-    //middle target point
-    const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5);
-
-    //shift to the center and rotate
-    cylinder.position = center;
-    cylinder.applyMatrix4(matrix);
-
-    //translate its center to the middle target point
-    cylinder.position.addScaledVector(middle, -1);
-
-    env.mesh.add(cylinder);
-
-    geometry.dispose();
-    material.dispose();
+    //geometry.dispose();
+    //material.dispose();
   };
 
-  g3d.Tetrahedron = (args, env) => {
+  g3d.Tetrahedron = async (args, env) => {
     /**
      * @type {number[]}
      */
-    var points = interpretate(args[0], env);
+    var points = await interpretate(args[0], env);
     console.log("Points of tetrahedron:");
     console.log(points);
     var faces = [
@@ -505,14 +489,111 @@
       ]);
     });
     console.log(fake);
-    interpretate(fake, env);
+    await interpretate(fake, env);
   };
 
-  g3d.GeometricTransformation = (args, env) => {
-    var group = new three.Group();
+  g3d.Translate = async (args, env) => {
+    let group = new THREE.Group();
+
+    let p = await interpretate(args[1], env);
+
+    //Backup of params
+    let copy = Object.assign({}, env);
+    copy.mesh = group;
+    await interpretate(args[0], copy);
+
+    group.translateX(p[0]);
+    group.translateY(p[1]);
+    group.translateZ(p[2]);
+
+    env.local.mesh = group;
+
+    env.mesh.add(group);
+  };
+
+  g3d.Translate.update = async (args, env) => {
+    const p = await interpretate(args[1], env);
+    const group = env.local.mesh;
+
+    if (env.Lerp) {
+
+      if (!env.local.lerp) {
+        console.log('creating worker for lerp of movements..');
+        const worker = {
+          alpha: 0.05,
+          target: new THREE.Vector3(...p),
+          eval: () => {
+            group.position.lerp(worker.target, 0.05)
+          }
+        };
+
+        env.local.lerp = worker;  
+
+        env.Handlers.push(worker);
+      }
+
+      env.local.lerp.target.fromArray(p);
+      return;
+    }
+
+    group.translateX(p[0]);
+    group.translateY(p[1]);
+    group.translateZ(p[2]);
+  }
+
+  g3d.Translate.virtual = true  
+
+  g3d.LookAt = async (args, env) => {
+    const group = new THREE.Group();
+    const dir = await interpretate(args[1], env);
+
+
+
+    await interpretate(args[0], {...env, mesh:group});
+
+    let bbox = new THREE.Box3().setFromObject(group);
+    let center = bbox.max.clone().add(bbox.min).divideScalar(2);
+
+    console.log('center: ');
+    console.log(center);
+
+    let translate = new THREE.Matrix4().makeTranslation(
+      -center.x,
+      -center.y,
+      -center.z,
+    );
+
+    group.applyMatrix4(translate);
+
+    group.lookAt(...dir);
+    group.rotation.x = MathUtils.PI/2;
+
+    translate = new THREE.Matrix4().makeTranslation(
+      center.x,
+      center.y,
+      center.z,
+    );
+
+    group.applyMatrix4(translate);
+
+    env.local.group = group;
+
+    env.mesh.add(group);
+  }
+
+  g3d.LookAt.update = async (args, env) => {
+    const dir = await interpretate(args[1], env);
+    env.local.group.lookAt(...dir);
+  }  
+
+  g3d.LookAt.virtual = true
+
+  g3d.GeometricTransformation = async (args, env) => {
+    var group = new THREE.Group();
     //Если center, то наверное надо приметь matrix
     //к каждому объекту относительно родительской группы.
-    var p = interpretate(args[1], env);
+    var p = [...(await interpretate(args[1], {...env, hold:false}))];
+    console.log(p);
     var centering = false;
     var centrans = [];
 
@@ -538,7 +619,7 @@
     if (p.length === 3) {
       if (typeof p[0] === "number") {
         var dir = p;
-        var matrix = new three.Matrix4().makeTranslation(...dir, 1);
+        var matrix = new THREE.Matrix4().makeTranslation(...dir, 1);
       } else {
         //make it like Matrix4
         p.forEach((el) => {
@@ -546,7 +627,7 @@
         });
         p.push([0, 0, 0, 1]);
 
-        var matrix = new three.Matrix4();
+        var matrix = new THREE.Matrix4();
         console.log("Apply matrix to group::");
         matrix.set(...aflatten(p));
       }
@@ -558,13 +639,13 @@
     //Backup of params
     var copy = Object.assign({}, env);
     copy.mesh = group;
-    interpretate(args[0], copy);
-
+    await interpretate(args[0], copy);
+    console.log('MATRIX');
     console.log(matrix);
 
     if (centering || centrans.length > 0) {
       console.log("::CENTER::");
-      var bbox = new three.Box3().setFromObject(group);
+      var bbox = new THREE.Box3().setFromObject(group);
       console.log(bbox);
       var center = bbox.max.clone().add(bbox.min).divideScalar(2);
       if (centrans.length > 0) {
@@ -573,14 +654,14 @@
       }
       console.log(center);
 
-      var translate = new three.Matrix4().makeTranslation(
+      var translate = new THREE.Matrix4().makeTranslation(
         -center.x,
         -center.y,
         -center.z,
       );
       group.applyMatrix4(translate);
       group.applyMatrix4(matrix);
-      translate = new three.Matrix4().makeTranslation(
+      translate = new THREE.Matrix4().makeTranslation(
         center.x,
         center.y,
         center.z
@@ -596,14 +677,14 @@
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
 
-    copy.geometry = new three.Geometry();
+    copy.geometry = new THREE.Geometry();
 
     (await interpretate(args[0], copy)).forEach((el) => {
       if (typeof el[0] !== "number") console.error("not a triple of number" + el);
-      copy.geometry.vertices.push(new three.Vector3(el[0], el[1], el[2]));
+      copy.geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
     });
 
-    const group = new three.Group();
+    const group = new THREE.Group();
 
     await interpretate(args[1], copy);
 
@@ -616,7 +697,7 @@
   g3d.Polygon = async (args, env) => {
     if (env.hasOwnProperty("geometry")) {
       /**
-       * @type {three.Geometry}
+       * @type {THREE.Geometry}
        */
       var geometry = env.geometry.clone();
 
@@ -625,21 +706,21 @@
 
         switch (c.length) {
           case 3:
-            geometry.faces.push(new three.Face3(c[0], c[1], c[2]));
+            geometry.faces.push(new THREE.Face3(c[0], c[1], c[2]));
             break;
 
           case 4:
             geometry.faces.push(
-              new three.Face3(c[0], c[1], c[2]),
-              new three.Face3(c[0], c[2], c[3]),
+              new THREE.Face3(c[0], c[1], c[2]),
+              new THREE.Face3(c[0], c[2], c[3]),
             );
             break;
 
           case 5:
             geometry.faces.push(
-              new three.Face3(c[0], c[1], c[4]),
-              new three.Face3(c[1], c[2], c[3]),
-              new three.Face3(c[1], c[3], c[4]),
+              new THREE.Face3(c[0], c[1], c[4]),
+              new THREE.Face3(c[1], c[2], c[3]),
+              new THREE.Face3(c[1], c[3], c[4]),
             );
             break;
           /**
@@ -649,10 +730,10 @@
            */
           case 6:
             geometry.faces.push(
-              new three.Face3(c[0], c[1], c[5]),
-              new three.Face3(c[1], c[2], c[5]),
-              new three.Face3(c[5], c[2], c[4]),
-              new three.Face3(c[2], c[3], c[4])
+              new THREE.Face3(c[0], c[1], c[5]),
+              new THREE.Face3(c[1], c[2], c[5]),
+              new THREE.Face3(c[5], c[2], c[4]),
+              new THREE.Face3(c[2], c[3], c[4])
             );
             break;
           default:
@@ -662,7 +743,7 @@
         }
       };
 
-      var a = await interpretate(args[0], env);
+      let a = await interpretate(args[0], env);
       if (a.length === 1) {
         a = a[0];
       }
@@ -674,16 +755,16 @@
         console.log("Create multiple face");
         a.forEach(createFace);
       }
-    } else {
-      var geometry = new three.Geometry();
-      var points = await interpretate(args[0], env);
+    } else { 
+      var geometry = new THREE.Geometry();
+      let points = await interpretate(args[0], env);
 
       points.forEach((el) => {
         if (typeof el[0] !== "number") {
           console.error("not a triple of number", el);
           return;
         }
-        geometry.vertices.push(new three.Vector3(el[0], el[1], el[2]));
+        geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
       });
 
       console.log("points");
@@ -691,13 +772,13 @@
 
       switch (points.length) {
         case 3:
-          geometry.faces.push(new three.Face3(0, 1, 2));
+          geometry.faces.push(new THREE.Face3(0, 1, 2));
           break;
 
         case 4:
           geometry.faces.push(
-            new three.Face3(0, 1, 2),
-            new three.Face3(0, 2, 3));
+            new THREE.Face3(0, 1, 2),
+            new THREE.Face3(0, 2, 3));
           break;
         /**
          *  0 1
@@ -706,9 +787,9 @@
          */
         case 5:
           geometry.faces.push(
-            new three.Face3(0, 1, 4),
-            new three.Face3(1, 2, 3),
-            new three.Face3(1, 3, 4));
+            new THREE.Face3(0, 1, 4),
+            new THREE.Face3(1, 2, 3),
+            new THREE.Face3(1, 3, 4));
           break;
         /**
          * 0  1
@@ -717,10 +798,10 @@
          */
         case 6:
           geometry.faces.push(
-            new three.Face3(0, 1, 5),
-            new three.Face3(1, 2, 5),
-            new three.Face3(5, 2, 4),
-            new three.Face3(2, 3, 4)
+            new THREE.Face3(0, 1, 5),
+            new THREE.Face3(1, 2, 5),
+            new THREE.Face3(5, 2, 4),
+            new THREE.Face3(2, 3, 4)
           );
           break;
         default:
@@ -729,7 +810,7 @@
       }
     }
 
-    const material = new three.MeshPhysicalMaterial({
+    const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
       transparent: env.opacity < 0.9,
       opacity: env.opacity,
@@ -743,37 +824,37 @@
       //depthWrite: false
     });
     console.log(env.opacity);
-    material.side = three.DoubleSide;
+    material.side = THREE.DoubleSide;
 
     geometry.computeFaceNormals();
     geometry.computeVertexNormals(true);
-    const poly = new three.Mesh(geometry, material);
+    const poly = new THREE.Mesh(geometry, material);
 
     //poly.frustumCulled = false;
     env.mesh.add(poly);
     material.dispose();
   };
 
-  g3d.Polyhedron = (args, env) => {
+  g3d.Polyhedron = async (args, env) => {
     if (args[1][1].length > 4) {
       //non-optimised variant to work with 4 vertex per face
-      interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
+      await interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
     } else {
       //reguar one. gpu-fiendly
       /**
        * @type {number[]}
        */
-      const indices = interpretate(args[1], env)
+      const indices = await interpretate(args[1], env)
         .flat(4)
         .map((i) => i - 1);
       /**
        * @type {number[]}
        */
-      const vertices = interpretate(args[0], env).flat(4);
+      const vertices = await interpretate(args[0], env).flat(4);
 
-      const geometry = new three.PolyhedronGeometry(vertices, indices);
+      const geometry = new THREE.PolyhedronGeometry(vertices, indices);
 
-      var material = new three.MeshPhysicalMaterial({
+      var material = new THREE.MeshPhysicalMaterial({
         color: env.color,
         transparent: true,
         opacity: env.opacity,
@@ -786,7 +867,7 @@
         ior: env.ior
       });
 
-      const mesh = new three.Mesh(geometry, material);
+      const mesh = new THREE.Mesh(geometry, material);
       env.mesh.add(mesh);
       geometry.dispose();
       material.dispose();
@@ -803,22 +884,22 @@
 
   g3d.Directive = (args, env) => { };
 
-  g3d.PlaneGeometry = () => { new three.PlaneGeometry;  };
+  g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
-  g3d.Line = (args, env) => {
+  g3d.Line = async (args, env) => {
     if (env.hasOwnProperty("geometry")) {
-      const geometry = new three.Geometry();
+      const geometry = new THREE.Geometry();
 
-      const points = interpretate(args[0], env);
+      const points = await interpretate(args[0], env);
       points.forEach((el) => {
         geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
       });
 
-      const material = new three.LineBasicMaterial({
+      const material = new THREE.LineBasicMaterial({
         linewidth: env.thickness,
         color: env.edgecolor,
       });
-      const line = new three.Line(geometry, material);
+      const line = new THREE.Line(geometry, material);
 
       line.material.setValues({
         polygonOffset: true,
@@ -831,28 +912,28 @@
       geometry.dispose();
       material.dispose();
     } else {
-      let arr = interpretate(args[0], env);
+      let arr = await interpretate(args[0], env);
       if (arr.length === 1) arr = arr[0];
       //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
       console.log("points: ", arr.length);
 
       const points = [];
       arr.forEach((p) => {
-        points.push(new three.Vector4(...p, 1));
+        points.push(new THREE.Vector4(...p, 1));
       });
-      //new three.Vector4(...arr[0], 1)
+      //new THREE.Vector4(...arr[0], 1)
 
       points.forEach((p) => {
         p = p.applyMatrix4(env.matrix);
       });
 
-      const geometry = new three.Geometry().setFromPoints(points);
-      const material = new three.LineBasicMaterial({
+      const geometry = new THREE.Geometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({
         color: env.edgecolor,
         linewidth: env.thickness,
       });
 
-      env.mesh.add(new three.Line(geometry, material));
+      env.mesh.add(new THREE.Line(geometry, material));
     }
   };
 
@@ -869,9 +950,9 @@
   g3d.Graphics3D = async (args, env) => {
     /* lazy loading */
 
-    if (!three) {
+    if (!THREE) {
       console.log('not there...')
-      three         = (await import('three'));
+      THREE         = (await import('three'));
       OrbitControls = (await import("three/examples/jsm/controls/OrbitControls")).OrbitControls;
       EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer')).EffectComposer;
       RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass')).RenderPass;
@@ -884,6 +965,8 @@
      */   
     env.local.handlers = [];
     env.local.prolog   = [];
+
+    const Handlers = [];
 
     /**
      * @type {Object}
@@ -901,7 +984,7 @@
      */
     let ImageSize = options.ImageSize || [core.DefaultWidth, core.DefaultWidth*0.618034];
 
-    let background = options.Background || new three.Color(0xffffff);
+    let background = options.Background || new THREE.Color(0xffffff);
 
     const lighting = options.Lighting || "Default";
 
@@ -914,8 +997,8 @@
 
     //path tracing engine
     if (options.RTX) {
-      //FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).Pass.FullScreenQuad;
-      //RTX = await import('three-gpu-pathtracer/build/index.module');
+      //FullScreenQuad = (await import('THREE/examples/jsm/postprocessing/Pass.js')).Pass.FullScreenQuad;
+      //RTX = await import('THREE-gpu-pathtracer/build/index.module');
       //PathTracingSceneGenerator   = RTX.PathTracingSceneGenerator;
       //PathTracingRenderer         = RTX.PathTracingRenderer;
       //PhysicalPathTracingMaterial = RTX.PhysicalPathTracingMaterial;
@@ -930,7 +1013,7 @@
     }
 
     /**
-    * @type {three.Mesh<three.Geometry>}
+    * @type {THREE.Mesh<THREE.Geometry>}
     */
 
     let camera, scene, renderer, composer;
@@ -943,7 +1026,7 @@
       bloomRadius: 0.11
     };
 
-    init();
+    await init();
     animate();
     
 
@@ -951,23 +1034,23 @@
 
     }
 
-    function init() {
+    async function init() {
 
-      scene = new three.Scene();
-      camera = new three.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 1, 20000 );
-      camera.position.set( 3, 3, 10 );
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 1, 20000 );
+      
 
-      renderer = new three.WebGLRenderer();
+      renderer = new THREE.WebGLRenderer();
       renderer.setPixelRatio( window.devicePixelRatio );
       renderer.setSize(ImageSize[0], ImageSize[1]);
-      //renderer.toneMapping = three.ACESFilmicToneMapping;
+      //renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.domElement.style = "margin:auto";
       container.appendChild( renderer.domElement );
 
       /* postprocess */
   		const renderScene = new RenderPass( scene, camera );
 
-  		const bloomPass = new UnrealBloomPass( new three.Vector2( ImageSize[0], ImageSize[1] ), 1.5, 0.4, 0.85 );
+  		const bloomPass = new UnrealBloomPass( new THREE.Vector2( ImageSize[0], ImageSize[1] ), 1.5, 0.4, 0.85 );
   		bloomPass.threshold = params.bloomThreshold;
   		bloomPass.strength = params.bloomStrength;
   		bloomPass.radius = params.bloomRadius;
@@ -1012,7 +1095,7 @@
   			bloomPass.radius = Number( value );
   		} );
 
-      if (background instanceof three.Color) scene.background = background;
+      if (background instanceof THREE.Color) scene.background = background;
 
 
       const guiContainer = document.createElement('div');
@@ -1024,40 +1107,55 @@
       env.local.scene    = scene;
       env.local.camera = camera;
 
-      scene.add(camera);
-
       if (lighting === "Default") g3d.DefaultLighting([], env);
 
-      const group = new three.Group();
+      const group = new THREE.Group();
+
+      const cameraMesh = {
+        mesh: scene,
+        pos: [3, 3, 10],
+        set: (mesh, pos) => {
+          cameraMesh.mesh = mesh;
+          cameraMesh.pos = pos;
+        }
+      }
 
       const envcopy = {
         ...env,
         context: g3d,
         numerical: true,
         tostring: false,
-        matrix: new three.Matrix4().set(
+        matrix: new THREE.Matrix4().set(
           1, 0, 0, 0,//
           0, 1, 0, 0,//
           0, 0, 1, 0,//
           0, 0, 0, 1),
-        color: new three.Color(1, 1, 1),
+        color: new THREE.Color(1, 1, 1),
         opacity: 1,
         thickness: 1,
         roughness: 0.5,
-        edgecolor: new three.Color(0, 0, 0),
+        edgecolor: new THREE.Color(0, 0, 0),
         mesh: group,
         metalness: 0,
-        emissive: new three.Color(0, 0, 0),
+        emissive: new THREE.Color(0, 0, 0),
         arrowHeight: 20,
         arrowRadius: 5,
         reflectivity: 0.5,
         clearcoat: 0,
-        ior: 1.5
+        ior: 1.5,
+        Lerp: options.Lerp,
+
+        Handlers: Handlers,
+
+        cameraMesh: cameraMesh
       }
     
-      interpretate(args[0], envcopy);
+      await interpretate(args[0], envcopy);
 
-      group.applyMatrix4(new three.Matrix4().set(
+      envcopy.cameraMesh.mesh.add(camera);
+      camera.position.set(...envcopy.cameraMesh.pos);
+
+      group.applyMatrix4(new THREE.Matrix4().set(
         1, 0, 0, 0,
         0, 0, 1, 0,
         0,-1, 0, 0,
@@ -1076,9 +1174,13 @@
 
 
     function animate() {
+      //added loop-handlers, void
+      for (let i=0; i<Handlers.length; ++i) {
+        Handlers[i].eval();
+      }
 
-      env.local.aid = requestAnimationFrame( animate );
       render();
+      env.local.aid = requestAnimationFrame( animate );
     }
 
     function render() {
@@ -1097,6 +1199,12 @@
   let Water = false;
   let Sky   = false;
 
+  g3d.Camera = (args, env) => {
+    let pos = args;
+    if (args.length === 0) pos = [3,3,1];
+    env.cameraMesh.set(env.mesh, pos);
+  }
+
   g3d.Reflectivity = (args, env) => {
     env.reflectivity = interpretate(args[0], env);
   }
@@ -1110,7 +1218,7 @@
   }
 
   g3d.LightProbe = (args, env) => {
-    //three.js light probe irradiance
+    //THREE.js light probe irradiance
   }
 
   g3d.DefaultLighting = (args, env) => {
@@ -1134,25 +1242,25 @@
     ];
 
     function addLight(l) {
-      var color = new three.Color().setRGB(l.color[0], l.color[1], l.color[2]);
+      var color = new THREE.Color().setRGB(l.color[0], l.color[1], l.color[2]);
       var light;
 
       if (l.type === "Ambient") {
-        light = new three.AmbientLight(color, 0.5);
+        light = new THREE.AmbientLight(color, 0.5);
       } else if (l.type === "Directional") {
         console.log('adding direction light');
         console.log(l);
-        light = new three.DirectionalLight(color, 1);
+        light = new THREE.DirectionalLight(color, 1);
         light.position.fromArray(l.position);
 
       } else if (l.type === "Spot") {
-        light = new three.SpotLight(color);
+        light = new THREE.SpotLight(color);
         light.position.fromArray(l.position);
         light.target.position.fromArray(l.target);
-        //light.target.updateMatrixWorld(); // This fixes bug in three.js
+        //light.target.updateMatrixWorld(); // This fixes bug in THREE.js
         light.angle = l.angle;
       } else if (l.type === "Point") {
-        light = new three.PointLight(color);
+        light = new THREE.PointLight(color);
         light.position.fromArray(l.position);
 
       } else {
@@ -1182,23 +1290,23 @@
 
     console.log(options);
 
-    let sun = new three.Vector3();
+    let sun = new THREE.Vector3();
     let water;
     // Water
 
-    const waterGeometry = new three.PlaneGeometry(...options.dims);
+    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
 
     water = new Water(
       waterGeometry,
       {
         textureWidth: 512,
         textureHeight: 512,
-        waterNormals: new three.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
 
-          texture.wrapS = texture.wrapT = three.RepeatWrapping;
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
         } ),
-        sunDirection: new three.Vector3(),
+        sunDirection: new THREE.Vector3(),
         sunColor: 0xffffff,
         waterColor: 0x001e0f,
         distortionScale: 3.7,
@@ -1234,11 +1342,11 @@
     env.local.scene.add( water );
     env.local.scene.add( sky );
 
-    const pmremGenerator = new three.PMREMGenerator( env.local.renderer );
+    const pmremGenerator = new THREE.PMREMGenerator( env.local.renderer );
     let renderTarget;
 
-    const phi = three.MathUtils.degToRad( 90 - parameters.elevation );
-    const theta = three.MathUtils.degToRad( parameters.azimuth );
+    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
+    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
 
     sun.setFromSphericalCoords( 1, phi, theta );
 
