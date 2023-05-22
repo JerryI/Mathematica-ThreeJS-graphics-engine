@@ -1027,6 +1027,13 @@ const { MathUtils } = require('three');
 
   let GUI;
 
+  g3d.ImageSize = () => "ImageSize"
+  g3d.Background = () => "Background"
+  g3d.AspectRatio = () => "AspectRatio"
+  g3d.Lighting = () => "Lighting"
+  g3d.Default = () => "Default"
+  g3d.None = () => "None"
+  g3d.Automatic = () => "Automatic"
 
   g3d.Graphics3D = async (args, env) => {
     /* lazy loading */
@@ -1052,7 +1059,7 @@ const { MathUtils } = require('three');
     /**
      * @type {Object}
      */  
-    const options = core._getRules(args, env);
+    const options = core._getRules(args, g3d);
     console.log(options);
 
     /**
@@ -1063,7 +1070,13 @@ const { MathUtils } = require('three');
     /**
      * @type {[Number, Number]}
      */
-    let ImageSize = options.ImageSize || [core.DefaultWidth, core.DefaultWidth*0.618034];
+    let ImageSize;
+    
+    if(options.ImageSize) {
+      ImageSize = await interpretate(options.ImageSize, env);
+    } else {
+      ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
+    } 
 
     let background = options.Background || new THREE.Color(0xffffff);
 

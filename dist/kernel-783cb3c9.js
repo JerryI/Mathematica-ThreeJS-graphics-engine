@@ -52889,6 +52889,13 @@ const { MathUtils } = require$$0;
 
   let GUI;
 
+  g3d.ImageSize = () => "ImageSize";
+  g3d.Background = () => "Background";
+  g3d.AspectRatio = () => "AspectRatio";
+  g3d.Lighting = () => "Lighting";
+  g3d.Default = () => "Default";
+  g3d.None = () => "None";
+  g3d.Automatic = () => "Automatic";
 
   g3d.Graphics3D = async (args, env) => {
     /* lazy loading */
@@ -52896,10 +52903,10 @@ const { MathUtils } = require$$0;
     if (!THREE) {
       console.log('not there...');
       THREE         = (await Promise.resolve().then(function () { return three_module; }));
-      OrbitControls = (await import('./OrbitControls-c19168e0.js')).OrbitControls;
-      EffectComposer= (await import('./EffectComposer-ff6bd019.js')).EffectComposer;
-      RenderPass    = (await import('./RenderPass-669f8df3.js')).RenderPass;
-      UnrealBloomPass=(await import('./UnrealBloomPass-4a87a264.js')).UnrealBloomPass;
+      OrbitControls = (await import('./OrbitControls-fd1539fa.js')).OrbitControls;
+      EffectComposer= (await import('./EffectComposer-97189c2f.js')).EffectComposer;
+      RenderPass    = (await import('./RenderPass-181f4aa3.js')).RenderPass;
+      UnrealBloomPass=(await import('./UnrealBloomPass-9ed94af5.js')).UnrealBloomPass;
       GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
     }
 
@@ -52914,7 +52921,7 @@ const { MathUtils } = require$$0;
     /**
      * @type {Object}
      */  
-    const options = core._getRules(args, env);
+    const options = core._getRules(args, g3d);
     console.log(options);
 
     /**
@@ -52925,7 +52932,13 @@ const { MathUtils } = require$$0;
     /**
      * @type {[Number, Number]}
      */
-    let ImageSize = options.ImageSize || [core.DefaultWidth, core.DefaultWidth*0.618034];
+    let ImageSize;
+    
+    if(options.ImageSize) {
+      ImageSize = await interpretate(options.ImageSize, env);
+    } else {
+      ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
+    } 
 
     let background = options.Background || new THREE.Color(0xffffff);
 
@@ -52945,7 +52958,7 @@ const { MathUtils } = require$$0;
       console.log('controld');
       console.log(options);
       if (options.Controls === 'FirstPersonControls') {
-        (await import('./FirstPersonControls-4b00d351.js')).FirstPersonControls;
+        (await import('./FirstPersonControls-ca7befd5.js')).FirstPersonControls;
       }
     }
 
@@ -53206,8 +53219,8 @@ const { MathUtils } = require$$0;
 
   g3d.SkyAndWater = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-f689ad5d.js')).Water;
-      Sky           = (await import('./Sky-76200f2f.js')).Sky;  
+      Water         = (await import('./Water-45b90e14.js')).Water;
+      Sky           = (await import('./Sky-571eec29.js')).Sky;  
     }
 
     let options = core._getRules(args, env);
