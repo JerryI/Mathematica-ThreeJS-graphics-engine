@@ -52456,7 +52456,13 @@ const { MathUtils } = require$$0;
     //Если center, то наверное надо приметь matrix
     //к каждому объекту относительно родительской группы.
     var p = [...(await interpretate(args[1], {...env, hold:false}))];
-    console.log(p);
+    //make it like Matrix4
+    p.forEach((el) => {
+      el.push(0);
+    });
+    p.push([0, 0, 0, 1]);
+
+    /*console.log(p);
     var centering = false;
     var centrans = [];
 
@@ -52532,10 +52538,85 @@ const { MathUtils } = require$$0;
       group.applyMatrix4(translate);
     } else {
       group.applyMatrix4(matrix);
-    }
+    }*/
+
+    await interpretate(args[0], {...env, mesh: group});
+
+    const matrix = new THREE.Matrix4().set(...aflatten(p));
+
+    group.matrixAutoUpdate = false;
+
+    env.local.quaternion = new THREE.Quaternion();
+    env.local.position = new THREE.Vector3();
+    env.local.scale = new THREE.Vector3();    
+
+    matrix.decompose(env.local.position, env.local.quaternion, env.local.scale);
+
+    group.quaternion.copy( env.local.quaternion );
+    group.position.copy( env.local.position );
+    group.scale.copy( env.local.scale );
+
+     // set initial values
+
+    //group.quaternion.set(newQ);
+
+    group.updateMatrix();
+
+    env.local.group = group;
 
     env.mesh.add(group);
   };
+
+  g3d.GeometricTransformation.update = async (args, env) => {
+    let p = [...(await interpretate(args[1], {...env, hold:false}))];
+    p.forEach((el) => {
+      el.push(0);
+    });
+    p.push([0, 0, 0, 1]);
+
+    const group = env.local.group;
+
+    const matrix = new THREE.Matrix4().set(...aflatten(p));
+
+    matrix.decompose(env.local.position, env.local.quaternion, env.local.scale); // set initial values
+
+    if (env.Lerp) {
+
+      if (!env.local.lerp) {
+        console.log('creating worker for lerp of matrix movements..');
+
+        const worker = {
+          alpha: 0.05,
+          quaternion: env.local.quaternion.clone(), //target
+          scale: env.local.scale.clone(), //target
+          position: env.local.position.clone(), //target
+          eval: () => {
+            group.quaternion.slerp(worker.quaternion, worker.alpha); 
+            group.updateMatrix();
+          }
+        };
+
+        env.local.lerp = worker;  
+
+        env.Handlers.push(worker);
+      }
+
+      env.local.lerp.quaternion.copy(env.local.quaternion);
+
+      return;
+    }
+
+    
+    group.quaternion.copy( env.local.quaternion );
+    group.position.copy( env.local.position );
+    group.scale.copy( env.local.scale );
+
+    group.updateMatrix();
+
+    env.mesh.add(group);
+  };  
+
+  g3d.GeometricTransformation.virtual = true;
 
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
@@ -52815,10 +52896,10 @@ const { MathUtils } = require$$0;
     if (!THREE) {
       console.log('not there...');
       THREE         = (await Promise.resolve().then(function () { return three_module; }));
-      OrbitControls = (await import('./OrbitControls-0994c16c.js')).OrbitControls;
-      EffectComposer= (await import('./EffectComposer-6eee9ec6.js')).EffectComposer;
-      RenderPass    = (await import('./RenderPass-51c8c2d2.js')).RenderPass;
-      UnrealBloomPass=(await import('./UnrealBloomPass-924dc1c2.js')).UnrealBloomPass;
+      OrbitControls = (await import('./OrbitControls-c19168e0.js')).OrbitControls;
+      EffectComposer= (await import('./EffectComposer-ff6bd019.js')).EffectComposer;
+      RenderPass    = (await import('./RenderPass-669f8df3.js')).RenderPass;
+      UnrealBloomPass=(await import('./UnrealBloomPass-4a87a264.js')).UnrealBloomPass;
       GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
     }
 
@@ -52864,7 +52945,7 @@ const { MathUtils } = require$$0;
       console.log('controld');
       console.log(options);
       if (options.Controls === 'FirstPersonControls') {
-        (await import('./FirstPersonControls-7ae03915.js')).FirstPersonControls;
+        (await import('./FirstPersonControls-4b00d351.js')).FirstPersonControls;
       }
     }
 
@@ -53125,8 +53206,8 @@ const { MathUtils } = require$$0;
 
   g3d.SkyAndWater = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-f02ff057.js')).Water;
-      Sky           = (await import('./Sky-acce91a1.js')).Sky;  
+      Water         = (await import('./Water-f689ad5d.js')).Water;
+      Sky           = (await import('./Sky-76200f2f.js')).Sky;  
     }
 
     let options = core._getRules(args, env);

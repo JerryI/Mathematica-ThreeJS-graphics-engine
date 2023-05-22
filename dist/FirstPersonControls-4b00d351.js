@@ -1,4 +1,4 @@
-import { V as Vector3, S as Spherical, f as MathUtils } from './kernel-2bb67789.js';
+import { V as Vector3, S as Spherical, f as MathUtils } from './kernel-1837b60b.js';
 
 var FirstPersonControls = function ( object, domElement ) {
 
