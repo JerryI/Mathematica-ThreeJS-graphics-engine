@@ -1,10 +1,27 @@
 const { MathUtils } = require('three');
-
 {
 
   let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
-  interpretate.contextExpand(g3d);
+  interpretate.contextExpand(g3d); 
+
+  ["AlignmentPoint", "AspectRatio", "AutomaticImageSize", "Axes", 
+  "AxesEdge", "AxesLabel", "AxesOrigin", "AxesStyle", "Background", 
+  "BaselinePosition", "BaseStyle", "Boxed", "BoxRatios", "BoxStyle", 
+  "ClipPlanes", "ClipPlanesStyle", "ColorOutput", "ContentSelectable", 
+  "ControllerLinking", "ControllerMethod", "ControllerPath", 
+  "CoordinatesToolOptions", "DisplayFunction", "Epilog", "FaceGrids", 
+  "FaceGridsStyle", "FormatType", "ImageMargins", "ImagePadding", 
+  "ImageSize", "ImageSizeRaw", "LabelStyle", "Lighting", "Method", 
+  "PlotLabel", "PlotRange", "PlotRangePadding", "PlotRegion", 
+  "PreserveImageOptions", "Prolog", "RotationAction", 
+  "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
+  "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
+  "ViewProjection", "ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
+    g3d[e] = () => e;
+  });
+
+
 
   /**
   * @type {import('three')}
@@ -50,8 +67,9 @@ const { MathUtils } = require('three');
     env.metalness = interpretate(args[0], env);
   }
 
-  g3d.Emissive = (args, env) => {
-    interpretate(args[0], {...env});
+  g3d.Emissive = async (args, env) => {
+    const copy = {...env};
+    await interpretate(args[0], copy);
     env.emissive = copy.color;
   }
 
@@ -93,12 +111,12 @@ const { MathUtils } = require('three');
 
   g3d.Thickness = (args, env) => { env.thickness = interpretate(args[0], env)};
 
-  g3d.Arrowheads = (args, env) => {
+  g3d.Arrowheads = async (args, env) => {
     if (args.length == 1) {
-      env.arrowRadius = interpretate(args[0], env);
+      env.arrowRadius = await interpretate(args[0], env);
     } else {
-      env.arrowHeight = interpretate(args[1], env);
-      env.arrowRadius = interpretate(args[0], env);
+      env.arrowHeight = await interpretate(args[1], env);
+      env.arrowRadius = await interpretate(args[0], env);
     }
   };
 
@@ -593,11 +611,17 @@ const { MathUtils } = require('three');
     //Если center, то наверное надо приметь matrix
     //к каждому объекту относительно родительской группы.
     var p = [...(await interpretate(args[1], {...env, hold:false}))];
-    //make it like Matrix4
-    p.forEach((el) => {
-      el.push(0);
-    });
-    p.push([0, 0, 0, 1]);
+
+    if (!p[0][0]) {
+      //most likely this is Translate
+      env.local.translationOnly = true;
+    } else {
+      //make it like Matrix4
+      p.forEach((el) => {
+        el.push(0);
+      });
+      p.push([0, 0, 0, 1]);
+    }
 
     /*console.log(p);
     var centering = false;
@@ -679,7 +703,13 @@ const { MathUtils } = require('three');
 
     await interpretate(args[0], {...env, mesh: group});
 
-    const matrix = new THREE.Matrix4().set(...aflatten(p));
+    let matrix;
+    
+    if (env.local.translationOnly) {
+      matrix = new THREE.Matrix4().makeTranslation(...p);
+    } else {
+      matrix = new THREE.Matrix4().set(...aflatten(p));
+    }
 
     group.matrixAutoUpdate = false;
 
@@ -706,16 +736,19 @@ const { MathUtils } = require('three');
 
   g3d.GeometricTransformation.update = async (args, env) => {
     let p = [...(await interpretate(args[1], {...env, hold:false}))];
-    p.forEach((el) => {
-      el.push(0);
-    });
-    p.push([0, 0, 0, 1]);
 
     const group = env.local.group;
+    
+    if (!env.local.translationOnly) {
+      p.forEach((el) => {
+        el.push(0);
+      });
+      p.push([0, 0, 0, 1]);
 
-    const matrix = new THREE.Matrix4().set(...aflatten(p));
+      const matrix = new THREE.Matrix4().set(...aflatten(p));
 
-    matrix.decompose(env.local.position, env.local.quaternion, env.local.scale); // set initial values
+      matrix.decompose(env.local.position, env.local.quaternion, env.local.scale); // set initial values
+    }
 
     if (env.Lerp) {
 
@@ -729,6 +762,7 @@ const { MathUtils } = require('three');
           position: env.local.position.clone(), //target
           eval: () => {
             group.quaternion.slerp(worker.quaternion, worker.alpha); 
+            group.position.lerp(worker.position, worker.alpha);
             group.updateMatrix();
           }
         };
@@ -738,15 +772,21 @@ const { MathUtils } = require('three');
         env.Handlers.push(worker);
       }
 
-      env.local.lerp.quaternion.copy(env.local.quaternion);
+      if (!env.local.translationOnly)
+        env.local.lerp.quaternion.copy(env.local.quaternion);
+      else
+        env.local.lerp.position.copy(env.local.position.set(...p));
 
       return;
     }
 
-    
-    group.quaternion.copy( env.local.quaternion );
-    group.position.copy( env.local.position );
-    group.scale.copy( env.local.scale );
+    if (!env.local.translationOnly) {
+      group.quaternion.copy( env.local.quaternion );
+      group.position.copy( env.local.position );
+      group.scale.copy( env.local.scale );
+    } else {
+      group.position.copy( env.local.position.set(...p) );
+    }
 
     group.updateMatrix();
 
@@ -1038,15 +1078,14 @@ const { MathUtils } = require('three');
   g3d.Graphics3D = async (args, env) => {
     /* lazy loading */
 
-    if (!THREE) {
-      console.log('not there...')
-      THREE         = (await import('three'));
-      OrbitControls = (await import("three/examples/jsm/controls/OrbitControls")).OrbitControls;
-      EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer')).EffectComposer;
-      RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass')).RenderPass;
-      UnrealBloomPass=(await import('three/examples/jsm/postprocessing/UnrealBloomPass')).UnrealBloomPass;
-      GUI           = (await import('dat.gui')).GUI;
-    }
+
+    THREE         = (await import('three'));
+    OrbitControls = (await import("three/examples/jsm/controls/OrbitControls")).OrbitControls;
+    EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer')).EffectComposer;
+    RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass')).RenderPass;
+    UnrealBloomPass=(await import('three/examples/jsm/postprocessing/UnrealBloomPass')).UnrealBloomPass;
+    GUI           = (await import('dat.gui')).GUI;
+
 
     /**
      * @type {Object}
@@ -1059,7 +1098,7 @@ const { MathUtils } = require('three');
     /**
      * @type {Object}
      */  
-    const options = core._getRules(args, g3d);
+    const options = await core._getRules(args, g3d);
     console.log(options);
 
     /**
@@ -1073,7 +1112,7 @@ const { MathUtils } = require('three');
     let ImageSize;
     
     if(options.ImageSize) {
-      ImageSize = await interpretate(options.ImageSize, env);
+      ImageSize = options.ImageSize;
     } else {
       ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
     } 
@@ -1098,13 +1137,224 @@ const { MathUtils } = require('three');
       //PhysicalPathTracingMaterial = RTX.PhysicalPathTracingMaterial;
     }
 
-    if (options.Controls) {
-      console.log('controld');
-      console.log(options);
-      if (options.Controls === 'FirstPersonControls') {
-        FirstPersonControls = (await import("three/examples/jsm/controls/FirstPersonControls")).FirstPersonControls;
+
+    let controlObject = {
+      init: (camera, dom) => {
+        controlObject.o = new OrbitControls( camera, renderer.domElement );
+        controlObject.o.target.set( 0, 1, 0 );
+        controlObject.o.update();
+      },
+
+      dispose: () => {
+        
       }
+    };
+
+    
+
+    if (options.Controls) {
+
+      if (options.Controls === 'PointerLockControls') {
+        const o = (await import("three/examples/jsm/controls/PointerLockControls")).PointerLockControls;
+        
+
+        controlObject = {
+          init: (camera, dom) => {
+            controlObject.o = new o( camera, dom );
+            env.local.scene.add( controlObject.o.getObject() );
+
+            controlObject.onKeyDown = function ( event ) {
+              switch ( event.code ) {
+    
+                case 'ArrowUp':
+                case 'KeyW':
+                  controlObject.moveForward = true;
+                  break;
+    
+                case 'ArrowLeft':
+                case 'KeyA':
+                  controlObject.moveLeft = true;
+                  break;
+    
+                case 'ArrowDown':
+                case 'KeyS':
+                  controlObject.moveBackward = true;
+                  break;
+    
+                case 'ArrowRight':
+                case 'KeyD':
+                  controlObject.moveRight = true;
+                  break;
+    
+                case 'Space':
+                  if ( controlObject.canJump === true ) controlObject.velocity.y += 20;
+                  controlObject.canJump = false;
+                  break;
+    
+              }
+              event.preventDefault();  
+              event.returnValue = false;
+              event.cancelBubble = true;
+              return false;
+              
+    
+            };
+    
+            controlObject.onKeyUp = function ( event ) {
+    
+              switch ( event.code ) {
+    
+                case 'ArrowUp':
+                case 'KeyW':
+                  controlObject.moveForward = false;
+                  break;
+    
+                case 'ArrowLeft':
+                case 'KeyA':
+                  controlObject.moveLeft = false;
+                  break;
+    
+                case 'ArrowDown':
+                case 'KeyS':
+                  controlObject.moveBackward = false;
+                  break;
+    
+                case 'ArrowRight':
+                case 'KeyD':
+                  controlObject.moveRight = false;
+                  break;
+                
+                
+              }
+
+              event.preventDefault();  
+              event.returnValue = false;
+              event.cancelBubble = true;
+              return false;              
+      
+    
+            };    
+            
+
+            env.local.handlers.push(controlObject.handler);
+
+            const inst = document.createElement('div');
+            inst.style.width="100%";
+            inst.style.height="100%";
+            inst.style.top = "0";
+            inst.style.position = "absolute";
+
+
+            
+            env.element.appendChild(inst);
+
+            document.addEventListener( 'keydown', controlObject.onKeyDown );
+            document.addEventListener( 'keyup', controlObject.onKeyUp );
+            
+
+            inst.addEventListener( 'click', function () {
+
+              controlObject.o.lock();
+    
+            } );
+
+            controlObject.o.addEventListener( 'lock', function () {
+
+              inst.style.display = 'none';
+              //blocker.style.display = 'none';
+    
+            } );
+    
+            controlObject.o.addEventListener( 'unlock', function () {
+    
+              //blocker.style.display = 'block';
+              inst.style.display = '';
+    
+            } );
+
+          },
+
+
+          prevTime: performance.now(),
+
+          handler: () => {
+            const time = performance.now();
+            const controls = controlObject.o;
+
+            if ( controls.isLocked === true ) {
+    
+              //raycaster.ray.origin.copy( controls.getObject().position );
+              //raycaster.ray.origin.y -= 10;
+    
+              //const intersections = raycaster.intersectObjects( objects, false );
+    
+              //const onObject = intersections.length > 0;
+              const onObject = false;
+
+              const delta = ( time - controlObject.prevTime ) / 1000;
+    
+              controlObject.velocity.x -= controlObject.velocity.x * 10.0 * delta;
+              controlObject.velocity.z -= controlObject.velocity.z * 10.0 * delta;
+    
+              controlObject.velocity.y -= 9.8 * 4.0 * delta; // 100.0 = mass
+    
+              controlObject.direction.z = Number( controlObject.moveForward ) - Number( controlObject.moveBackward );
+              controlObject.direction.x = Number( controlObject.moveRight ) - Number( controlObject.moveLeft );
+              controlObject.direction.normalize(); // this ensures consistent movements in all directions
+    
+              if ( controlObject.moveForward || controlObject.moveBackward ) controlObject.velocity.z -= controlObject.direction.z * 40.0 * delta;
+              if ( controlObject.moveLeft || controlObject.moveRight ) controlObject.velocity.x -= controlObject.direction.x * 40.0 * delta;
+    
+              if ( onObject === true ) {
+    
+                controlObject.velocity.y = Math.max( 0, controlObject.velocity.y );
+                controlObject.canJump = true;
+    
+              }
+    
+              controls.moveRight( - controlObject.velocity.x * delta );
+              controls.moveForward( - controlObject.velocity.z * delta );
+    
+              controls.getObject().position.y += ( controlObject.velocity.y * delta ); // new behavior
+    
+              if ( controls.getObject().position.y < 0.3 ) {
+    
+                controlObject.velocity.y = 0;
+                controls.getObject().position.y = 0.3;
+    
+                controlObject.canJump = true;
+    
+              }
+    
+            }
+    
+            controlObject.prevTime = time;
+          },
+
+          moveBackward: false,
+          moveForward: false,
+          moveLeft: false,
+          moveRight: false,
+          canJump: false,
+          velocity: new THREE.Vector3(),
+          direction: new THREE.Vector3(),
+
+          dispose: () =>{
+
+            document.removeEventListener( 'keydown', controlObject.onKeyDown );
+            document.removeEventListener( 'keyup', controlObject.onKeyUp );
+            
+          }  
+        };
+
+       
+
+              
+
+      } 
     }
+
+    env.local.controlObject = controlObject;
 
     /**
     * @type {THREE.Mesh<THREE.Geometry>}
@@ -1131,7 +1381,7 @@ const { MathUtils } = require('three');
     async function init() {
 
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 1, 20000 );
+      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 0.01, 2000 );
       
 
       renderer = new THREE.WebGLRenderer();
@@ -1259,10 +1509,7 @@ const { MathUtils } = require('three');
 
       
       
-      controls = new OrbitControls( camera, renderer.domElement );
-      controls.target.set( 0, 1, 0 );
-      controls.update();
-      
+      env.local.controlObject.init( camera, renderer.domElement );
       zoomExtents(scene, camera);
     }
 
@@ -1374,13 +1621,17 @@ const { MathUtils } = require('three');
       Sky           = (await import('three/examples/jsm/objects/Sky')).Sky;  
     }
 
-    let options = core._getRules(args, env);
+    let options = await core._getRules(args, env);
     console.log('options:');
-    options.dims = options.dims || [10000, 10000];
-    options.skyscale = options.skyscale || 10000;
-    options.elevation = options.elevation ||  8;
-    options.azimuth = options.azimuth || 180;
+    options.dims = options.Dims || [10000, 10000];
+    options.skyscale = options.Skyscale || 10000;
+    options.elevation = options.Elevation ||  8;
+    options.azimuth = options.Azimuth || 180;
 
+    options.turbidity = options.Turbidity || 10;
+    options.rayleigh = options.Rayleigh || 2;
+    options.mieCoefficient = options.MieCoefficient || 0.005;
+    options.mieDirectionalG = options.MieDirectionalG || 0.8;
 
     console.log(options);
 
@@ -1395,7 +1646,7 @@ const { MathUtils } = require('three');
       {
         textureWidth: 512,
         textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+        waterNormals: new THREE.TextureLoader().load( 'https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/assets/waternormals.jpg', function ( texture ) {
 
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
@@ -1421,10 +1672,10 @@ const { MathUtils } = require('three');
 
     const skyUniforms = sky.material.uniforms;
 
-    skyUniforms[ 'turbidity' ].value = 10;
-    skyUniforms[ 'rayleigh' ].value = 2;
-    skyUniforms[ 'mieCoefficient' ].value = 0.005;
-    skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+    skyUniforms[ 'turbidity' ].value = options.turbidity;
+    skyUniforms[ 'rayleigh' ].value = options.rayleigh;
+    skyUniforms[ 'mieCoefficient' ].value = options.mieCoefficient;
+    skyUniforms[ 'mieDirectionalG' ].value = options.mieDirectionalG;
 
     const parameters = {
       elevation: options.elevation,
@@ -1461,10 +1712,129 @@ const { MathUtils } = require('three');
     );
   }
 
+  g3d.Sky = async (args, env) => {
+    if (!Sky) {
+      Sky           = (await import('three/examples/jsm/objects/Sky')).Sky;  
+    }
+
+    let options = await core._getRules(args, env);
+    console.log('options:');
+    options.dims = options.Dims || [10000, 10000];
+    options.skyscale = options.Skyscale || 10000;
+    options.elevation = options.Elevation ||  8;
+    options.azimuth = options.Azimuth || 180;
+
+    options.turbidity = options.Turbidity || 10;
+    options.rayleigh = options.Rayleigh || 2;
+    options.mieCoefficient = options.MieCoefficient || 0.005;
+    options.mieDirectionalG = options.MieDirectionalG || 0.8;
+
+    console.log(options);
+
+    let sun = new THREE.Vector3();
+
+    // Skybox
+
+    const sky = new Sky();
+    sky.scale.setScalar( options.skyscale );
+
+    env.local.sky = sky;  
+
+    const skyUniforms = sky.material.uniforms;
+
+    skyUniforms[ 'turbidity' ].value = options.turbidity;
+    skyUniforms[ 'rayleigh' ].value = options.rayleigh;
+    skyUniforms[ 'mieCoefficient' ].value = options.mieCoefficient;
+    skyUniforms[ 'mieDirectionalG' ].value = options.mieDirectionalG;
+
+    const parameters = {
+      elevation: options.elevation,
+      azimuth: options.azimuth
+    };
+
+    env.local.scene.add( sky );
+
+    const pmremGenerator = new THREE.PMREMGenerator( env.local.renderer );
+    let renderTarget;
+
+    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
+    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
+
+    sun.setFromSphericalCoords( 1, phi, theta );
+
+    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
+    env.local.sun = sun;
+    //water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+
+    if ( renderTarget !== undefined ) renderTarget.dispose();
+
+    renderTarget = pmremGenerator.fromScene( sky );
+
+    env.local.scene.environment = renderTarget.texture;  
+  }
+  
+  g3d.Water = async (args, env) => {
+    if (!Water) {
+      Water         = (await import('three/examples/jsm/objects/Water')).Water;
+    }
+
+    let options = await core._getRules(args, env);
+    console.log('options:');
+
+
+    console.log(options);
+    options.dims = options.Dims || [10000, 10000];
+
+    let water;
+    // Water
+
+    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
+
+    water = new Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/assets/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        sunDirection: new THREE.Vector3(),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: true
+      }
+    );
+
+    water.rotation.x = - Math.PI / 2;
+    
+    env.local.water = water;
+
+    env.local.scene.add( water );
+    
+    const sun = env.local.sun || (new THREE.Vector3(1,1,1));
+    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+
+    //every frame
+    env.local.handlers.push(
+      function() {
+        env.local.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+      }
+    );
+  }  
+
   g3d.Graphics3D.destroy = (args, env) => {
     console.log('Graphics3D was removed');
     console.log('env global:'); console.log(env.global);
     console.log('env local:'); console.log(env.local);
+    env.local.controlObject.dispose();
     cancelAnimationFrame(env.local.aid);
   }
+
+  g3d.Large = (args, env) => {
+    return 1.0;
+  }
+
 }
