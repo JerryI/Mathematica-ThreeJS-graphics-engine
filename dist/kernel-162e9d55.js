@@ -51877,7 +51877,7 @@ const { MathUtils } = require$$0;
 
   let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
-  interpretate.contextExpand(g3d);
+  interpretate.contextExpand(g3d); 
 
   ["AlignmentPoint", "AspectRatio", "AutomaticImageSize", "Axes", 
   "AxesEdge", "AxesLabel", "AxesOrigin", "AxesStyle", "Background", 
@@ -51891,7 +51891,7 @@ const { MathUtils } = require$$0;
   "PreserveImageOptions", "Prolog", "RotationAction", 
   "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
   "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
-  "ViewProjection", "ViewRange", "ViewVector", "ViewVertical"].map((e)=>{
+  "ViewProjection", "ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
     g3d[e] = () => e;
   });
 
@@ -52940,15 +52940,14 @@ const { MathUtils } = require$$0;
   g3d.Graphics3D = async (args, env) => {
     /* lazy loading */
 
-    if (!THREE) {
-      console.log('not there...');
-      THREE         = (await Promise.resolve().then(function () { return three_module; }));
-      OrbitControls = (await import('./OrbitControls-58ea0aa3.js')).OrbitControls;
-      EffectComposer= (await import('./EffectComposer-2faef2b9.js')).EffectComposer;
-      RenderPass    = (await import('./RenderPass-651258bb.js')).RenderPass;
-      UnrealBloomPass=(await import('./UnrealBloomPass-70ac957f.js')).UnrealBloomPass;
-      GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
-    }
+
+    THREE         = (await Promise.resolve().then(function () { return three_module; }));
+    OrbitControls = (await import('./OrbitControls-c192cce5.js')).OrbitControls;
+    EffectComposer= (await import('./EffectComposer-c77a2dfe.js')).EffectComposer;
+    RenderPass    = (await import('./RenderPass-db1d93c3.js')).RenderPass;
+    UnrealBloomPass=(await import('./UnrealBloomPass-a5cbdae7.js')).UnrealBloomPass;
+    GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
+
 
     /**
      * @type {Object}
@@ -52975,7 +52974,7 @@ const { MathUtils } = require$$0;
     let ImageSize;
     
     if(options.ImageSize) {
-      ImageSize = await interpretate(options.ImageSize, env);
+      ImageSize = options.ImageSize;
     } else {
       ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
     } 
@@ -52994,20 +52993,216 @@ const { MathUtils } = require$$0;
     //path tracing engine
     if (options.RTX) ;
 
-    if (options.Controls) {
-      console.log('controld');
-      console.log(options);
-      if (options.Controls === 'FirstPersonControls') {
-        (await import('./FirstPersonControls-b47cd0ab.js')).FirstPersonControls;
+
+    let controlObject = {
+      init: (camera, dom) => {
+        controlObject.o = new OrbitControls( camera, renderer.domElement );
+        controlObject.o.target.set( 0, 1, 0 );
+        controlObject.o.update();
+      },
+
+      dispose: () => {
+        
       }
+    };
+
+    
+
+    if (options.Controls) {
+
+      if (options.Controls === 'PointerLockControls') {
+        const o = (await import('./PointerLockControls-4afff780.js')).PointerLockControls;
+        
+
+        controlObject = {
+          init: (camera, dom) => {
+            controlObject.o = new o( camera, dom );
+            env.local.scene.add( controlObject.o.getObject() );
+
+            controlObject.onKeyDown = function ( event ) {
+              switch ( event.code ) {
+    
+                case 'ArrowUp':
+                case 'KeyW':
+                  controlObject.moveForward = true;
+                  break;
+    
+                case 'ArrowLeft':
+                case 'KeyA':
+                  controlObject.moveLeft = true;
+                  break;
+    
+                case 'ArrowDown':
+                case 'KeyS':
+                  controlObject.moveBackward = true;
+                  break;
+    
+                case 'ArrowRight':
+                case 'KeyD':
+                  controlObject.moveRight = true;
+                  break;
+    
+                case 'Space':
+                  if ( controlObject.canJump === true ) controlObject.velocity.y += 20;
+                  controlObject.canJump = false;
+                  break;
+    
+              }
+              event.preventDefault();  
+              event.returnValue = false;
+              event.cancelBubble = true;
+              return false;
+              
+    
+            };
+    
+            controlObject.onKeyUp = function ( event ) {
+    
+              switch ( event.code ) {
+    
+                case 'ArrowUp':
+                case 'KeyW':
+                  controlObject.moveForward = false;
+                  break;
+    
+                case 'ArrowLeft':
+                case 'KeyA':
+                  controlObject.moveLeft = false;
+                  break;
+    
+                case 'ArrowDown':
+                case 'KeyS':
+                  controlObject.moveBackward = false;
+                  break;
+    
+                case 'ArrowRight':
+                case 'KeyD':
+                  controlObject.moveRight = false;
+                  break;
+                
+                
+              }
+
+              event.preventDefault();  
+              event.returnValue = false;
+              event.cancelBubble = true;
+              return false;              
+      
+    
+            };    
+            
+
+            env.local.handlers.push(controlObject.handler);
+
+            const inst = document.createElement('div');
+            inst.style.width="100%";
+            inst.style.height="100%";
+            inst.style.top = "0";
+            inst.style.position = "absolute";
+
+
+            
+            env.element.appendChild(inst);
+
+            renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
+            renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
+
+            renderer.domElement.tabIndex = 1;
+
+            inst.addEventListener( 'click', function () {
+
+              controlObject.o.lock();
+    
+            } );
+
+            controlObject.o.addEventListener( 'lock', function () {
+
+              inst.style.display = 'none';
+              //blocker.style.display = 'none';
+    
+            } );
+    
+            controlObject.o.addEventListener( 'unlock', function () {
+    
+              //blocker.style.display = 'block';
+              inst.style.display = '';
+    
+            } );
+
+          },
+
+
+          prevTime: performance.now(),
+
+          handler: () => {
+            const time = performance.now();
+            const controls = controlObject.o;
+
+            if ( controls.isLocked === true ) {
+
+              const delta = ( time - controlObject.prevTime ) / 1000;
+    
+              controlObject.velocity.x -= controlObject.velocity.x * 10.0 * delta;
+              controlObject.velocity.z -= controlObject.velocity.z * 10.0 * delta;
+    
+              controlObject.velocity.y -= 9.8 * 4.0 * delta; // 100.0 = mass
+    
+              controlObject.direction.z = Number( controlObject.moveForward ) - Number( controlObject.moveBackward );
+              controlObject.direction.x = Number( controlObject.moveRight ) - Number( controlObject.moveLeft );
+              controlObject.direction.normalize(); // this ensures consistent movements in all directions
+    
+              if ( controlObject.moveForward || controlObject.moveBackward ) controlObject.velocity.z -= controlObject.direction.z * 40.0 * delta;
+              if ( controlObject.moveLeft || controlObject.moveRight ) controlObject.velocity.x -= controlObject.direction.x * 40.0 * delta;
+    
+              controls.moveRight( - controlObject.velocity.x * delta );
+              controls.moveForward( - controlObject.velocity.z * delta );
+    
+              controls.getObject().position.y += ( controlObject.velocity.y * delta ); // new behavior
+    
+              if ( controls.getObject().position.y < 0.3 ) {
+    
+                controlObject.velocity.y = 0;
+                controls.getObject().position.y = 0.3;
+    
+                controlObject.canJump = true;
+    
+              }
+    
+            }
+    
+            controlObject.prevTime = time;
+          },
+
+          moveBackward: false,
+          moveForward: false,
+          moveLeft: false,
+          moveRight: false,
+          canJump: false,
+          velocity: new THREE.Vector3(),
+          direction: new THREE.Vector3(),
+
+          dispose: () =>{
+
+            document.removeEventListener( 'keydown', controlObject.onKeyDown );
+            document.removeEventListener( 'keyup', controlObject.onKeyUp );
+            
+          }  
+        };
+
+       
+
+              
+
+      } 
     }
+
+    env.local.controlObject = controlObject;
 
     /**
     * @type {THREE.Mesh<THREE.Geometry>}
     */
 
     let camera, scene, renderer, composer;
-    let controls;
 
     const params = {
       exposure: 1,
@@ -53150,9 +53345,7 @@ const { MathUtils } = require$$0;
 
       
       
-      controls = new OrbitControls( camera, renderer.domElement );
-      controls.target.set( 0, 1, 0 );
-      controls.update();
+      env.local.controlObject.init( camera, renderer.domElement );
     }
 
 
@@ -53259,8 +53452,8 @@ const { MathUtils } = require$$0;
 
   g3d.SkyAndWater = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-acd81fd5.js')).Water;
-      Sky           = (await import('./Sky-52cba757.js')).Sky;  
+      Water         = (await import('./Water-cca988a1.js')).Water;
+      Sky           = (await import('./Sky-bd59e3e0.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -53356,7 +53549,7 @@ const { MathUtils } = require$$0;
 
   g3d.Sky = async (args, env) => {
     if (!Sky) {
-      Sky           = (await import('./Sky-52cba757.js')).Sky;  
+      Sky           = (await import('./Sky-bd59e3e0.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -53417,7 +53610,7 @@ const { MathUtils } = require$$0;
   
   g3d.Water = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-acd81fd5.js')).Water;
+      Water         = (await import('./Water-cca988a1.js')).Water;
     }
 
     let options = await core._getRules(args, env);
@@ -53471,6 +53664,7 @@ const { MathUtils } = require$$0;
     console.log('Graphics3D was removed');
     console.log('env global:'); console.log(env.global);
     console.log('env local:'); console.log(env.local);
+    env.local.controlObject.dispose();
     cancelAnimationFrame(env.local.aid);
   };
 
@@ -53480,4 +53674,4 @@ const { MathUtils } = require$$0;
 
 }
 
-export { AdditiveBlending as A, BackSide as B, Clock as C, EventDispatcher as E, FrontSide as F, LinearFilter as L, MOUSE as M, NoToneMapping as N, OrthographicCamera as O, PlaneBufferGeometry as P, Quaternion as Q, RGBAFormat as R, Spherical as S, TOUCH as T, UniformsUtils as U, Vector3 as V, WebGLRenderTarget as W, Vector2 as a, ShaderMaterial as b, Mesh as c, Color as d, MeshBasicMaterial as e, MathUtils$1 as f, Plane as g, Matrix4 as h, Vector4 as i, PerspectiveCamera as j, UniformsLib as k, LinearEncoding as l, RGBFormat as m, BoxBufferGeometry as n, kernel as o };
+export { AdditiveBlending as A, BackSide as B, Clock as C, EventDispatcher as E, FrontSide as F, LinearFilter as L, MOUSE as M, NoToneMapping as N, OrthographicCamera as O, PlaneBufferGeometry as P, Quaternion as Q, RGBAFormat as R, Spherical as S, TOUCH as T, UniformsUtils as U, Vector3 as V, WebGLRenderTarget as W, Vector2 as a, ShaderMaterial as b, Mesh as c, Color as d, MeshBasicMaterial as e, Euler as f, Plane as g, Matrix4 as h, Vector4 as i, PerspectiveCamera as j, MathUtils$1 as k, UniformsLib as l, LinearEncoding as m, RGBFormat as n, BoxBufferGeometry as o, kernel as p };

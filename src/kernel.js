@@ -1248,9 +1248,10 @@ const { MathUtils } = require('three');
             
             env.element.appendChild(inst);
 
-            document.addEventListener( 'keydown', controlObject.onKeyDown );
-            document.addEventListener( 'keyup', controlObject.onKeyUp );
-            
+            renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
+            renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
+
+            renderer.domElement.tabIndex = 1;
 
             inst.addEventListener( 'click', function () {
 
