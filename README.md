@@ -14,23 +14,7 @@ See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange
 __This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
 but one can use it independently as well
 
-__This package depends on [WLJS Interpreter](https://github.com/JerryI/wljs-interpreter)__ (will be downloaded automatically on startup)
-
-## Examples
-To run examples gallery, you need to have `nodejs` and `wolframscript` installed
-```bash
-git clone https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine
-cd Mathematica-ThreeJS-graphics-engine
-npm i
-```
-to generate gallery and install WL dependencies
-```bash
-npm run test
-```
-and run a dev server on your machine
-```bash
-npm run watch
-```
+__Live demo on [WLJS Interpreter](https://github.com/JerryI/wljs-interpreter) sandbox__ 
 
 
 ## Contributing

@@ -52871,54 +52871,8 @@ const { MathUtils } = require$$0;
   g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
   g3d.Line = async (args, env) => {
-    if (env.hasOwnProperty("geometry")) {
-      const geometry = new THREE.Geometry();
-
-      const points = await interpretate(args[0], env);
-      points.forEach((el) => {
-        geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
-      });
-
-      const material = new THREE.LineBasicMaterial({
-        linewidth: env.thickness,
-        color: env.edgecolor,
-      });
-      const line = new THREE.Line(geometry, material);
-
-      line.material.setValues({
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1
-      });
-
-      env.mesh.add(line);
-
-      geometry.dispose();
-      material.dispose();
-    } else {
-      let arr = await interpretate(args[0], env);
-      if (arr.length === 1) arr = arr[0];
-      //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
-      console.log("points: ", arr.length);
-
-      const points = [];
-      arr.forEach((p) => {
-        points.push(new THREE.Vector4(...p, 1));
-      });
-      //new THREE.Vector4(...arr[0], 1)
-
-      points.forEach((p) => {
-        p = p.applyMatrix4(env.matrix);
-      });
-
-      const geometry = new THREE.Geometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: env.edgecolor,
-        linewidth: env.thickness,
-      });
-
-      env.mesh.add(new THREE.Line(geometry, material));
-    }
+    console.warn('g3d.Line is temporary disbaled');
+    return;
   };
 
   let OrbitControls;
@@ -52942,10 +52896,10 @@ const { MathUtils } = require$$0;
 
 
     THREE         = (await Promise.resolve().then(function () { return three_module; }));
-    OrbitControls = (await import('./OrbitControls-c192cce5.js')).OrbitControls;
-    EffectComposer= (await import('./EffectComposer-c77a2dfe.js')).EffectComposer;
-    RenderPass    = (await import('./RenderPass-db1d93c3.js')).RenderPass;
-    UnrealBloomPass=(await import('./UnrealBloomPass-a5cbdae7.js')).UnrealBloomPass;
+    OrbitControls = (await import('./OrbitControls-ce4bd9ae.js')).OrbitControls;
+    EffectComposer= (await import('./EffectComposer-5483618b.js')).EffectComposer;
+    RenderPass    = (await import('./RenderPass-7e6f5804.js')).RenderPass;
+    UnrealBloomPass=(await import('./UnrealBloomPass-bbd174c0.js')).UnrealBloomPass;
     GUI           = (await import('./dat.gui.module-042c4ed7.js')).GUI;
 
 
@@ -53011,7 +52965,7 @@ const { MathUtils } = require$$0;
     if (options.Controls) {
 
       if (options.Controls === 'PointerLockControls') {
-        const o = (await import('./PointerLockControls-4afff780.js')).PointerLockControls;
+        const o = (await import('./PointerLockControls-6ab0ceb2.js')).PointerLockControls;
         
 
         controlObject = {
@@ -53452,8 +53406,8 @@ const { MathUtils } = require$$0;
 
   g3d.SkyAndWater = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-cca988a1.js')).Water;
-      Sky           = (await import('./Sky-bd59e3e0.js')).Sky;  
+      Water         = (await import('./Water-46604f42.js')).Water;
+      Sky           = (await import('./Sky-9a36253f.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -53549,7 +53503,7 @@ const { MathUtils } = require$$0;
 
   g3d.Sky = async (args, env) => {
     if (!Sky) {
-      Sky           = (await import('./Sky-bd59e3e0.js')).Sky;  
+      Sky           = (await import('./Sky-9a36253f.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -53610,7 +53564,7 @@ const { MathUtils } = require$$0;
   
   g3d.Water = async (args, env) => {
     if (!Water) {
-      Water         = (await import('./Water-cca988a1.js')).Water;
+      Water         = (await import('./Water-46604f42.js')).Water;
     }
 
     let options = await core._getRules(args, env);

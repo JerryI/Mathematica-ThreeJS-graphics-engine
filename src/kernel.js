@@ -1008,6 +1008,8 @@ const { MathUtils } = require('three');
   g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
   g3d.Line = async (args, env) => {
+    console.warn('g3d.Line is temporary disbaled');
+    return;
     if (env.hasOwnProperty("geometry")) {
       const geometry = new THREE.Geometry();
 

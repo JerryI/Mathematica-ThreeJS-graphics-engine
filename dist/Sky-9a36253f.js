@@ -1,4 +1,4 @@
-import { b as ShaderMaterial, U as UniformsUtils, B as BackSide, c as Mesh, o as BoxBufferGeometry, V as Vector3 } from './kernel-162e9d55.js';
+import { b as ShaderMaterial, U as UniformsUtils, B as BackSide, c as Mesh, o as BoxBufferGeometry, V as Vector3 } from './kernel-9772a043.js';
 
 /**
  * Based on "A Practical Analytic Model for Daylight"
