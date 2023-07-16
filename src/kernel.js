@@ -1,5 +1,4 @@
 const { MathUtils } = require('three');
-{
 
   let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
@@ -17,7 +16,7 @@ const { MathUtils } = require('three');
   "PreserveImageOptions", "Prolog", "RotationAction", 
   "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
   "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
-  "ViewProjection", "ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
+  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
     g3d[e] = () => e;
   });
 
@@ -798,108 +797,52 @@ const { MathUtils } = require('three');
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
 
-    copy.geometry = new THREE.Geometry();
+    
 
-    (await interpretate(args[0], copy)).forEach((el) => {
-      if (typeof el[0] !== "number") console.error("not a triple of number" + el);
-      copy.geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
-    });
+    const pts = (await interpretate(args[0], copy)).flat();
+    copy.vertices = new Float32Array( pts )
 
     const group = new THREE.Group();
 
     await interpretate(args[1], copy);
 
     env.mesh.add(group);
-    copy.geometry.dispose();
+    //copy.geometry.dispose();
   };
 
   g3d.AbsoluteThickness = (args, env) => {}
 
   g3d.Polygon = async (args, env) => {
-    if (env.hasOwnProperty("geometry")) {
-      /**
-       * @type {THREE.Geometry}
-       */
-      var geometry = env.geometry.clone();
+    var geometry = new THREE.BufferGeometry();
+    let vertices;
 
-      var createFace = (c) => {
-        c = c.map((x) => x - 1);
+    if (env.hasOwnProperty("vertices")) {
 
-        switch (c.length) {
-          case 3:
-            geometry.faces.push(new THREE.Face3(c[0], c[1], c[2]));
-            break;
-
-          case 4:
-            geometry.faces.push(
-              new THREE.Face3(c[0], c[1], c[2]),
-              new THREE.Face3(c[0], c[2], c[3]),
-            );
-            break;
-
-          case 5:
-            geometry.faces.push(
-              new THREE.Face3(c[0], c[1], c[4]),
-              new THREE.Face3(c[1], c[2], c[3]),
-              new THREE.Face3(c[1], c[3], c[4]),
-            );
-            break;
-          /**
-           * 0 1
-           *5    2
-           * 4  3
-           */
-          case 6:
-            geometry.faces.push(
-              new THREE.Face3(c[0], c[1], c[5]),
-              new THREE.Face3(c[1], c[2], c[5]),
-              new THREE.Face3(c[5], c[2], c[4]),
-              new THREE.Face3(c[2], c[3], c[4])
-            );
-            break;
-          default:
-            console.log(c);
-            console.log(c.length);
-            console.error("Cant produce complex polygons! at", c);
-        }
-      };
+      vertices = env.vertices;
 
       let a = await interpretate(args[0], env);
-      if (a.length === 1) {
-        a = a[0];
-      }
+      
+      geometry.setIndex( a.flat().map((e)=>e-1) );
 
-      if (typeof a[0] === "number") {
-        console.log("Create single face");
-        createFace(a);
-      } else {
-        console.log("Create multiple face");
-        a.forEach(createFace);
-      }
+
     } else { 
-      var geometry = new THREE.Geometry();
+      
       let points = await interpretate(args[0], env);
 
-      points.forEach((el) => {
-        if (typeof el[0] !== "number") {
-          console.error("not a triple of number", el);
-          return;
-        }
-        geometry.vertices.push(new THREE.Vector3(el[0], el[1], el[2]));
-      });
+      vertices = new Float32Array( points.flat() );
+
+  
 
       console.log("points");
       console.log(points);
 
       switch (points.length) {
         case 3:
-          geometry.faces.push(new THREE.Face3(0, 1, 2));
+          geometry.setIndex( [0,1,2] );
           break;
 
         case 4:
-          geometry.faces.push(
-            new THREE.Face3(0, 1, 2),
-            new THREE.Face3(0, 2, 3));
+          geometry.setIndex( [0,1,2,      0,2,3] );
           break;
         /**
          *  0 1
@@ -907,10 +850,7 @@ const { MathUtils } = require('three');
          *   3
          */
         case 5:
-          geometry.faces.push(
-            new THREE.Face3(0, 1, 4),
-            new THREE.Face3(1, 2, 3),
-            new THREE.Face3(1, 3, 4));
+          geometry.setIndex( [0, 1, 4,     1, 2, 3,     1, 3, 4] );
           break;
         /**
          * 0  1
@@ -918,12 +858,7 @@ const { MathUtils } = require('three');
          * 4   3
          */
         case 6:
-          geometry.faces.push(
-            new THREE.Face3(0, 1, 5),
-            new THREE.Face3(1, 2, 5),
-            new THREE.Face3(5, 2, 4),
-            new THREE.Face3(2, 3, 4)
-          );
+          geometry.setIndex( [0, 1, 5,     1, 2, 5,     5, 2, 4,       2, 3, 4] );
           break;
         default:
           console.log(points);
@@ -931,9 +866,12 @@ const { MathUtils } = require('three');
       }
     }
 
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    geometry.computeVertexNormals();
+
     const material = new THREE.MeshPhysicalMaterial({
       color: env.color,
-      transparent: env.opacity < 0.9,
+      transparent: env.opacity < 1,
       opacity: env.opacity,
       roughness: env.roughness,
       metalness: env.metalness,
@@ -947,8 +885,6 @@ const { MathUtils } = require('three');
     console.log(env.opacity);
     material.side = THREE.DoubleSide;
 
-    geometry.computeFaceNormals();
-    geometry.computeVertexNormals(true);
     const poly = new THREE.Mesh(geometry, material);
 
     //poly.frustumCulled = false;
@@ -1060,9 +996,6 @@ const { MathUtils } = require('three');
     }
   };
 
-  let OrbitControls;
-  let FirstPersonControls = false;
-
   let EffectComposer;
   let RenderPass; 
   let UnrealBloomPass;
@@ -1077,15 +1010,15 @@ const { MathUtils } = require('three');
   g3d.None = () => "None"
   g3d.Automatic = () => "Automatic"
 
-  g3d.Graphics3D = async (args, env) => {
+  g3d.Graphics3Do = async (args, env) => {
     /* lazy loading */
 
 
     THREE         = (await import('three'));
-    OrbitControls = (await import("three/examples/jsm/controls/OrbitControls")).OrbitControls;
-    EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer')).EffectComposer;
-    RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass')).RenderPass;
-    UnrealBloomPass=(await import('three/examples/jsm/postprocessing/UnrealBloomPass')).UnrealBloomPass;
+    OrbitControls = (await import("three/examples/jsm/controls/OrbitControls.js")).OrbitControls;
+    EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer.js')).EffectComposer;
+    RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass.js')).RenderPass;
+    UnrealBloomPass=(await import('three/examples/jsm/postprocessing/UnrealBloomPass.js')).UnrealBloomPass;
     GUI           = (await import('dat.gui')).GUI;
 
 
@@ -1131,12 +1064,16 @@ const { MathUtils } = require('three');
     console.log(ImageSize);
 
     //path tracing engine
+    options.RTX = true;
+
     if (options.RTX) {
-      //FullScreenQuad = (await import('THREE/examples/jsm/postprocessing/Pass.js')).Pass.FullScreenQuad;
-      //RTX = await import('THREE-gpu-pathtracer/build/index.module');
-      //PathTracingSceneGenerator   = RTX.PathTracingSceneGenerator;
-      //PathTracingRenderer         = RTX.PathTracingRenderer;
-      //PhysicalPathTracingMaterial = RTX.PhysicalPathTracingMaterial;
+ 
+      RTX = await import('three-gpu-pathtracer/build/index.module');
+      PathTracingSceneGenerator   = RTX.PathTracingSceneGenerator;
+      PathTracingRenderer         = RTX.PathTracingRenderer;
+      PhysicalPathTracingMaterial = RTX.PhysicalPathTracingMaterial;  
+
+      console.log(RTX);
     }
 
 
@@ -1157,7 +1094,7 @@ const { MathUtils } = require('three');
     if (options.Controls) {
 
       if (options.Controls === 'PointerLockControls') {
-        const o = (await import("three/examples/jsm/controls/PointerLockControls")).PointerLockControls;
+        const o = (await import("three/examples/jsm/controls/PointerLockControls.js")).PointerLockControls;
         
 
         controlObject = {
@@ -1366,12 +1303,37 @@ const { MathUtils } = require('three');
     let camera, scene, renderer, composer;
     let controls, water, sun, mesh;
 
-    const params = {
+    let params = {
       exposure: 1,
       bloomStrength: 0.1,
       bloomThreshold: 0.5,
       bloomRadius: 0.11
     };
+
+    if (options.RTX) {
+      params = { ...params,
+        multipleImportanceSampling: true,
+        stableNoise: false,
+        denoiseEnabled: false,
+        denoiseSigma: 2.5,
+        denoiseThreshold: 0.1,
+        denoiseKSigma: 1.0,
+        environmentIntensity: 1,
+        environmentRotation: 0,
+        environmentBlur: 0.0,
+        backgroundBlur: 0.0,
+        bounces: 2,
+        samplesPerFrame: 1,
+        acesToneMapping: true,
+        resolutionScale: 0.1,
+        transparentTraversals: 20,
+        filterGlossyFactor: 0.5,
+        tiles: 1,
+        backgroundAlpha: 1,
+        checkerboardTransparency: true,
+        cameraProjection: 'Perspective'
+      };     
+    }
 
     await init();
     animate();
@@ -1384,8 +1346,7 @@ const { MathUtils } = require('three');
     async function init() {
 
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 0.01, 2000 );
-      
+      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 0.01, 2000 );     
 
       renderer = new THREE.WebGLRenderer();
       renderer.setPixelRatio( window.devicePixelRatio );
@@ -1393,6 +1354,30 @@ const { MathUtils } = require('three');
       //renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.domElement.style = "margin:auto";
       container.appendChild( renderer.domElement );
+
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      
+      // initialize the path tracing material and renderer
+      const ptMaterial = new RTX.PhysicalPathTracingMaterial();
+      const ptRenderer = new RTX.PathTracingRenderer( renderer );
+      ptRenderer.setSize( window.innerWidth, window.innerHeight );
+      ptRenderer.camera = camera;
+      ptRenderer.material = ptMaterial;   
+      
+      
+      // if rendering transparent background
+      ptRenderer.alpha = true;
+
+      // init quad for rendering to the canvas
+      const fsQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
+      	map: ptRenderer.target.texture,
+      
+      	// if rendering transparent background
+      	blending: THREE.CustomBlending,
+      } ) );
+
+          
 
       /* postprocess */
   		const renderScene = new RenderPass( scene, camera );
@@ -1510,10 +1495,13 @@ const { MathUtils } = require('three');
 
       scene.add(group);
 
-      
+      // ensure scene matrices are up to date
+      scene.updateMatrixWorld();  
       
       env.local.controlObject.init( camera, renderer.domElement );
       zoomExtents(scene, camera);
+
+      
     }
 
 
@@ -1620,8 +1608,8 @@ const { MathUtils } = require('three');
 
   g3d.SkyAndWater = async (args, env) => {
     if (!Water) {
-      Water         = (await import('three/examples/jsm/objects/Water')).Water;
-      Sky           = (await import('three/examples/jsm/objects/Sky')).Sky;  
+      Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
+      Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -1717,7 +1705,7 @@ const { MathUtils } = require('three');
 
   g3d.Sky = async (args, env) => {
     if (!Sky) {
-      Sky           = (await import('three/examples/jsm/objects/Sky')).Sky;  
+      Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
     }
 
     let options = await core._getRules(args, env);
@@ -1778,7 +1766,7 @@ const { MathUtils } = require('three');
   
   g3d.Water = async (args, env) => {
     if (!Water) {
-      Water         = (await import('three/examples/jsm/objects/Water')).Water;
+      Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
     }
 
     let options = await core._getRules(args, env);
@@ -1827,17 +1815,499 @@ const { MathUtils } = require('three');
       }
     );
   }  
-
+  /*
   g3d.Graphics3D.destroy = (args, env) => {
     console.log('Graphics3D was removed');
     console.log('env global:'); console.log(env.global);
     console.log('env local:'); console.log(env.local);
     env.local.controlObject.dispose();
     cancelAnimationFrame(env.local.aid);
-  }
+  }*/
 
   g3d.Large = (args, env) => {
     return 1.0;
   }
 
+const setImageSize = async (options) => {
+  let ImageSize;
+
+  if (options.ImageSize) {
+    ImageSize = await interpretate(options.ImageSize, env);
+    if (!(ImageSize instanceof Array)) ImageSize = [ImageSize, ImageSize*0.618034];
+  } else {
+    ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
+  }
+
+  return ImageSize;
 }
+
+const getControls = async (options) => {
+
+}
+
+let RTX = {};
+
+const setupRTX = async () => {
+  if (RTX) return;
+  
+}
+
+const setupRenderer = async () => {
+
+
+}
+
+let RGBELoader;
+let OrbitControls;
+let FullScreenQuad;
+
+core.Graphics3D = async (args, env) => {  
+  //Lazy loading
+
+  THREE         = (await import('three'));
+  OrbitControls = (await import("three/examples/jsm/controls/OrbitControls.js")).OrbitControls;
+  GUI           = (await import('dat.gui')).GUI;  
+  RGBELoader    = (await import('three/examples/jsm/loaders/RGBELoader.js')).RGBELoader;
+  
+  RTX = (await import('three-gpu-pathtracer/build/index.module'));
+  FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).FullScreenQuad;
+
+  console.log(RTX);
+
+  /**
+   * @type {Object}
+   */  
+  const options = await core._getRules(args, {...env, context: g3d, hold:true});
+  console.log(options);  
+
+  /**
+   * @type {HTMLElement}
+   */
+  const container = env.element;
+
+  /**
+   * @type {[Number, Number]}
+   */
+  const ImageSize = await setImageSize(options); 
+
+  const params = 	{
+    multipleImportanceSampling: true,
+  	stableNoise: false,
+  	denoiseEnabled: false,
+  	denoiseSigma: 2.5,
+  	denoiseThreshold: 0.1,
+  	denoiseKSigma: 1.0,
+  	environmentIntensity: 1,
+  	environmentRotation: 0,
+  	environmentBlur: 0.0,
+  	backgroundBlur: 0.0,
+  	bounces: 2,
+  	samplesPerFrame: 1,
+  	acesToneMapping: true,
+  	resolutionScale: 0.1,
+  	transparentTraversals: 20,
+  	filterGlossyFactor: 0.5,
+  	tiles: 1,
+  	backgroundAlpha: 1,
+  	checkerboardTransparency: true,
+  	cameraProjection: 'Perspective',
+  };
+
+  //Setting GUI
+  const gui = new GUI({ autoPlace: false });
+  const guiContainer = document.createElement('div');
+  guiContainer.classList.add('graphics3d-controller');
+  guiContainer.appendChild(gui.domElement);
+  container.appendChild( guiContainer );    
+
+  //Setting up renderer
+  let renderer, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
+  let perspectiveCamera, orthoCamera, equirectCamera;
+  let envMap, envMapGenerator, scene;
+  let samplesEl;
+  let PT_PROGRAM_ID;
+
+  const orthoWidth = 5;
+
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.outputEncoding = THREE.sRGBEncoding;
+	renderer.setClearColor( 0, 0 );
+	container.appendChild( renderer.domElement );
+
+	const aspect = ImageSize[0]/ImageSize[1];
+	perspectiveCamera = new RTX.PhysicalCamera( 75, aspect, 0.025, 500 );
+	perspectiveCamera.position.set( - 4, 2, 3 );
+
+	const orthoHeight = orthoWidth / aspect;
+	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
+	orthoCamera.position.set( - 4, 2, 3 );
+
+	equirectCamera = new RTX.EquirectCamera();
+	equirectCamera.position.set( - 4, 2, 3 );
+
+	ptRenderer = new RTX.PathTracingRenderer( renderer );
+	ptRenderer.alpha = true;
+	ptRenderer.material = new RTX.PhysicalPathTracingMaterial();
+	ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', params.transparentTraversals );
+	ptRenderer.material.setDefine( 'FEATURE_MIS', Number( params.multipleImportanceSampling ) );
+	ptRenderer.tiles.set( params.tiles, params.tiles );
+
+	blitQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
+		map: ptRenderer.target.texture,
+		blending: THREE.CustomBlending,
+		premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
+	} ) );
+
+	denoiseQuad = new FullScreenQuad( new RTX.DenoiseMaterial( {
+		map: ptRenderer.target.texture,
+		blending: THREE.CustomBlending,
+		premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
+	} ) );  
+
+	controls = new OrbitControls( perspectiveCamera, renderer.domElement );
+	controls.addEventListener( 'change', () => {
+
+		ptRenderer.reset();
+
+	} );  
+
+	scene = new THREE.Scene();
+
+  const group = new THREE.Group();
+
+  const envcopy = {
+    ...env,
+    context: g3d,
+    numerical: true,
+    tostring: false,
+    matrix: new THREE.Matrix4().set(
+      1, 0, 0, 0,//
+      0, 1, 0, 0,//
+      0, 0, 1, 0,//
+      0, 0, 0, 1),
+    color: new THREE.Color(1, 1, 1),
+    opacity: 1,
+    thickness: 1,
+    roughness: 0.5,
+    edgecolor: new THREE.Color(0, 0, 0),
+    mesh: group,
+    metalness: 0,
+    emissive: new THREE.Color(0, 0, 0),
+    arrowHeight: 20,
+    arrowRadius: 5,
+    reflectivity: 0.5,
+    clearcoat: 0,
+    ior: 1.5,
+    Lerp: options.Lerp
+  }  
+
+  await interpretate(args[0], envcopy);
+
+  group.applyMatrix4(new THREE.Matrix4().set(
+    1, 0, 0, 0,
+    0, 0, 1, 0,
+    0,-1, 0, 0,
+    0, 0, 0, 1));
+
+  scene.add(group);
+
+	envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer );
+
+	const envMapPromise = new RGBELoader().setDataType( THREE.FloatType )
+		.loadAsync( 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/equirectangular/royal_esplanade_1k.hdr' )
+		.then( texture => {
+
+			envMap = texture;
+
+			updateEnvBlur();
+
+		} );  
+
+
+  const generator = new RTX.DynamicPathTracingSceneGenerator( scene );
+  const sceneInfo = generator.generate( scene );
+  const { bvh, textures, materials } = sceneInfo;
+
+  const geometry = bvh.geometry;
+  const material = ptRenderer.material;
+
+  material.bvh.updateFrom( bvh );
+  material.attributesArray.updateFrom(
+    geometry.attributes.normal,
+    geometry.attributes.tangent,
+    geometry.attributes.uv,
+    geometry.attributes.color,
+  );
+
+  material.materialIndexAttribute.updateFrom( geometry.attributes.materialIndex );
+  material.textures.setTextures( renderer, 2048, 2048, textures );
+  material.materials.updateFrom( materials, textures );
+
+  await Promise.all( [ envMapPromise ] );    
+
+  function onResize() {
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const scale = params.resolutionScale;
+    const dpr = window.devicePixelRatio;
+  
+    ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
+    ptRenderer.reset();
+  
+    renderer.setSize( w, h );
+    renderer.setPixelRatio( window.devicePixelRatio * scale );
+  
+    const aspect = w / h;
+  
+    perspectiveCamera.aspect = aspect;
+    perspectiveCamera.updateProjectionMatrix();
+  
+    const orthoHeight = orthoWidth / aspect;
+    orthoCamera.top = orthoHeight / 2;
+    orthoCamera.bottom = orthoHeight / - 2;
+    orthoCamera.updateProjectionMatrix();
+  
+  }
+  
+  function reset() {
+  
+    ptRenderer.reset();
+  
+  }
+  
+  function updateEnvBlur() {
+  
+    const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
+    ptRenderer.material.envMapInfo.updateFrom( blurredTex );
+    scene.environment = blurredTex;
+    ptRenderer.reset();
+  
+  }
+  
+  function updateCamera( cameraProjection ) {
+  
+    if ( cameraProjection === 'Perspective' ) {
+  
+      if ( activeCamera ) {
+  
+        perspectiveCamera.position.copy( activeCamera.position );
+  
+      }
+  
+      activeCamera = perspectiveCamera;
+  
+    } else if ( cameraProjection === 'Orthographic' ) {
+  
+      if ( activeCamera ) {
+  
+        orthoCamera.position.copy( activeCamera.position );
+  
+      }
+  
+      activeCamera = orthoCamera;
+  
+    } else { // Equirect
+  
+      if ( activeCamera ) {
+  
+        equirectCamera.position.copy( activeCamera.position );
+  
+      }
+  
+      activeCamera = equirectCamera;
+  
+    }
+  
+    controls.object = activeCamera;
+    ptRenderer.camera = activeCamera;
+  
+    controls.update();
+  
+    reset();
+  
+  }
+  
+  function animate() {
+  
+    requestAnimationFrame( animate );
+  
+    ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
+    //ptRenderer.material.materials.setMatte( 0, false );
+    //ptRenderer.material.materials.setMatte( 1, false );
+    //ptRenderer.material.materials.setMatte( 2, false );
+    //ptRenderer.material.materials.setCastShadow( 0, true );
+    //ptRenderer.material.materials.setCastShadow( 1, true );
+  
+    ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
+    ptRenderer.material.environmentIntensity = params.environmentIntensity;
+    ptRenderer.material.backgroundBlur = params.backgroundBlur;
+    ptRenderer.material.bounces = params.bounces;
+    ptRenderer.material.backgroundAlpha = params.backgroundAlpha;
+    ptRenderer.material.physicalCamera.updateFrom( activeCamera );
+  
+    activeCamera.updateMatrixWorld();
+  
+    if ( params.backgroundAlpha < 1.0 ) {
+  
+      scene.background = null;
+  
+    } else {
+  
+      scene.background = scene.environment;
+  
+    }
+  
+    // Get the path tracing shader id. It will be the next program compiled and used here.
+    if ( PT_PROGRAM_ID === undefined ) {
+  
+      PT_PROGRAM_ID = renderer.info.programs.length;
+  
+    }
+  
+    for ( let i = 0, l = params.samplesPerFrame; i < l; i ++ ) {
+  
+      ptRenderer.update();
+  
+    }
+  
+    if ( ptRenderer.samples < 1 ) {
+  
+      renderer.render( scene, activeCamera );
+  
+    }
+  
+    denoiseQuad.material.sigma = params.denoiseSigma;
+    denoiseQuad.material.threshold = params.denoiseThreshold;
+    denoiseQuad.material.kSigma = params.denoiseKSigma;
+  
+    const quad = params.denoiseEnabled ? denoiseQuad : blitQuad;
+  
+    renderer.autoClear = false;
+    quad.material.map = ptRenderer.target.texture;
+    quad.render( renderer );
+    renderer.autoClear = true;
+  
+    //samplesEl.innerText = `Samples: ${ Math.floor( ptRenderer.samples ) }`;
+  
+  }
+  
+
+	onResize();
+
+	updateCamera( params.cameraProjection );
+
+	const ptFolder = gui.addFolder( 'Path Tracing' );
+	ptFolder.add( params, 'acesToneMapping' ).onChange( value => {
+
+		renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+		blitQuad.material.needsUpdate = true;
+
+	} );
+	ptFolder.add( params, 'stableNoise' ).onChange( value => {
+
+		ptRenderer.stableNoise = value;
+
+	} );
+	ptFolder.add( params, 'multipleImportanceSampling' ).onChange( value => {
+
+		ptRenderer.material.setDefine( 'FEATURE_MIS', Number( value ) );
+		ptRenderer.reset();
+
+	} );
+	ptFolder.add( params, 'tiles', 1, 4, 1 ).onChange( value => {
+
+		ptRenderer.tiles.set( value, value );
+
+	} );
+	ptFolder.add( params, 'samplesPerFrame', 1, 10, 1 );
+	ptFolder.add( params, 'filterGlossyFactor', 0, 1 ).onChange( () => {
+
+		ptRenderer.reset();
+
+	} );
+	ptFolder.add( params, 'bounces', 1, 30, 1 ).onChange( () => {
+
+		ptRenderer.reset();
+
+	} );
+	ptFolder.add( params, 'transparentTraversals', 0, 40, 1 ).onChange( value => {
+
+		ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', value );
+		ptRenderer.reset();
+
+	} );
+	ptFolder.add( params, 'resolutionScale', 0.1, 1 ).onChange( () => {
+
+		onResize();
+
+	} );
+
+	const denoiseFolder = gui.addFolder( 'Denoising' );
+	denoiseFolder.add( params, 'denoiseEnabled' );
+	denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 );
+	denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 );
+	denoiseFolder.add( params, 'denoiseKSigma', 0.0, 12.0 );
+	denoiseFolder.close();
+
+
+	const envFolder = gui.addFolder( 'Environment' );
+	envFolder.add( params, 'environmentIntensity', 0, 10 ).onChange( () => {
+
+		ptRenderer.reset();
+
+	} );
+	envFolder.add( params, 'environmentRotation', 0, 2 * Math.PI ).onChange( v => {
+
+		ptRenderer.material.environmentRotation.makeRotationY( v );
+		ptRenderer.reset();
+
+	} );
+	envFolder.add( params, 'environmentBlur', 0, 1 ).onChange( () => {
+
+		updateEnvBlur();
+
+	} );
+	envFolder.add( params, 'backgroundBlur', 0, 1 ).onChange( () => {
+
+		ptRenderer.reset();
+
+	} );
+	envFolder.add( params, 'backgroundAlpha', 0, 1 ).onChange( () => {
+
+		ptRenderer.reset();
+
+	} );
+	envFolder.close();
+
+	const cameraFolder = gui.addFolder( 'Camera' );
+	cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic', 'Equirectangular' ] ).onChange( v => {
+
+		updateCamera( v );
+
+	} );
+	cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
+
+		perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
+		this.updateDisplay();
+		reset();
+
+	} );
+	cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
+	cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
+	cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
+
+		perspectiveCamera.updateProjectionMatrix();
+		reset();
+
+	} ).listen();
+
+	cameraFolder.close();  
+
+  animate();
+}
+
