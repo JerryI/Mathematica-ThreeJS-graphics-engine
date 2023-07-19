@@ -33764,14 +33764,7 @@ const { MathUtils } = three;
     console.warn('temporary disabled');
     return;
   };  
-  /*
-  g3d.Graphics3D.destroy = (args, env) => {
-    console.log('Graphics3D was removed');
-    console.log('env global:'); console.log(env.global);
-    console.log('env local:'); console.log(env.local);
-    env.local.controlObject.dispose();
-    cancelAnimationFrame(env.local.aid);
-  }*/
+
 
   g3d.Large = (args, env) => {
     return 1.0;
@@ -34567,6 +34560,14 @@ core.Graphics3D = async (args, env) => {
 	cameraFolder.close();  
 
   animate();
+};
+
+core.Graphics3D.destroy = (args, env) => {
+  console.log('Graphics3D was removed');
+  console.log('env global:'); console.log(env.global);
+  console.log('env local:'); console.log(env.local);
+  env.local.controlObject.dispose();
+  cancelAnimationFrame(env.local.aid);
 };
 
 export { kernel as default };
