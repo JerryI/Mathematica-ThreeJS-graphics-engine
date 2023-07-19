@@ -372,8 +372,8 @@ const { MathUtils } = require('three');
 
     if (args.length === 2) {
       var points = [
-        new THREE.Vector4(...(await interpretate(args[0], env)), 1),
         new THREE.Vector4(...(await interpretate(args[1], env)), 1),
+        new THREE.Vector4(...(await interpretate(args[0], env)), 1),
       ];
 
       origin = points[0]
@@ -822,7 +822,56 @@ const { MathUtils } = require('three');
 
       let a = await interpretate(args[0], env);
       
-      geometry.setIndex( a.flat().map((e)=>e-1) );
+      if (a[0].length === 3) {
+        geometry.setIndex( a.flat().map((e)=>e-1) );
+      } else {
+        //more complicatec case, need to covert all polygons into triangles
+        const extendedIndexes = [];
+
+  
+
+        for (let i=0; i<a.length; ++i) {
+          const b = a[i];
+          switch (b.length) {
+            case 3:
+              extendedIndexes.push([b[0],b[1],b[2]]);
+              break;
+    
+            case 4:
+              extendedIndexes.push([b[0],b[1],b[2]]);
+              extendedIndexes.push([b[0],b[2],b[3]]);
+              break;
+            /**
+             *  0 1
+             * 4   2
+             *   3
+             */
+            case 5:
+              extendedIndexes.push([b[0], b[1], b[4]]);
+              extendedIndexes.push([b[1], b[2], b[3]]);
+              extendedIndexes.push([b[1], b[3], b[4]]);
+              break;
+            /**
+             * 0  1
+             *5     2
+             * 4   3
+             */
+            case 6:
+              extendedIndexes.push([b[0], b[1], b[5]]);
+              extendedIndexes.push([b[1], b[2], b[5]]);
+              extendedIndexes.push([b[5], b[2], b[4]]);
+              extendedIndexes.push([b[2], b[3], b[4]]);
+              break;
+            default:
+             
+              console.error("Cant build complex polygon ::");
+          }
+        }   
+
+        geometry.setIndex( extendedIndexes.flat().map((e)=>e-1) );
+        
+        
+      }
 
 
     } else { 
@@ -1008,530 +1057,15 @@ const { MathUtils } = require('three');
   g3d.Lighting = () => "Lighting"
   g3d.Default = () => "Default"
   g3d.None = () => "None"
-  g3d.Automatic = () => "Automatic"
-
-  g3d.Graphics3Do = async (args, env) => {
-    /* lazy loading */
-
-
-    THREE         = (await import('three'));
-    OrbitControls = (await import("three/examples/jsm/controls/OrbitControls.js")).OrbitControls;
-    EffectComposer= (await import('three/examples/jsm/postprocessing/EffectComposer.js')).EffectComposer;
-    RenderPass    = (await import('three/examples/jsm/postprocessing/RenderPass.js')).RenderPass;
-    UnrealBloomPass=(await import('three/examples/jsm/postprocessing/UnrealBloomPass.js')).UnrealBloomPass;
-    GUI           = (await import('dat.gui')).GUI;
-
-
-    /**
-     * @type {Object}
-     */   
-    env.local.handlers = [];
-    env.local.prolog   = [];
-
-    const Handlers = [];
-
-    /**
-     * @type {Object}
-     */  
-    const options = await core._getRules(args, g3d);
-    console.log(options);
-
-    /**
-     * @type {HTMLElement}
-     */
-    var container = env.element;
-
-    /**
-     * @type {[Number, Number]}
-     */
-    let ImageSize;
-    
-    if(options.ImageSize) {
-      ImageSize = options.ImageSize;
-    } else {
-      ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
-    } 
-
-    let background = options.Background || new THREE.Color(0xffffff);
-
-    const lighting = options.Lighting || "Default";
-
-    const aspectratio = options.AspectRatio || 0.618034;
-
-    //if only the width is specified
-    if (!(ImageSize instanceof Array)) ImageSize = [ImageSize, ImageSize*aspectratio];
-    console.log('Image size');
-    console.log(ImageSize);
-
-    //path tracing engine
-    options.RTX = true;
-
-    if (options.RTX) {
- 
-      RTX = await import('three-gpu-pathtracer/build/index.module');
-      PathTracingSceneGenerator   = RTX.PathTracingSceneGenerator;
-      PathTracingRenderer         = RTX.PathTracingRenderer;
-      PhysicalPathTracingMaterial = RTX.PhysicalPathTracingMaterial;  
-
-      console.log(RTX);
-    }
-
-
-    let controlObject = {
-      init: (camera, dom) => {
-        controlObject.o = new OrbitControls( camera, renderer.domElement );
-        controlObject.o.target.set( 0, 1, 0 );
-        controlObject.o.update();
-      },
-
-      dispose: () => {
-        
-      }
-    };
-
-    
-
-    if (options.Controls) {
-
-      if (options.Controls === 'PointerLockControls') {
-        const o = (await import("three/examples/jsm/controls/PointerLockControls.js")).PointerLockControls;
-        
-
-        controlObject = {
-          init: (camera, dom) => {
-            controlObject.o = new o( camera, dom );
-            env.local.scene.add( controlObject.o.getObject() );
-
-            controlObject.onKeyDown = function ( event ) {
-              switch ( event.code ) {
-    
-                case 'ArrowUp':
-                case 'KeyW':
-                  controlObject.moveForward = true;
-                  break;
-    
-                case 'ArrowLeft':
-                case 'KeyA':
-                  controlObject.moveLeft = true;
-                  break;
-    
-                case 'ArrowDown':
-                case 'KeyS':
-                  controlObject.moveBackward = true;
-                  break;
-    
-                case 'ArrowRight':
-                case 'KeyD':
-                  controlObject.moveRight = true;
-                  break;
-    
-                case 'Space':
-                  if ( controlObject.canJump === true ) controlObject.velocity.y += 20;
-                  controlObject.canJump = false;
-                  break;
-    
-              }
-              event.preventDefault();  
-              event.returnValue = false;
-              event.cancelBubble = true;
-              return false;
-              
-    
-            };
-    
-            controlObject.onKeyUp = function ( event ) {
-    
-              switch ( event.code ) {
-    
-                case 'ArrowUp':
-                case 'KeyW':
-                  controlObject.moveForward = false;
-                  break;
-    
-                case 'ArrowLeft':
-                case 'KeyA':
-                  controlObject.moveLeft = false;
-                  break;
-    
-                case 'ArrowDown':
-                case 'KeyS':
-                  controlObject.moveBackward = false;
-                  break;
-    
-                case 'ArrowRight':
-                case 'KeyD':
-                  controlObject.moveRight = false;
-                  break;
-                
-                
-              }
-
-              event.preventDefault();  
-              event.returnValue = false;
-              event.cancelBubble = true;
-              return false;              
-      
-    
-            };    
-            
-
-            env.local.handlers.push(controlObject.handler);
-
-            const inst = document.createElement('div');
-            inst.style.width="100%";
-            inst.style.height="100%";
-            inst.style.top = "0";
-            inst.style.position = "absolute";
-
-
-            
-            env.element.appendChild(inst);
-
-            renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
-            renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
-
-            renderer.domElement.tabIndex = 1;
-
-            inst.addEventListener( 'click', function () {
-
-              controlObject.o.lock();
-    
-            } );
-
-            controlObject.o.addEventListener( 'lock', function () {
-
-              inst.style.display = 'none';
-              //blocker.style.display = 'none';
-    
-            } );
-    
-            controlObject.o.addEventListener( 'unlock', function () {
-    
-              //blocker.style.display = 'block';
-              inst.style.display = '';
-    
-            } );
-
-          },
-
-
-          prevTime: performance.now(),
-
-          handler: () => {
-            const time = performance.now();
-            const controls = controlObject.o;
-
-            if ( controls.isLocked === true ) {
-    
-              //raycaster.ray.origin.copy( controls.getObject().position );
-              //raycaster.ray.origin.y -= 10;
-    
-              //const intersections = raycaster.intersectObjects( objects, false );
-    
-              //const onObject = intersections.length > 0;
-              const onObject = false;
-
-              const delta = ( time - controlObject.prevTime ) / 1000;
-    
-              controlObject.velocity.x -= controlObject.velocity.x * 10.0 * delta;
-              controlObject.velocity.z -= controlObject.velocity.z * 10.0 * delta;
-    
-              controlObject.velocity.y -= 9.8 * 4.0 * delta; // 100.0 = mass
-    
-              controlObject.direction.z = Number( controlObject.moveForward ) - Number( controlObject.moveBackward );
-              controlObject.direction.x = Number( controlObject.moveRight ) - Number( controlObject.moveLeft );
-              controlObject.direction.normalize(); // this ensures consistent movements in all directions
-    
-              if ( controlObject.moveForward || controlObject.moveBackward ) controlObject.velocity.z -= controlObject.direction.z * 40.0 * delta;
-              if ( controlObject.moveLeft || controlObject.moveRight ) controlObject.velocity.x -= controlObject.direction.x * 40.0 * delta;
-    
-              if ( onObject === true ) {
-    
-                controlObject.velocity.y = Math.max( 0, controlObject.velocity.y );
-                controlObject.canJump = true;
-    
-              }
-    
-              controls.moveRight( - controlObject.velocity.x * delta );
-              controls.moveForward( - controlObject.velocity.z * delta );
-    
-              controls.getObject().position.y += ( controlObject.velocity.y * delta ); // new behavior
-    
-              if ( controls.getObject().position.y < 0.3 ) {
-    
-                controlObject.velocity.y = 0;
-                controls.getObject().position.y = 0.3;
-    
-                controlObject.canJump = true;
-    
-              }
-    
-            }
-    
-            controlObject.prevTime = time;
-          },
-
-          moveBackward: false,
-          moveForward: false,
-          moveLeft: false,
-          moveRight: false,
-          canJump: false,
-          velocity: new THREE.Vector3(),
-          direction: new THREE.Vector3(),
-
-          dispose: () =>{
-
-            document.removeEventListener( 'keydown', controlObject.onKeyDown );
-            document.removeEventListener( 'keyup', controlObject.onKeyUp );
-            
-          }  
-        };
-
-       
-
-              
-
-      } 
-    }
-
-    env.local.controlObject = controlObject;
-
-    /**
-    * @type {THREE.Mesh<THREE.Geometry>}
-    */
-
-    let camera, scene, renderer, composer;
-    let controls, water, sun, mesh;
-
-    let params = {
-      exposure: 1,
-      bloomStrength: 0.1,
-      bloomThreshold: 0.5,
-      bloomRadius: 0.11
-    };
-
-    if (options.RTX) {
-      params = { ...params,
-        multipleImportanceSampling: true,
-        stableNoise: false,
-        denoiseEnabled: false,
-        denoiseSigma: 2.5,
-        denoiseThreshold: 0.1,
-        denoiseKSigma: 1.0,
-        environmentIntensity: 1,
-        environmentRotation: 0,
-        environmentBlur: 0.0,
-        backgroundBlur: 0.0,
-        bounces: 2,
-        samplesPerFrame: 1,
-        acesToneMapping: true,
-        resolutionScale: 0.1,
-        transparentTraversals: 20,
-        filterGlossyFactor: 0.5,
-        tiles: 1,
-        backgroundAlpha: 1,
-        checkerboardTransparency: true,
-        cameraProjection: 'Perspective'
-      };     
-    }
-
-    await init();
-    animate();
-    
-
-    function zoomExtents(scene, camera) {
-
-    }
-
-    async function init() {
-
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera( 55, ImageSize[0]/ImageSize[1], 0.01, 2000 );     
-
-      renderer = new THREE.WebGLRenderer();
-      renderer.setPixelRatio( window.devicePixelRatio );
-      renderer.setSize(ImageSize[0], ImageSize[1]);
-      //renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.domElement.style = "margin:auto";
-      container.appendChild( renderer.domElement );
-
-      renderer.outputEncoding = THREE.sRGBEncoding;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      
-      // initialize the path tracing material and renderer
-      const ptMaterial = new RTX.PhysicalPathTracingMaterial();
-      const ptRenderer = new RTX.PathTracingRenderer( renderer );
-      ptRenderer.setSize( window.innerWidth, window.innerHeight );
-      ptRenderer.camera = camera;
-      ptRenderer.material = ptMaterial;   
-      
-      
-      // if rendering transparent background
-      ptRenderer.alpha = true;
-
-      // init quad for rendering to the canvas
-      const fsQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
-      	map: ptRenderer.target.texture,
-      
-      	// if rendering transparent background
-      	blending: THREE.CustomBlending,
-      } ) );
-
-          
-
-      /* postprocess */
-  		const renderScene = new RenderPass( scene, camera );
-
-  		const bloomPass = new UnrealBloomPass( new THREE.Vector2( ImageSize[0], ImageSize[1] ), 1.5, 0.4, 0.85 );
-  		bloomPass.threshold = params.bloomThreshold;
-  		bloomPass.strength = params.bloomStrength;
-  		bloomPass.radius = params.bloomRadius;
-
-      composer = new EffectComposer( renderer );
-  		composer.addPass( renderScene );
-  		composer.addPass( bloomPass );
-
-      composer.setSize(ImageSize[0], ImageSize[1]);
-
-      function takeScheenshot() {
-        //renderer.render( scene, camera );
-        composer.render();
-        renderer.domElement.toBlob(function(blob){
-          var a = document.createElement('a');
-          var url = URL.createObjectURL(blob);
-          a.href = url;
-          a.download = 'screenshot.png';
-          a.click();
-        }, 'image/png', 1.0);
-      }
-
-      const gui = new GUI({ autoPlace: false });
-      const button = { Save:function(){ takeScheenshot() }};
-      gui.add(button, 'Save');
-
-      const bloomFolder = gui.addFolder('Bloom');
-
-  		bloomFolder.add( params, 'exposure', 0.1, 2 ).onChange( function ( value ) {
-  			renderer.toneMappingExposure = Math.pow( value, 4.0 );
-  		} );
-
-  		bloomFolder.add( params, 'bloomThreshold', 0.0, 1.0 ).onChange( function ( value ) {
-  			bloomPass.threshold = Number( value );
-  		} );
-
-  		bloomFolder.add( params, 'bloomStrength', 0.0, 3.0 ).onChange( function ( value ) {
-  			bloomPass.strength = Number( value );
-  		} );
-
-  		bloomFolder.add( params, 'bloomRadius', 0.0, 1.0 ).step( 0.01 ).onChange( function ( value ) {
-  			bloomPass.radius = Number( value );
-  		} );
-
-      if (background instanceof THREE.Color) scene.background = background;
-
-
-      const guiContainer = document.createElement('div');
-      guiContainer.classList.add('graphics3d-controller');
-      guiContainer.appendChild(gui.domElement);
-      container.appendChild( guiContainer );    
-
-      env.local.renderer = renderer;
-      env.local.scene    = scene;
-      env.local.camera = camera;
-
-      if (lighting === "Default") g3d.DefaultLighting([], env);
-
-      const group = new THREE.Group();
-
-      const cameraMesh = {
-        mesh: scene,
-        pos: [3, 3, 10],
-        set: (mesh, pos) => {
-          cameraMesh.mesh = mesh;
-          cameraMesh.pos = pos;
-        }
-      }
-
-      const envcopy = {
-        ...env,
-        context: g3d,
-        numerical: true,
-        tostring: false,
-        matrix: new THREE.Matrix4().set(
-          1, 0, 0, 0,//
-          0, 1, 0, 0,//
-          0, 0, 1, 0,//
-          0, 0, 0, 1),
-        color: new THREE.Color(1, 1, 1),
-        opacity: 1,
-        thickness: 1,
-        roughness: 0.5,
-        edgecolor: new THREE.Color(0, 0, 0),
-        mesh: group,
-        metalness: 0,
-        emissive: new THREE.Color(0, 0, 0),
-        arrowHeight: 20,
-        arrowRadius: 5,
-        reflectivity: 0.5,
-        clearcoat: 0,
-        ior: 1.5,
-        Lerp: options.Lerp,
-
-        Handlers: Handlers,
-
-        cameraMesh: cameraMesh
-      }
-    
-      await interpretate(args[0], envcopy);
-
-      envcopy.cameraMesh.mesh.add(camera);
-      camera.position.set(...envcopy.cameraMesh.pos);
-
-      group.applyMatrix4(new THREE.Matrix4().set(
-        1, 0, 0, 0,
-        0, 0, 1, 0,
-        0,-1, 0, 0,
-        0, 0, 0, 1));
-
-      scene.add(group);
-
-      // ensure scene matrices are up to date
-      scene.updateMatrixWorld();  
-      
-      env.local.controlObject.init( camera, renderer.domElement );
-      zoomExtents(scene, camera);
-
-      
-    }
-
-
-    function animate() {
-      //added loop-handlers, void
-      for (let i=0; i<Handlers.length; ++i) {
-        Handlers[i].eval();
-      }
-
-      render();
-      env.local.aid = requestAnimationFrame( animate );
-    }
-
-    function render() {
-      //added loop-handlers, void
-      env.local.handlers.forEach((f)=>{
-        f();
-      });
-
-      //renderer.render( scene, camera );
-      composer.render();
-    }
-
-
-  }; 
+  g3d.Lightmap = () => "Lightmap"
+  g3d.Automatic = () => "Automatic" 
 
   let Water = false;
   let Sky   = false;
 
   g3d.Camera = (args, env) => {
+    console.warn('temporary disabled');
+    return;
     let pos = args;
     if (args.length === 0) pos = [3,3,1];
     env.cameraMesh.set(env.mesh, pos);
@@ -1607,6 +1141,9 @@ const { MathUtils } = require('three');
   }
 
   g3d.SkyAndWater = async (args, env) => {
+    console.warn('temporary disabled');
+    return;
+
     if (!Water) {
       Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
       Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
@@ -1704,6 +1241,8 @@ const { MathUtils } = require('three');
   }
 
   g3d.Sky = async (args, env) => {
+    console.warn('temporary disabled');
+    return;
     if (!Sky) {
       Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
     }
@@ -1765,6 +1304,9 @@ const { MathUtils } = require('three');
   }
   
   g3d.Water = async (args, env) => {
+    console.warn('temporary disabled');
+    return;
+    
     if (!Water) {
       Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
     }
@@ -1857,6 +1399,14 @@ const setupRenderer = async () => {
 
 }
 
+const addDefaultLighting = (scene) => {
+  const light = new THREE.PointLight(0xffffff, 2, 10);
+  light.position.set(0, 10, 0);
+  scene.add(light);
+  var hemiLight = new THREE.HemisphereLight( 0xffffbb, 0x080820, 2 );
+  scene.add( hemiLight );
+}
+
 let RGBELoader;
 let OrbitControls;
 let FullScreenQuad;
@@ -1876,7 +1426,21 @@ core.Graphics3D = async (args, env) => {
   const options = await core._getRules(args, {...env, context: g3d, hold:true});
   console.log(options);  
 
-  //RTX = (await import('three-gpu-pathtracer/build/index.module'));
+
+  let PathRendering = false;
+  if ('RTX' in options) {
+    PathRendering = true;
+    RTX = (await import('three-gpu-pathtracer/build/index.module'));
+  }
+
+
+    /**
+     * @type {Object}
+     */   
+    env.local.handlers = [];
+    env.local.prolog   = [];
+
+    const Handlers = [];
 
   /**
    * @type {HTMLElement}
@@ -1911,12 +1475,28 @@ core.Graphics3D = async (args, env) => {
   	cameraProjection: 'Orthographic',
   };
 
+  if (!PathRendering) params.resolutionScale = 1;
+
   //Setting GUI
   const gui = new GUI({ autoPlace: false });
   const guiContainer = document.createElement('div');
   guiContainer.classList.add('graphics3d-controller');
   guiContainer.appendChild(gui.domElement);
   container.appendChild( guiContainer );    
+
+  function takeScheenshot() {
+    animate();
+    renderer.domElement.toBlob(function(blob){
+      var a = document.createElement('a');
+      var url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = 'screenshot.png';
+      a.click();
+    }, 'image/png', 1.0);
+  }
+
+  const button = { Save:function(){ takeScheenshot() }};
+  gui.add(button, 'Save');
 
   //Setting up renderer
   let renderer, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
@@ -1934,41 +1514,269 @@ core.Graphics3D = async (args, env) => {
 	container.appendChild( renderer.domElement );
 
 	const aspect = ImageSize[0]/ImageSize[1];
-	//perspectiveCamera = new RTX.PhysicalCamera( 75, aspect, 0.025, 500 );
-	//perspectiveCamera.position.set( - 4, 2, 3 );
+
+  if (PathRendering) {
+	  perspectiveCamera = new RTX.PhysicalCamera( 75, aspect, 0.025, 500 );
+	  perspectiveCamera.position.set( - 4, 2, 3 );
+  } else {
+    perspectiveCamera = new THREE.PerspectiveCamera( 75, aspect, 0.025, 500 );
+  }
 
 	const orthoHeight = orthoWidth / aspect;
 	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
 	orthoCamera.position.set( - 4, 2, 3 );
 
-	//equirectCamera = new RTX.EquirectCamera();
-	//equirectCamera.position.set( - 4, 2, 3 );
+  if (PathRendering) {
+	  equirectCamera = new RTX.EquirectCamera();
+	  equirectCamera.position.set( - 4, 2, 3 );
 
-	/*ptRenderer = new RTX.PathTracingRenderer( renderer );
-	ptRenderer.alpha = true;
-	ptRenderer.material = new RTX.PhysicalPathTracingMaterial();
-	ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', params.transparentTraversals );
-	ptRenderer.material.setDefine( 'FEATURE_MIS', Number( params.multipleImportanceSampling ) );
-	ptRenderer.tiles.set( params.tiles, params.tiles );
+	  ptRenderer = new RTX.PathTracingRenderer( renderer );
+	  ptRenderer.alpha = true;
+	  ptRenderer.material = new RTX.PhysicalPathTracingMaterial();
+	  ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', params.transparentTraversals );
+	  ptRenderer.material.setDefine( 'FEATURE_MIS', Number( params.multipleImportanceSampling ) );
+	  ptRenderer.tiles.set( params.tiles, params.tiles );
 
-	blitQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
-		map: ptRenderer.target.texture,
-		blending: THREE.CustomBlending,
-		premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
-	} ) );
+	  blitQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
+		  map: ptRenderer.target.texture,
+		  blending: THREE.CustomBlending,
+		  premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
+	  } ) );
 
-	denoiseQuad = new FullScreenQuad( new RTX.DenoiseMaterial( {
-		map: ptRenderer.target.texture,
-		blending: THREE.CustomBlending,
-		premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
-	} ) );  */
+	  denoiseQuad = new FullScreenQuad( new RTX.DenoiseMaterial( {
+		  map: ptRenderer.target.texture,
+		  blending: THREE.CustomBlending,
+		  premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
+	  } ) ); 
+  } 
 
-	controls = new OrbitControls( orthoCamera, renderer.domElement );
-	controls.addEventListener( 'change', () => {
+  let controlObject = {
+    init: (camera, dom) => {
+      controlObject.o = new OrbitControls( camera, renderer.domElement );
+      controlObject.o.target.set( 0, 1, 0 );
+      controlObject.o.update();
+    },
 
-		//ptRenderer.reset();
+    dispose: () => {
+      
+    }
+  };
 
-	} );  
+  
+
+  if (options.Controls) {
+
+    if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
+      const o = (await import("three/examples/jsm/controls/PointerLockControls.js")).PointerLockControls;
+      
+
+      controlObject = {
+        init: (camera, dom) => {
+          controlObject.o = new o( camera, dom );
+          env.local.scene.add( controlObject.o.getObject() );
+
+          controlObject.onKeyDown = function ( event ) {
+            switch ( event.code ) {
+  
+              case 'ArrowUp':
+              case 'KeyW':
+                controlObject.moveForward = true;
+                break;
+  
+              case 'ArrowLeft':
+              case 'KeyA':
+                controlObject.moveLeft = true;
+                break;
+  
+              case 'ArrowDown':
+              case 'KeyS':
+                controlObject.moveBackward = true;
+                break;
+  
+              case 'ArrowRight':
+              case 'KeyD':
+                controlObject.moveRight = true;
+                break;
+  
+              case 'Space':
+                if ( controlObject.canJump === true ) controlObject.velocity.y += 20;
+                controlObject.canJump = false;
+                break;
+  
+            }
+            event.preventDefault();  
+            event.returnValue = false;
+            event.cancelBubble = true;
+            return false;
+            
+  
+          };
+  
+          controlObject.onKeyUp = function ( event ) {
+  
+            switch ( event.code ) {
+  
+              case 'ArrowUp':
+              case 'KeyW':
+                controlObject.moveForward = false;
+                break;
+  
+              case 'ArrowLeft':
+              case 'KeyA':
+                controlObject.moveLeft = false;
+                break;
+  
+              case 'ArrowDown':
+              case 'KeyS':
+                controlObject.moveBackward = false;
+                break;
+  
+              case 'ArrowRight':
+              case 'KeyD':
+                controlObject.moveRight = false;
+                break;
+              
+              
+            }
+
+            event.preventDefault();  
+            event.returnValue = false;
+            event.cancelBubble = true;
+            return false;              
+    
+  
+          };    
+          
+
+          env.local.handlers.push(controlObject.handler);
+
+          const inst = document.createElement('div');
+          inst.style.width="100%";
+          inst.style.height="100%";
+          inst.style.top = "0";
+          inst.style.position = "absolute";
+
+
+          
+          env.element.appendChild(inst);
+
+          renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
+          renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
+
+          renderer.domElement.tabIndex = 1;
+
+          inst.addEventListener( 'click', function () {
+
+            controlObject.o.lock();
+  
+          } );
+
+          controlObject.o.addEventListener( 'lock', function () {
+
+            inst.style.display = 'none';
+            //blocker.style.display = 'none';
+  
+          } );
+  
+          controlObject.o.addEventListener( 'unlock', function () {
+  
+            //blocker.style.display = 'block';
+            inst.style.display = '';
+  
+          } );
+
+        },
+
+
+        prevTime: performance.now(),
+
+        handler: () => {
+          const time = performance.now();
+          const controls = controlObject.o;
+
+          if ( controls.isLocked === true ) {
+  
+            //raycaster.ray.origin.copy( controls.getObject().position );
+            //raycaster.ray.origin.y -= 10;
+  
+            //const intersections = raycaster.intersectObjects( objects, false );
+  
+            //const onObject = intersections.length > 0;
+            const onObject = false;
+
+            const delta = ( time - controlObject.prevTime ) / 1000;
+  
+            controlObject.velocity.x -= controlObject.velocity.x * 10.0 * delta;
+            controlObject.velocity.z -= controlObject.velocity.z * 10.0 * delta;
+  
+            controlObject.velocity.y -= 9.8 * 4.0 * delta; // 100.0 = mass
+  
+            controlObject.direction.z = Number( controlObject.moveForward ) - Number( controlObject.moveBackward );
+            controlObject.direction.x = Number( controlObject.moveRight ) - Number( controlObject.moveLeft );
+            controlObject.direction.normalize(); // this ensures consistent movements in all directions
+  
+            if ( controlObject.moveForward || controlObject.moveBackward ) controlObject.velocity.z -= controlObject.direction.z * 40.0 * delta;
+            if ( controlObject.moveLeft || controlObject.moveRight ) controlObject.velocity.x -= controlObject.direction.x * 40.0 * delta;
+  
+            if ( onObject === true ) {
+  
+              controlObject.velocity.y = Math.max( 0, controlObject.velocity.y );
+              controlObject.canJump = true;
+  
+            }
+  
+            controls.moveRight( - controlObject.velocity.x * delta );
+            controls.moveForward( - controlObject.velocity.z * delta );
+  
+            controls.getObject().position.y += ( controlObject.velocity.y * delta ); // new behavior
+  
+            if ( controls.getObject().position.y < 0.3 ) {
+  
+              controlObject.velocity.y = 0;
+              controls.getObject().position.y = 0.3;
+  
+              controlObject.canJump = true;
+  
+            }
+  
+          }
+  
+          controlObject.prevTime = time;
+        },
+
+        moveBackward: false,
+        moveForward: false,
+        moveLeft: false,
+        moveRight: false,
+        canJump: false,
+        velocity: new THREE.Vector3(),
+        direction: new THREE.Vector3(),
+
+        dispose: () =>{
+
+          document.removeEventListener( 'keydown', controlObject.onKeyDown );
+          document.removeEventListener( 'keyup', controlObject.onKeyUp );
+          
+        }  
+      };
+
+     
+
+            
+
+    } 
+  }
+
+  env.local.controlObject = controlObject;
+
+  controlObject.init(orthoCamera, renderer.domElement);
+  controls = controlObject.o;
+
+  if (PathRendering) {
+	  controls.addEventListener( 'change', () => {
+	  	ptRenderer.reset();
+	  } ); 
+  } 
 
 	scene = new THREE.Scene();
 
@@ -1997,10 +1805,19 @@ core.Graphics3D = async (args, env) => {
     reflectivity: 0.5,
     clearcoat: 0,
     ior: 1.5,
-    Lerp: options.Lerp
+    Lerp: options.Lerp,
+
+    Handlers: Handlers
   }  
 
+  env.local.renderer = renderer;
+  env.local.scene    = scene;
+
   await interpretate(args[0], envcopy);
+
+  var bbox = new THREE.Box3().setFromObject(group);
+
+  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0)
 
   group.applyMatrix4(new THREE.Matrix4().set(
     1, 0, 0, 0,
@@ -2008,60 +1825,84 @@ core.Graphics3D = async (args, env) => {
     0, -1, 0, 0,
     0, 0, 0, 1));
 
+
+
     
 
   scene.add(group);
 
-  //scene.updateMatrixWorld();
+  scene.updateMatrixWorld();
 
-	//envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer ); 
+  //add some lighting
+  if ('Lighting' in options) {
+    //if ((await interpretate(options.Lighting, env)) === 'None')
 
-	const envMapPromise = new RGBELoader().setDataType( THREE.FloatType )
-		.loadAsync( '/industrial_sunset_02_puresky_1k.hdr' )
+  } else {
+    addDefaultLighting(scene);
+  }
+  
+  if (PathRendering)
+	  envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer ); 
+
+	let envMapPromise;
+  
+  if ('Lightmap' in options) {
+    const url = await interpretate(options.Lightmap, env);
+
+    envMapPromise = new RGBELoader().setDataType( THREE.FloatType )
+		.loadAsync(url)
 		.then( texture => {
 
-			//envMap = texture;
+      if (PathRendering) {
+        envMap = texture;
+        updateEnvBlur();
+      }
 
-			//updateEnvBlur();
+      if (PathRendering) return;
 
       var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
 
-      
-   
-
       scene.environment = envMap;
 
-      scene.background = null;
+      scene.background = envMap;
 
       texture.dispose();
       pmremGenerator.dispose();
 
-		} );  
+		} );
+  }
+  
 
-    var pmremGenerator = new THREE.PMREMGenerator( renderer );
-    pmremGenerator.compileEquirectangularShader();
+    if (!PathRendering) {
+      var pmremGenerator = new THREE.PMREMGenerator( renderer );
+      pmremGenerator.compileEquirectangularShader();
+    }
+
+    if (PathRendering) {
+      var generator = new RTX.DynamicPathTracingSceneGenerator( scene );
+      var sceneInfo = generator.generate( scene );
+      var { bvh, textures, materials } = sceneInfo;
+
+      var geometry = bvh.geometry;
+      var material = ptRenderer.material;
+
+      material.bvh.updateFrom( bvh );
+      material.attributesArray.updateFrom(
+        geometry.attributes.normal,
+        geometry.attributes.tangent,
+        geometry.attributes.uv,
+        geometry.attributes.color,
+      );
+
+    material.materialIndexAttribute.updateFrom( geometry.attributes.materialIndex );
+    material.textures.setTextures( renderer, 2048, 2048, textures );
+    material.materials.updateFrom( materials, textures );
+  }
+
+  if ('Lightmap' in options)
+    await Promise.all( [ envMapPromise ] );    
 
 
-  /*const generator = new RTX.DynamicPathTracingSceneGenerator( scene );
-  const sceneInfo = generator.generate( scene );
-  const { bvh, textures, materials } = sceneInfo;
-
-  const geometry = bvh.geometry;
-  const material = ptRenderer.material;
-
-  material.bvh.updateFrom( bvh );
-  material.attributesArray.updateFrom(
-    geometry.attributes.normal,
-    geometry.attributes.tangent,
-    geometry.attributes.uv,
-    geometry.attributes.color,
-  );
-
-  material.materialIndexAttribute.updateFrom( geometry.attributes.materialIndex );
-  material.textures.setTextures( renderer, 2048, 2048, textures );
-  material.materials.updateFrom( materials, textures ); */
-
-  await Promise.all( [ envMapPromise ] );    
 
   function onResize() {
 
@@ -2069,17 +1910,19 @@ core.Graphics3D = async (args, env) => {
     const h = ImageSize[1];
     const scale = params.resolutionScale;
     const dpr = window.devicePixelRatio;
-  
-    //ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
-    //ptRenderer.reset();
+
+    if (PathRendering) {
+      ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
+      ptRenderer.reset();
+    }
   
     renderer.setSize( w, h );
     renderer.setPixelRatio( window.devicePixelRatio * scale );
   
     const aspect = w / h;
-  
-    //perspectiveCamera.aspect = aspect;
-    //perspectiveCamera.updateProjectionMatrix();
+    
+    perspectiveCamera.aspect = aspect;
+    perspectiveCamera.updateProjectionMatrix();
   
     const orthoHeight = orthoWidth / aspect;
     orthoCamera.top = orthoHeight / 2;
@@ -2089,17 +1932,16 @@ core.Graphics3D = async (args, env) => {
   }
   
   function reset() {
-  
-    //ptRenderer.reset();
-  
+    if (PathRendering)
+      ptRenderer.reset();
   }
   
   function updateEnvBlur() {
   
-    //const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
-    //ptRenderer.material.envMapInfo.updateFrom( blurredTex );
-    //scene.environment = blurredTex;
-    //ptRenderer.reset();
+    const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
+    ptRenderer.material.envMapInfo.updateFrom( blurredTex );
+    scene.environment = blurredTex;
+    ptRenderer.reset();
   
   }
   
@@ -2138,9 +1980,19 @@ core.Graphics3D = async (args, env) => {
     }
   
     controls.object = activeCamera;
-    //ptRenderer.camera = activeCamera;
+    if (PathRendering)
+      ptRenderer.camera = activeCamera;
   
     controls.update();
+
+    for (let i=0; i<Handlers.length; ++i) {
+      Handlers[i].eval();
+    }
+
+    //added loop-handlers, void
+    env.local.handlers.forEach((f)=>{
+      f();
+    });    
   
     reset();
   
@@ -2148,17 +2000,21 @@ core.Graphics3D = async (args, env) => {
   
   function animate() {
   
-    requestAnimationFrame( animate );
-  
-    //ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
+    env.local.aid = requestAnimationFrame( animate );
+
+
+    
+    if (PathRendering) {
+      ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
 
   
-    /*ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
-    ptRenderer.material.environmentIntensity = params.environmentIntensity;
-    ptRenderer.material.backgroundBlur = params.backgroundBlur;
-    ptRenderer.material.bounces = params.bounces;
-    ptRenderer.material.backgroundAlpha = params.backgroundAlpha;
-    ptRenderer.material.physicalCamera.updateFrom( activeCamera );*/
+      ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
+      ptRenderer.material.environmentIntensity = params.environmentIntensity;
+      ptRenderer.material.backgroundBlur = params.backgroundBlur;
+      ptRenderer.material.bounces = params.bounces;
+      ptRenderer.material.backgroundAlpha = params.backgroundAlpha;
+      ptRenderer.material.physicalCamera.updateFrom( activeCamera );
+    }
   
     activeCamera.updateMatrixWorld();
   
@@ -2171,36 +2027,43 @@ core.Graphics3D = async (args, env) => {
       scene.background = scene.environment;
   
     }
+    
+    if (PathRendering) {
+      // Get the path tracing shader id. It will be the next program compiled and used here.
+      if ( PT_PROGRAM_ID === undefined ) {
   
-    // Get the path tracing shader id. It will be the next program compiled and used here.
-    /*if ( PT_PROGRAM_ID === undefined ) {
+        PT_PROGRAM_ID = renderer.info.programs.length;
   
-      PT_PROGRAM_ID = renderer.info.programs.length;
+      }
   
-    }
+      for ( let i = 0, l = params.samplesPerFrame; i < l; i ++ ) {
   
-    for ( let i = 0, l = params.samplesPerFrame; i < l; i ++ ) {
+          ptRenderer.update();
   
-      ptRenderer.update();
+      }
   
-    }
+      if ( ptRenderer.samples < 1 ) {
   
-    if ( ptRenderer.samples < 1 ) {*/
+        renderer.render( scene, activeCamera );
   
+      }
+      denoiseQuad.material.sigma = params.denoiseSigma;
+      denoiseQuad.material.threshold = params.denoiseThreshold;
+      denoiseQuad.material.kSigma = params.denoiseKSigma;
+  
+      const quad = params.denoiseEnabled ? denoiseQuad : blitQuad;
+  
+      renderer.autoClear = false;
+      quad.material.map = ptRenderer.target.texture;
+      quad.render( renderer );
+      renderer.autoClear = true;
+
+    } else {
       renderer.render( scene, activeCamera );
+    }
+
   
-    //}
-  
-    /*denoiseQuad.material.sigma = params.denoiseSigma;
-    denoiseQuad.material.threshold = params.denoiseThreshold;
-    denoiseQuad.material.kSigma = params.denoiseKSigma;
-  
-    const quad = params.denoiseEnabled ? denoiseQuad : blitQuad;
-  
-    renderer.autoClear = false;
-    quad.material.map = ptRenderer.target.texture;
-    quad.render( renderer );
-    renderer.autoClear = true;*/
+    /**/
   
     //samplesEl.innerText = `Samples: ${ Math.floor( ptRenderer.samples ) }`;
   
@@ -2211,13 +2074,9 @@ core.Graphics3D = async (args, env) => {
 
 	updateCamera( params.cameraProjection );
 
-	/*const ptFolder = gui.addFolder( 'Path Tracing' );
-	ptFolder.add( params, 'acesToneMapping' ).onChange( value => {
+  if (PathRendering) {
+	  const ptFolder = gui.addFolder( 'Path Tracing' );
 
-		renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-		blitQuad.material.needsUpdate = true;
-
-	} );
 	ptFolder.add( params, 'stableNoise' ).onChange( value => {
 
 		ptRenderer.stableNoise = value;
@@ -2292,7 +2151,8 @@ core.Graphics3D = async (args, env) => {
 		ptRenderer.reset();
 
 	} );
-	envFolder.close();*/
+	envFolder.close();
+  }
 
 	const cameraFolder = gui.addFolder( 'Camera' );
 	cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic', 'Equirectangular' ] ).onChange( v => {
@@ -2300,24 +2160,35 @@ core.Graphics3D = async (args, env) => {
 		updateCamera( v );
 
 	} );
-	//cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
-	//cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
 
-	//	perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
-	//	this.updateDisplay();
-	//	reset();
+  cameraFolder.add( params, 'acesToneMapping' ).onChange( value => {
 
-	//} );
-	//cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
-	//cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
-	//cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
-	//cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
-	//cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
+    renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    if (PathRendering)
+      blitQuad.material.needsUpdate = true;
 
-	//	perspectiveCamera.updateProjectionMatrix();
-	//	reset();
+  } );
 
-	//} ).listen();
+  if (PathRendering) {
+	cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
+
+		perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
+		this.updateDisplay();
+		reset();
+
+	} );
+	cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
+	cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
+	cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
+	cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
+
+		perspectiveCamera.updateProjectionMatrix();
+		reset();
+
+	} ).listen();
+  }
 
 	cameraFolder.close();  
 
