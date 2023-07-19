@@ -1,33 +1,22 @@
 {
-  "name": "three-gpu-pathtracer",
-  "version": "0.0.15",
-  "description": "Path tracing renderer and utilities for three.js built on top of three-mesh-bvh.",
-  "module": "src/index.js",
-  "main": "build/index.umd.cjs",
-  "type": "module",
-  "sideEffects": false,
-  "files": [
-    "src/*",
-    "build/*"
-  ],
-  "keywords": [
-    "webgl",
-    "threejs",
-    "performance",
-    "geometry",
-    "graphics",
-    "mesh",
-    "renderer",
-    "raytracing",
-    "bvh",
-    "three-js",
-    "path-tracing",
-    "three-mesh-bvh",
-    "rtx",
-    "path-tracer",
-    "path",
-    "tracer"
-  ],
+  "name": "wljs-graphics3d-threejs",
+  "version": "0.1.0",
+  "description": "A ThreeJS inplementation of Mathematica's Graphics3D",
+  "wljs-meta": {
+    "jsmodule": "dist/kernel.js",
+    "wlkernel": "src/kernel.wl",
+    "autocomplete": "src/autocomplete.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine"
+  },
+  "author": "Kirill Vasin",
+  "license": "GPL",
+  "bugs": {
+    "url": "https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine/issues"
+  },
+  "homepage": "https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine#readme",
   "dependencies": {
     "dat.gui": "^0.7.9",
     "node-sass": "^9.0.0",
@@ -69,15 +58,5 @@
     "screenshot-diff": "node ./scripts/regression-test.js",
     "lint": "eslint \"./src/**/*.{js,ts}\" \"./example/*.js\"",
     "prepublishOnly": "npm run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gkjohnson/three-gpu-pathtracer.git"
-  },
-  "author": "Garrett Johnson <garrett.kjohnson@gmail.com>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/gkjohnson/three-gpu-pathtracer/issues"
-  },
-  "homepage": "https://github.com/gkjohnson/three-gpu-pathtracer#readme"
+  }
 }
