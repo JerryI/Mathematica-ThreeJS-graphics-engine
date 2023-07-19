@@ -20,19 +20,5 @@
     <script src="./js/<?wsp i ?>.js"></script>
 <?wsp , {i, scenes}]  ?>
 
-<script>
-    var list = [ <?wsp Table[ "'"<>i<>"', ", {i, scenes}] ?> 'empty' ];
-    list.pop();
-
-    function render(a) {
-      console.log("creating "+a);
-      interpretate(window[a], {element: document.getElementById('gfx-'+a), local: {handlers: []}, global: {}});
-    }
-    
-    window.addEventListener("load", (event) => {
-        list.forEach( f => render(f) );
-    });
-    
-</script>
 
 <?wsp LoadPage["templates/footer.wsp"] ?>

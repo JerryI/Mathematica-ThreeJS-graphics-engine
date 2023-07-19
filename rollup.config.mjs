@@ -33,7 +33,7 @@ export default {
     verbose: true,
   
     // Multiple folders to serve from
-    contentBase: ['dist', 'tests/public', 'tests/Packages'],
+    contentBase: ['dist', 'tests/public', 'tests/Packages', 'assets'],
   
     // Options used in setting up server
     host: 'localhost',

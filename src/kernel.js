@@ -1867,18 +1867,16 @@ core.Graphics3D = async (args, env) => {
   THREE         = (await import('three'));
   OrbitControls = (await import("three/examples/jsm/controls/OrbitControls.js")).OrbitControls;
   GUI           = (await import('dat.gui')).GUI;  
-  RGBELoader    = (await import('three/examples/jsm/loaders/RGBELoader.js')).RGBELoader;
-  
-  RTX = (await import('three-gpu-pathtracer/build/index.module'));
-  FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).FullScreenQuad;
-
-  console.log(RTX);
+  RGBELoader    = (await import('three/examples/jsm/loaders/RGBELoader.js')).RGBELoader; 
+  FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).FullScreenQuad; 
 
   /**
    * @type {Object}
    */  
   const options = await core._getRules(args, {...env, context: g3d, hold:true});
   console.log(options);  
+
+  //RTX = (await import('three-gpu-pathtracer/build/index.module'));
 
   /**
    * @type {HTMLElement}
@@ -1893,7 +1891,7 @@ core.Graphics3D = async (args, env) => {
   const params = 	{
     multipleImportanceSampling: true,
   	stableNoise: false,
-  	denoiseEnabled: false,
+  	denoiseEnabled: true,
   	denoiseSigma: 2.5,
   	denoiseThreshold: 0.1,
   	denoiseKSigma: 1.0,
@@ -1901,16 +1899,16 @@ core.Graphics3D = async (args, env) => {
   	environmentRotation: 0,
   	environmentBlur: 0.0,
   	backgroundBlur: 0.0,
-  	bounces: 2,
+  	bounces: 5,
   	samplesPerFrame: 1,
   	acesToneMapping: true,
-  	resolutionScale: 0.1,
+  	resolutionScale: 0.5,
   	transparentTraversals: 20,
   	filterGlossyFactor: 0.5,
   	tiles: 1,
   	backgroundAlpha: 1,
   	checkerboardTransparency: true,
-  	cameraProjection: 'Perspective',
+  	cameraProjection: 'Orthographic',
   };
 
   //Setting GUI
@@ -1936,17 +1934,17 @@ core.Graphics3D = async (args, env) => {
 	container.appendChild( renderer.domElement );
 
 	const aspect = ImageSize[0]/ImageSize[1];
-	perspectiveCamera = new RTX.PhysicalCamera( 75, aspect, 0.025, 500 );
-	perspectiveCamera.position.set( - 4, 2, 3 );
+	//perspectiveCamera = new RTX.PhysicalCamera( 75, aspect, 0.025, 500 );
+	//perspectiveCamera.position.set( - 4, 2, 3 );
 
 	const orthoHeight = orthoWidth / aspect;
 	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
 	orthoCamera.position.set( - 4, 2, 3 );
 
-	equirectCamera = new RTX.EquirectCamera();
-	equirectCamera.position.set( - 4, 2, 3 );
+	//equirectCamera = new RTX.EquirectCamera();
+	//equirectCamera.position.set( - 4, 2, 3 );
 
-	ptRenderer = new RTX.PathTracingRenderer( renderer );
+	/*ptRenderer = new RTX.PathTracingRenderer( renderer );
 	ptRenderer.alpha = true;
 	ptRenderer.material = new RTX.PhysicalPathTracingMaterial();
 	ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', params.transparentTraversals );
@@ -1963,12 +1961,12 @@ core.Graphics3D = async (args, env) => {
 		map: ptRenderer.target.texture,
 		blending: THREE.CustomBlending,
 		premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
-	} ) );  
+	} ) );  */
 
-	controls = new OrbitControls( perspectiveCamera, renderer.domElement );
+	controls = new OrbitControls( orthoCamera, renderer.domElement );
 	controls.addEventListener( 'change', () => {
 
-		ptRenderer.reset();
+		//ptRenderer.reset();
 
 	} );  
 
@@ -2007,25 +2005,44 @@ core.Graphics3D = async (args, env) => {
   group.applyMatrix4(new THREE.Matrix4().set(
     1, 0, 0, 0,
     0, 0, 1, 0,
-    0,-1, 0, 0,
+    0, -1, 0, 0,
     0, 0, 0, 1));
+
+    
 
   scene.add(group);
 
-	envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer );
+  //scene.updateMatrixWorld();
+
+	//envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer ); 
 
 	const envMapPromise = new RGBELoader().setDataType( THREE.FloatType )
-		.loadAsync( 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/equirectangular/royal_esplanade_1k.hdr' )
+		.loadAsync( '/industrial_sunset_02_puresky_1k.hdr' )
 		.then( texture => {
 
-			envMap = texture;
+			//envMap = texture;
 
-			updateEnvBlur();
+			//updateEnvBlur();
+
+      var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+      
+   
+
+      scene.environment = envMap;
+
+      scene.background = null;
+
+      texture.dispose();
+      pmremGenerator.dispose();
 
 		} );  
 
+    var pmremGenerator = new THREE.PMREMGenerator( renderer );
+    pmremGenerator.compileEquirectangularShader();
 
-  const generator = new RTX.DynamicPathTracingSceneGenerator( scene );
+
+  /*const generator = new RTX.DynamicPathTracingSceneGenerator( scene );
   const sceneInfo = generator.generate( scene );
   const { bvh, textures, materials } = sceneInfo;
 
@@ -2042,27 +2059,27 @@ core.Graphics3D = async (args, env) => {
 
   material.materialIndexAttribute.updateFrom( geometry.attributes.materialIndex );
   material.textures.setTextures( renderer, 2048, 2048, textures );
-  material.materials.updateFrom( materials, textures );
+  material.materials.updateFrom( materials, textures ); */
 
   await Promise.all( [ envMapPromise ] );    
 
   function onResize() {
 
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const w = ImageSize[0];
+    const h = ImageSize[1];
     const scale = params.resolutionScale;
     const dpr = window.devicePixelRatio;
   
-    ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
-    ptRenderer.reset();
+    //ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
+    //ptRenderer.reset();
   
     renderer.setSize( w, h );
     renderer.setPixelRatio( window.devicePixelRatio * scale );
   
     const aspect = w / h;
   
-    perspectiveCamera.aspect = aspect;
-    perspectiveCamera.updateProjectionMatrix();
+    //perspectiveCamera.aspect = aspect;
+    //perspectiveCamera.updateProjectionMatrix();
   
     const orthoHeight = orthoWidth / aspect;
     orthoCamera.top = orthoHeight / 2;
@@ -2073,16 +2090,16 @@ core.Graphics3D = async (args, env) => {
   
   function reset() {
   
-    ptRenderer.reset();
+    //ptRenderer.reset();
   
   }
   
   function updateEnvBlur() {
   
-    const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
-    ptRenderer.material.envMapInfo.updateFrom( blurredTex );
-    scene.environment = blurredTex;
-    ptRenderer.reset();
+    //const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
+    //ptRenderer.material.envMapInfo.updateFrom( blurredTex );
+    //scene.environment = blurredTex;
+    //ptRenderer.reset();
   
   }
   
@@ -2121,7 +2138,7 @@ core.Graphics3D = async (args, env) => {
     }
   
     controls.object = activeCamera;
-    ptRenderer.camera = activeCamera;
+    //ptRenderer.camera = activeCamera;
   
     controls.update();
   
@@ -2133,19 +2150,15 @@ core.Graphics3D = async (args, env) => {
   
     requestAnimationFrame( animate );
   
-    ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
-    //ptRenderer.material.materials.setMatte( 0, false );
-    //ptRenderer.material.materials.setMatte( 1, false );
-    //ptRenderer.material.materials.setMatte( 2, false );
-    //ptRenderer.material.materials.setCastShadow( 0, true );
-    //ptRenderer.material.materials.setCastShadow( 1, true );
+    //ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
+
   
-    ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
+    /*ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
     ptRenderer.material.environmentIntensity = params.environmentIntensity;
     ptRenderer.material.backgroundBlur = params.backgroundBlur;
     ptRenderer.material.bounces = params.bounces;
     ptRenderer.material.backgroundAlpha = params.backgroundAlpha;
-    ptRenderer.material.physicalCamera.updateFrom( activeCamera );
+    ptRenderer.material.physicalCamera.updateFrom( activeCamera );*/
   
     activeCamera.updateMatrixWorld();
   
@@ -2160,7 +2173,7 @@ core.Graphics3D = async (args, env) => {
     }
   
     // Get the path tracing shader id. It will be the next program compiled and used here.
-    if ( PT_PROGRAM_ID === undefined ) {
+    /*if ( PT_PROGRAM_ID === undefined ) {
   
       PT_PROGRAM_ID = renderer.info.programs.length;
   
@@ -2172,13 +2185,13 @@ core.Graphics3D = async (args, env) => {
   
     }
   
-    if ( ptRenderer.samples < 1 ) {
+    if ( ptRenderer.samples < 1 ) {*/
   
       renderer.render( scene, activeCamera );
   
-    }
+    //}
   
-    denoiseQuad.material.sigma = params.denoiseSigma;
+    /*denoiseQuad.material.sigma = params.denoiseSigma;
     denoiseQuad.material.threshold = params.denoiseThreshold;
     denoiseQuad.material.kSigma = params.denoiseKSigma;
   
@@ -2187,7 +2200,7 @@ core.Graphics3D = async (args, env) => {
     renderer.autoClear = false;
     quad.material.map = ptRenderer.target.texture;
     quad.render( renderer );
-    renderer.autoClear = true;
+    renderer.autoClear = true;*/
   
     //samplesEl.innerText = `Samples: ${ Math.floor( ptRenderer.samples ) }`;
   
@@ -2198,7 +2211,7 @@ core.Graphics3D = async (args, env) => {
 
 	updateCamera( params.cameraProjection );
 
-	const ptFolder = gui.addFolder( 'Path Tracing' );
+	/*const ptFolder = gui.addFolder( 'Path Tracing' );
 	ptFolder.add( params, 'acesToneMapping' ).onChange( value => {
 
 		renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
@@ -2279,7 +2292,7 @@ core.Graphics3D = async (args, env) => {
 		ptRenderer.reset();
 
 	} );
-	envFolder.close();
+	envFolder.close();*/
 
 	const cameraFolder = gui.addFolder( 'Camera' );
 	cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic', 'Equirectangular' ] ).onChange( v => {
@@ -2287,24 +2300,24 @@ core.Graphics3D = async (args, env) => {
 		updateCamera( v );
 
 	} );
-	cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
-	cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
+	//cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
+	//cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
 
-		perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
-		this.updateDisplay();
-		reset();
+	//	perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
+	//	this.updateDisplay();
+	//	reset();
 
-	} );
-	cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
-	cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
-	cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
-	cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
-	cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
+	//} );
+	//cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
+	//cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
+	//cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
+	//cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
+	//cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
 
-		perspectiveCamera.updateProjectionMatrix();
-		reset();
+	//	perspectiveCamera.updateProjectionMatrix();
+	//	reset();
 
-	} ).listen();
+	//} ).listen();
 
 	cameraFolder.close();  
 
