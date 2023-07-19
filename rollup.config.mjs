@@ -20,7 +20,7 @@ export default {
   }),
   json(),
   commonjs({transformMixedEsModules:true}),
-  /*serve({
+  serve({
     // Launch in browser (default: false)
     open: true,
   
@@ -33,7 +33,7 @@ export default {
     verbose: true,
   
     // Multiple folders to serve from
-    contentBase: ['dist', 'tests/public', 'tests/Packages'],
+    contentBase: ['dist', 'tests/public', 'tests/Packages', 'assets'],
   
     // Options used in setting up server
     host: 'localhost',
@@ -48,6 +48,6 @@ export default {
       const protocol = this.https ? 'https' : 'http'
       console.log(`Server listening at ${protocol}://localhost:${address.port}/`)
     }
-  })*/
+  })
   ]
 };

@@ -43,9 +43,6 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``Polygon`` - fully supported
 - ``Line`` - supported
 
-
-- ``THREE.Geometry`` is depricated in a new Three.JS version. Needed to be refactored.
-
 ### Extra features
 - ``Emissive[]`` - property fro the object to emitt light
 - ``IOR[]`` - specify the refractive index
@@ -57,6 +54,12 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 ## Development
 
 ## Tests
+
+```mathematica
+wolframscript -f buildtests.wls
+npm run watch
+```
+
 you can easily add new scenes by adding files into `tests/src` dir. 
 For the complex scenes use `LoadPage["templates/signlepage_nodom.wsp"]` instead of `LoadPage["templates/signlepage.wsp",{data = json}]`.
 

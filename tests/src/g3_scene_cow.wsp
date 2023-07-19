@@ -1,5 +1,5 @@
 <?wsp
-    function = ExampleData[{"Geometry3D", "Cow"}];
+    function = Graphics3D[{Metalness[1], ExampleData[{"Geometry3D", "Cow"}][[1]]}];
 
     json = ExportFunction[function];
     ""
