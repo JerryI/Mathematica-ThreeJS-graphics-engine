@@ -2,8 +2,8 @@
 <html>
   <head>
 	<!-- created using OpenAI -->
-    <script src="/wljs-interpreter/src/interpreter.js"></script>
-    <script src="/wljs-interpreter/src/core.js"></script>
+    <script type="module" src="/wljs-interpreter/src/interpreter.js"></script>
+    <script type="module" src="/wljs-interpreter/src/core.js"></script>
 
     <script type="module" src="kernel.js"></script>
 

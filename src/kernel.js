@@ -1,4 +1,3 @@
-const { MathUtils } = require('three');
 
   let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
@@ -26,6 +25,7 @@ const { MathUtils } = require('three');
   * @type {import('three')}
   */
   let THREE;
+  let MathUtils;
 
   function computeGroupCenter(group) {
     var center = new THREE.Vector3();
@@ -108,7 +108,8 @@ const { MathUtils } = require('three');
 
   g3d.ImageScaled = (args, env) => { };
 
-  g3d.Thickness = (args, env) => { env.thickness = interpretate(args[0], env)};
+  g3d.Thickness = (args, env) => { //env.thickness = interpretate(args[0], env)
+  };
 
   g3d.Arrowheads = async (args, env) => {
     if (args.length == 1) {
@@ -826,9 +827,12 @@ const { MathUtils } = require('three');
         geometry.setIndex( a.flat().map((e)=>e-1) );
       } else {
         //more complicatec case, need to covert all polygons into triangles
-        const extendedIndexes = [];
+        let extendedIndexes = [];
 
-  
+        console.log(a);
+
+        if (Array.isArray(a[0])) {
+       
 
         for (let i=0; i<a.length; ++i) {
           const b = a[i];
@@ -864,9 +868,14 @@ const { MathUtils } = require('three');
               break;
             default:
              
-              console.error("Cant build complex polygon ::");
+              console.error("cannot build complex polygon");
+              //FIXME
+              break;
           }
         }   
+      } else {
+        extendedIndexes = a.flat();
+      }
 
         geometry.setIndex( extendedIndexes.flat().map((e)=>e-1) );
         
@@ -992,16 +1001,47 @@ const { MathUtils } = require('three');
 
   g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
-  g3d.Line = async (args, env) => {
-    console.warn('g3d.Line is temporary disbaled');
-    return;
-    if (env.hasOwnProperty("geometry")) {
-      const geometry = new THREE.Geometry();
+  const arrayRange = (start, stop, step) =>
+  Array.from(
+  { length: (stop - start) / step + 1 },
+  (value, index) => start + index * step
+  );
 
+
+  g3d.Line = async (args, env) => {
+    
+    var geometry = new THREE.BufferGeometry();
+    let vertices;
+
+    if (env.hasOwnProperty("vertices")) {
+      
+      vertices = env.vertices;
+
+      let a = await interpretate(args[0], env);
+      
+
+      geometry.setIndex( a.flat().map((e)=>e-1) );
+     
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+
+
+    } else { 
+   
       const points = await interpretate(args[0], env);
-      points.forEach((el) => {
-        geometry.vertices.push((env.geometry.vertices[el - 1]).clone(),);
-      });
+
+      const pts = [];
+
+      for (let i=0; i<points.length; ++i)
+        pts.push(new THREE.Vector3().fromArray(points[i]));
+
+        console.log(points);
+   
+
+      geometry.setFromPoints( pts );
+    }
+
+    
+    
 
       const material = new THREE.LineBasicMaterial({
         linewidth: env.thickness,
@@ -1009,40 +1049,11 @@ const { MathUtils } = require('three');
       });
       const line = new THREE.Line(geometry, material);
 
-      line.material.setValues({
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-        polygonOffsetUnits: 1
-      })
-
+ 
       env.mesh.add(line);
 
-      geometry.dispose();
-      material.dispose();
-    } else {
-      let arr = await interpretate(args[0], env);
-      if (arr.length === 1) arr = arr[0];
-      //if (arr.length !== 2) console.error( "Tube must have 2 vectors!");
-      console.log("points: ", arr.length);
-
-      const points = [];
-      arr.forEach((p) => {
-        points.push(new THREE.Vector4(...p, 1));
-      });
-      //new THREE.Vector4(...arr[0], 1)
-
-      points.forEach((p) => {
-        p = p.applyMatrix4(env.matrix);
-      });
-
-      const geometry = new THREE.Geometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: env.edgecolor,
-        linewidth: env.thickness,
-      });
-
-      env.mesh.add(new THREE.Line(geometry, material));
-    }
+      //geometry.dispose();
+      //material.dispose();
   };
 
   let EffectComposer;
@@ -1363,7 +1374,7 @@ const { MathUtils } = require('three');
     return 1.0;
   }
 
-const setImageSize = async (options) => {
+const setImageSize = async (options, env) => {
   let ImageSize;
 
   if (options.ImageSize) {
@@ -1412,6 +1423,7 @@ core.Graphics3D = async (args, env) => {
   GUI           = (await import('dat.gui')).GUI;  
   RGBELoader    = (await import('three/examples/jsm/loaders/RGBELoader.js')).RGBELoader; 
   FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).FullScreenQuad; 
+  MathUtils     = THREE.MathUtils;
 
   /**
    * @type {Object}
@@ -1443,7 +1455,7 @@ core.Graphics3D = async (args, env) => {
   /**
    * @type {[Number, Number]}
    */
-  const ImageSize = await setImageSize(options); 
+  const ImageSize = await setImageSize(options, env); 
 
   const params = 	{
     multipleImportanceSampling: true,
@@ -1872,7 +1884,7 @@ core.Graphics3D = async (args, env) => {
     }
 
     if (PathRendering) {
-      var generator = new RTX.DynamicPathTracingSceneGenerator( scene );
+      var generator = new RTX.PathTracingSceneGenerator( scene );
       var sceneInfo = generator.generate( scene );
       var { bvh, textures, materials } = sceneInfo;
 
