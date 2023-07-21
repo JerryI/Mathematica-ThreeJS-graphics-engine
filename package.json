@@ -1,6 +1,6 @@
 {
   "name": "wljs-graphics3d-threejs",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "A ThreeJS inplementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "jsmodule": "dist/kernel.js",
