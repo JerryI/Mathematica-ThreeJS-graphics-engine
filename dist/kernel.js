@@ -96,7 +96,7 @@ let g3d = {};
 
   g3d.ImageScaled = (args, env) => { };
 
-  g3d.Thickness = (args, env) => { //env.thickness = interpretate(args[0], env)
+  g3d.Thickness = async (args, env) => { env.thickness = await interpretate(args[0], env);
   };
 
   g3d.Arrowheads = async (args, env) => {
@@ -120,9 +120,9 @@ let g3d = {};
     const coordinates = await interpretate(args[0], env);
 
     /**
-     * @type {THREE.MeshPhysicalMaterial}}
+     * @type {env.material}}
      */  
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = new env.material({
       color: env.color,
       transparent: false,
       roughness: env.roughness,
@@ -225,7 +225,7 @@ let g3d = {};
     var radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
 
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = new env.material({
       color: env.color,
       roughness: env.roughness,
       opacity: env.opacity,
@@ -293,10 +293,13 @@ let g3d = {};
 
   };
 
-  g3d.Sphere.destroy = (args, env) => {
+  g3d.Sphere.destroy = async (args, env) => {
     console.log('Sphere: destroy');
     console.log(args);
     console.log(env);
+
+    for (const a of args)
+      await interpretate(a, env);
 
   };
 
@@ -383,7 +386,7 @@ let g3d = {};
     }
 
     const geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = new env.material({
       color: env.color,
       transparent: true,
       opacity: env.opacity,
@@ -431,7 +434,7 @@ let g3d = {};
     coordinates[0] = new THREE.Vector3(...coordinates[0]);
     coordinates[1] = new THREE.Vector3(...coordinates[1]);
 
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = new env.material({
       color: env.color,
       transparent: false,
       roughness: env.roughness,
@@ -915,7 +918,7 @@ let g3d = {};
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     geometry.computeVertexNormals();
 
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = new env.material({
       color: env.color,
       transparent: env.opacity < 1,
       opacity: env.opacity,
@@ -957,7 +960,7 @@ let g3d = {};
 
       const geometry = new THREE.PolyhedronGeometry(vertices, indices);
 
-      var material = new THREE.MeshPhysicalMaterial({
+      var material = new env.material({
         color: env.color,
         transparent: true,
         opacity: env.opacity,
@@ -1074,55 +1077,8 @@ let g3d = {};
   };
 
   g3d.DefaultLighting = (args, env) => {
-    const lighting = [
-      { type: "Ambient", color: [0.3, 0.2, 0.4] },
-      {
-        type: "Directional",
-        color: [0.8, 0, 0],
-        position: [2, 0, 2]
-      },
-      {
-        type: "Directional",
-        color: [0, 0.8, 0],
-        position: [2, 2, 2]
-      },
-      {
-        type: "Directional",
-        color: [0, 0, 0.8],
-        position: [0, 2, 2]
-      }
-    ];
-
-    function addLight(l) {
-      var color = new THREE.Color().setRGB(l.color[0], l.color[1], l.color[2]);
-      var light;
-
-      if (l.type === "Ambient") {
-        light = new THREE.AmbientLight(color, 0.5);
-      } else if (l.type === "Directional") {
-        console.log('adding direction light');
-        console.log(l);
-        light = new THREE.DirectionalLight(color, 1);
-        light.position.fromArray(l.position);
-
-      } else if (l.type === "Spot") {
-        light = new THREE.SpotLight(color);
-        light.position.fromArray(l.position);
-        light.target.position.fromArray(l.target);
-        //light.target.updateMatrixWorld(); // This fixes bug in THREE.js
-        light.angle = l.angle;
-      } else if (l.type === "Point") {
-        light = new THREE.PointLight(color);
-        light.position.fromArray(l.position);
-
-      } else {
-        alert("Error: Internal Light Error", l.type);
-        return;
-      }
-      return light;
-    } 
-
-    lighting.forEach((el) => env.local.camera.add(addLight(el)) );
+    console.warn('temporary disabled');
+    return;
 
   };
 
@@ -1168,6 +1124,65 @@ const addDefaultLighting = (scene) => {
   var hemiLight = new THREE.HemisphereLight( 0xffffbb, 0x080820, 2 );
   scene.add( hemiLight );
 };
+
+g3d.PointLight = async (args, env) => {
+  const copy = {...env};
+  const options = await core._getRules(args, {...env, hold: true});
+
+  console.log(options);
+
+  if (args.length - options.length > 0) await interpretate(args[0], copy); else copy.color = 0xffffff;
+  let intensity = 1; if (args.length - options.length > 1) intensity = await interpretate(args[1], env);
+  let distance = 0; if (args.length - options.length > 2) distance = await interpretate(args[2], env);
+  let decay = 2; if (args.length - options.length > 3) decay = await interpretate(args[3], env);
+
+  let position = [0, 0, 10];
+  if (options.Position) {
+    position = await interpretate(options.Position, env);
+  }
+
+  console.log(position);
+
+  const light = new THREE.PointLight(copy.color, intensity, distance, decay);
+  light.position.set(...position);
+  env.local.light = light;
+  env.mesh.add(light);
+};
+
+g3d.PointLight.update = async (args, env) => {
+  const options = await core._getRules(args, {...env, hold: true});
+  if (options.Position) {
+    env.local.light.position.set(...(await interpretate(options.Position, env)));
+  }  
+};
+
+g3d.PointLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env);};
+
+g3d.PointLight.virtual = true;
+
+g3d.HemisphereLight = async (args, env) => {
+  const copy = {...env};
+
+  if (args.length > 0) await interpretate(args[0], copy); else copy.color = 0xffffbb;
+  const skyColor = copy.color;
+
+  if (args.length > 1) await interpretate(args[1], copy); else copy.color = 0x080820;
+  const groundColor = copy.color;
+ if (args.length > 2) await interpretate(args[1], env);
+
+  const hemiLight = new THREE.HemisphereLight( skyColor, groundColor, 2 );
+  env.local.scene.add( hemiLight );
+};
+
+g3d.MeshMaterial = async (args, env) => {
+  const mat = await interpretate(args[0], env);
+  env.material = mat;
+};
+
+g3d.MeshPhysicalMaterial = () => THREE.MeshPhysicalMaterial;
+g3d.MeshLambertMaterial = () => THREE.MeshLambertMaterial;
+g3d.MeshPhongMaterial = () => THREE.MeshPhongMaterial;
+g3d.MeshToonMaterial = () => THREE.MeshToonMaterial;
 
 let RGBELoader;
 let OrbitControls;
@@ -1539,6 +1554,7 @@ core.Graphics3D = async (args, env) => {
       0, 1, 0, 0,//
       0, 0, 1, 0,//
       0, 0, 0, 1),
+    material: THREE.MeshPhysicalMaterial,
     color: new THREE.Color(1, 1, 1),
     opacity: 1,
     thickness: 1,
