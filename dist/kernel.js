@@ -274,21 +274,70 @@ let g3d = {};
 
   g3d.Sphere.update = async (args, env) => {
     console.log('Sphere: updating the data!');
-    console.log(args);
-    console.log(env);
+
+
+    const c = await interpretate(args[0], env);
+
+    if (env.Lerp) {
+
+      if (env.local.multiple) {
+
+        if (!env.local.lerp) {
+          console.log('creating worker for lerp of movements multiple..');
+          const initial = c.map((e)=> new THREE.Vector3(...e));
+
+          const worker = {
+            alpha: 0.05,
+            target: initial,
+            eval: () => {
+              for (let i=0; i<env.local.object.length; ++i)
+                env.local.object[i].position.lerp(worker.target[i], 0.05);
+            }
+          };
+  
+          env.local.lerp = worker;  
+  
+          env.Handlers.push(worker);
+        }
+        
+        for (let i=0; i<c.length; ++i)
+          env.local.lerp.target[i].fromArray(c);
+
+        return;
+
+      } else {
+
+        if (!env.local.lerp) {
+          console.log('creating worker for lerp of movements..');
+          const worker = {
+            alpha: 0.05,
+            target: new THREE.Vector3(...c),
+            eval: () => {
+              env.local.object.position.lerp(worker.target, 0.05);
+            }
+          };
+  
+          env.local.lerp = worker;  
+  
+          env.Handlers.push(worker);
+        }
+  
+        env.local.lerp.target.fromArray(c);
+        return;
+      }
+    }
 
     if (env.local.multiple) {
-      const data = await interpretate(args[0], env);
       let i = 0;
-      data.forEach((c)=>{
-        env.local.object[i].position.set(...c);
+      c.forEach((cc)=>{
+        env.local.object[i].position.set(...cc);
         ++i;
       });
 
       return;
     }
 
-    const c = await interpretate(args[0], env);
+    
     env.local.object.position.set(...c);
 
   };
@@ -1253,6 +1302,10 @@ core.Graphics3D = async (args, env) => {
   	cameraProjection: 'Orthographic',
   };
 
+  if (options.ViewProjection) { 
+    params.cameraProjection = await interpretate(options.ViewProjection, env);
+  }
+
   if (!PathRendering) params.resolutionScale = 1;
 
   //Setting GUI
@@ -1531,6 +1584,8 @@ core.Graphics3D = async (args, env) => {
 
   env.local.controlObject = controlObject;
 
+
+
   controlObject.init(orthoCamera, renderer.domElement);
   controls = controlObject.o;
 
@@ -1568,7 +1623,7 @@ core.Graphics3D = async (args, env) => {
     reflectivity: 0.5,
     clearcoat: 0,
     ior: 1.5,
-    Lerp: options.Lerp,
+    Lerp: options.Lerp || true,
 
     Handlers: Handlers
   };  
@@ -1745,14 +1800,7 @@ core.Graphics3D = async (args, env) => {
   
     controls.update();
 
-    for (let i=0; i<Handlers.length; ++i) {
-      Handlers[i].eval();
-    }
 
-    //added loop-handlers, void
-    env.local.handlers.forEach((f)=>{
-      f();
-    });    
   
     reset();
   
@@ -1822,7 +1870,14 @@ core.Graphics3D = async (args, env) => {
       renderer.render( scene, activeCamera );
     }
 
-  
+    for (let i=0; i<Handlers.length; ++i) {
+      Handlers[i].eval();
+    }
+
+    //added loop-handlers, void
+    env.local.handlers.forEach((f)=>{
+      f();
+    });    
     /**/
   
     //samplesEl.innerText = `Samples: ${ Math.floor( ptRenderer.samples ) }`;

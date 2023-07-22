@@ -1,5 +1,4 @@
-
-  let g3d = {};
+let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
   interpretate.contextExpand(g3d); 
 
@@ -27,27 +26,16 @@
   let THREE;
   let MathUtils;
 
-  function computeGroupCenter(group) {
-    var center = new THREE.Vector3();
-    var children = group.children;
-    var count = children.length;
-    for (var i = 0; i < count; i++) {
-      center.add(children[i].position);
-    }
-    center.divideScalar(count);
-    return center;
-  }
-
-  g3d.Style = core.List
+  g3d.Style = core.List;
 
   /**
    * @description https://threejs.org/docs/#api/en/materials/LineDashedMaterial
    */
   g3d.Dashing = (args, env) => {
     console.log("Dashing not implemented");
-  }
+  };
 
-  g3d.Annotation = core.List
+  g3d.Annotation = core.List;
 
   g3d.GraphicsGroup = async (args, env) => {
     const group = new THREE.Group();
@@ -64,13 +52,13 @@
 
   g3d.Metalness = (args, env) => {
     env.metalness = interpretate(args[0], env);
-  }
+  };
 
   g3d.Emissive = async (args, env) => {
     const copy = {...env};
     await interpretate(args[0], copy);
     env.emissive = copy.color;
-  }
+  };
 
   g3d.RGBColor = async (args, env) => {
     if (args.length !== 3 && args.length !== 1) {
@@ -97,7 +85,7 @@
     if (typeof o !== "number") console.error("Opacity must have number value!");
     console.log(o);
     env.roughness = o;  
-  }
+  };
 
   g3d.Opacity = (args, env) => {
     var o = interpretate(args[0], env);
@@ -108,7 +96,7 @@
 
   g3d.ImageScaled = (args, env) => { };
 
-  g3d.Thickness = async (args, env) => { env.thickness = await interpretate(args[0], env)
+  g3d.Thickness = async (args, env) => { env.thickness = await interpretate(args[0], env);
   };
 
   g3d.Arrowheads = async (args, env) => {
@@ -122,7 +110,7 @@
 
   g3d.TubeArrow = async (args, env) => {
     console.log('Context test');
-    console.log(this);
+    console.log(undefined);
 
     let radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
@@ -158,7 +146,7 @@
     geometry.computeBoundingBox();
     let position = geometry.boundingBox;
 
-    let center = position.max.addScaledVector(position.min, -1);
+    position.max.addScaledVector(position.min, -1);
 
     //default geometry
     const cylinder = new THREE.Mesh(geometry, material);
@@ -303,7 +291,7 @@
             target: initial,
             eval: () => {
               for (let i=0; i<env.local.object.length; ++i)
-                env.local.object[i].position.lerp(worker.target[i], 0.05)
+                env.local.object[i].position.lerp(worker.target[i], 0.05);
             }
           };
   
@@ -325,7 +313,7 @@
             alpha: 0.05,
             target: new THREE.Vector3(...c),
             eval: () => {
-              env.local.object.position.lerp(worker.target, 0.05)
+              env.local.object.position.lerp(worker.target, 0.05);
             }
           };
   
@@ -352,7 +340,7 @@
     
     env.local.object.position.set(...c);
 
-  }
+  };
 
   g3d.Sphere.destroy = async (args, env) => {
     console.log('Sphere: destroy');
@@ -362,9 +350,9 @@
     for (const a of args)
       await interpretate(a, env);
 
-  }
+  };
 
-  g3d.Sphere.virtual = true
+  g3d.Sphere.virtual = true;
 
   g3d.Sky = (args, env) => {
     const sky = new Sky();
@@ -379,7 +367,7 @@
   	skyUniforms[ 'rayleigh' ].value = 2;
   	skyUniforms[ 'mieCoefficient' ].value = 0.005;
   	skyUniforms[ 'mieDirectionalG' ].value = 0.8;
-  }
+  };
 
   g3d.Water = (args, env) => {
     const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
@@ -406,7 +394,7 @@
 
   		env.mesh.add( water );
       env.water = water;
-  }
+  };
 
   g3d.Cuboid = async (args, env) => {
     //if (params.hasOwnProperty('geometry')) {
@@ -593,7 +581,7 @@
           alpha: 0.05,
           target: new THREE.Vector3(...p),
           eval: () => {
-            group.position.lerp(worker.target, 0.05)
+            group.position.lerp(worker.target, 0.05);
           }
         };
 
@@ -609,9 +597,9 @@
     group.translateX(p[0]);
     group.translateY(p[1]);
     group.translateZ(p[2]);
-  }
+  };
 
-  g3d.Translate.virtual = true  
+  g3d.Translate.virtual = true;  
 
   g3d.LookAt = async (args, env) => {
     const group = new THREE.Group();
@@ -649,14 +637,14 @@
     env.local.group = group;
 
     env.mesh.add(group);
-  }
+  };
 
   g3d.LookAt.update = async (args, env) => {
     const dir = await interpretate(args[1], env);
     env.local.group.lookAt(...dir);
-  }  
+  };  
 
-  g3d.LookAt.virtual = true
+  g3d.LookAt.virtual = true;
 
   g3d.GeometricTransformation = async (args, env) => {
     var group = new THREE.Group();
@@ -845,7 +833,7 @@
     env.mesh.add(group);
   };  
 
-  g3d.GeometricTransformation.virtual = true
+  g3d.GeometricTransformation.virtual = true;
 
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
@@ -853,7 +841,7 @@
     
 
     const pts = (await interpretate(args[0], copy)).flat();
-    copy.vertices = new Float32Array( pts )
+    copy.vertices = new Float32Array( pts );
 
     const group = new THREE.Group();
 
@@ -863,7 +851,7 @@
     //copy.geometry.dispose();
   };
 
-  g3d.AbsoluteThickness = (args, env) => {}
+  g3d.AbsoluteThickness = (args, env) => {};
 
   g3d.Polygon = async (args, env) => {
     var geometry = new THREE.BufferGeometry();
@@ -1053,12 +1041,6 @@
 
   g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
-  const arrayRange = (start, stop, step) =>
-  Array.from(
-  { length: (stop - start) / step + 1 },
-  (value, index) => start + index * step
-  );
-
 
   g3d.Line = async (args, env) => {
     
@@ -1108,20 +1090,16 @@
       //material.dispose();
   };
 
-  let EffectComposer;
-  let RenderPass; 
-  let UnrealBloomPass;
-
   let GUI;
 
-  g3d.ImageSize = () => "ImageSize"
-  g3d.Background = () => "Background"
-  g3d.AspectRatio = () => "AspectRatio"
-  g3d.Lighting = () => "Lighting"
-  g3d.Default = () => "Default"
-  g3d.None = () => "None"
-  g3d.Lightmap = () => "Lightmap"
-  g3d.Automatic = () => "Automatic" 
+  g3d.ImageSize = () => "ImageSize";
+  g3d.Background = () => "Background";
+  g3d.AspectRatio = () => "AspectRatio";
+  g3d.Lighting = () => "Lighting";
+  g3d.Default = () => "Default";
+  g3d.None = () => "None";
+  g3d.Lightmap = () => "Lightmap";
+  g3d.Automatic = () => "Automatic"; 
 
   let Water = false;
   let Sky   = false;
@@ -1129,304 +1107,49 @@
   g3d.Camera = (args, env) => {
     console.warn('temporary disabled');
     return;
-    let pos = args;
-    if (args.length === 0) pos = [3,3,1];
-    env.cameraMesh.set(env.mesh, pos);
-  }
+  };
 
   g3d.Reflectivity = (args, env) => {
     env.reflectivity = interpretate(args[0], env);
-  }
+  };
 
   g3d.IOR = (args, env) => {
     env.ior = interpretate(args[0], env);
-  }
+  };
 
   g3d.Clearcoat = (args, env) => {
     env.clearcoat = interpretate(args[0], env);
-  }
+  };
 
   g3d.LightProbe = (args, env) => {
     //THREE.js light probe irradiance
-  }
+  };
 
   g3d.DefaultLighting = (args, env) => {
     console.warn('temporary disabled');
     return;
-    const lighting = [
-      { type: "Ambient", color: [0.3, 0.2, 0.4] },
-      {
-        type: "Directional",
-        color: [0.8, 0, 0],
-        position: [2, 0, 2]
-      },
-      {
-        type: "Directional",
-        color: [0, 0.8, 0],
-        position: [2, 2, 2]
-      },
-      {
-        type: "Directional",
-        color: [0, 0, 0.8],
-        position: [0, 2, 2]
-      }
-    ];
 
-    function addLight(l) {
-      var color = new THREE.Color().setRGB(l.color[0], l.color[1], l.color[2]);
-      var light;
-
-      if (l.type === "Ambient") {
-        light = new THREE.AmbientLight(color, 0.5);
-      } else if (l.type === "Directional") {
-        console.log('adding direction light');
-        console.log(l);
-        light = new THREE.DirectionalLight(color, 1);
-        light.position.fromArray(l.position);
-
-      } else if (l.type === "Spot") {
-        light = new THREE.SpotLight(color);
-        light.position.fromArray(l.position);
-        light.target.position.fromArray(l.target);
-        //light.target.updateMatrixWorld(); // This fixes bug in THREE.js
-        light.angle = l.angle;
-      } else if (l.type === "Point") {
-        light = new THREE.PointLight(color);
-        light.position.fromArray(l.position);
-
-      } else {
-        alert("Error: Internal Light Error", l.type);
-        return;
-      }
-      return light;
-    } 
-
-    lighting.forEach((el) => env.local.camera.add(addLight(el)) );
-
-  }
+  };
 
   g3d.SkyAndWater = async (args, env) => {
     console.warn('temporary disabled');
     return;
-
-    if (!Water) {
-      Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
-      Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
-    }
-
-    let options = await core._getRules(args, env);
-    console.log('options:');
-    options.dims = options.Dims || [10000, 10000];
-    options.skyscale = options.Skyscale || 10000;
-    options.elevation = options.Elevation ||  8;
-    options.azimuth = options.Azimuth || 180;
-
-    options.turbidity = options.Turbidity || 10;
-    options.rayleigh = options.Rayleigh || 2;
-    options.mieCoefficient = options.MieCoefficient || 0.005;
-    options.mieDirectionalG = options.MieDirectionalG || 0.8;
-
-    console.log(options);
-
-    let sun = new THREE.Vector3();
-    let water;
-    // Water
-
-    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
-
-    water = new Water(
-      waterGeometry,
-      {
-        textureWidth: 512,
-        textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( 'https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/assets/waternormals.jpg', function ( texture ) {
-
-          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-
-        } ),
-        sunDirection: new THREE.Vector3(),
-        sunColor: 0xffffff,
-        waterColor: 0x001e0f,
-        distortionScale: 3.7,
-        fog: true
-      }
-    );
-
-    water.rotation.x = - Math.PI / 2;
-    
-    env.local.water = water;
-
-    // Skybox
-
-    const sky = new Sky();
-    sky.scale.setScalar( options.skyscale );
-
-    env.local.sky = sky;  
-
-    const skyUniforms = sky.material.uniforms;
-
-    skyUniforms[ 'turbidity' ].value = options.turbidity;
-    skyUniforms[ 'rayleigh' ].value = options.rayleigh;
-    skyUniforms[ 'mieCoefficient' ].value = options.mieCoefficient;
-    skyUniforms[ 'mieDirectionalG' ].value = options.mieDirectionalG;
-
-    const parameters = {
-      elevation: options.elevation,
-      azimuth: options.azimuth
-    };
-
-
-
-    env.local.scene.add( water );
-    env.local.scene.add( sky );
-
-    const pmremGenerator = new THREE.PMREMGenerator( env.local.renderer );
-    let renderTarget;
-
-    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
-    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
-
-    sun.setFromSphericalCoords( 1, phi, theta );
-
-    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
-    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
-
-    if ( renderTarget !== undefined ) renderTarget.dispose();
-
-    renderTarget = pmremGenerator.fromScene( sky );
-
-    env.local.scene.environment = renderTarget.texture;  
-
-    //every frame
-    env.local.handlers.push(
-      function() {
-        env.local.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
-      }
-    );
-  }
+  };
 
   g3d.Sky = async (args, env) => {
     console.warn('temporary disabled');
     return;
-    if (!Sky) {
-      Sky           = (await import('three/examples/jsm/objects/Sky.js')).Sky;  
-    }
-
-    let options = await core._getRules(args, env);
-    console.log('options:');
-    options.dims = options.Dims || [10000, 10000];
-    options.skyscale = options.Skyscale || 10000;
-    options.elevation = options.Elevation ||  8;
-    options.azimuth = options.Azimuth || 180;
-
-    options.turbidity = options.Turbidity || 10;
-    options.rayleigh = options.Rayleigh || 2;
-    options.mieCoefficient = options.MieCoefficient || 0.005;
-    options.mieDirectionalG = options.MieDirectionalG || 0.8;
-
-    console.log(options);
-
-    let sun = new THREE.Vector3();
-
-    // Skybox
-
-    const sky = new Sky();
-    sky.scale.setScalar( options.skyscale );
-
-    env.local.sky = sky;  
-
-    const skyUniforms = sky.material.uniforms;
-
-    skyUniforms[ 'turbidity' ].value = options.turbidity;
-    skyUniforms[ 'rayleigh' ].value = options.rayleigh;
-    skyUniforms[ 'mieCoefficient' ].value = options.mieCoefficient;
-    skyUniforms[ 'mieDirectionalG' ].value = options.mieDirectionalG;
-
-    const parameters = {
-      elevation: options.elevation,
-      azimuth: options.azimuth
-    };
-
-    env.local.scene.add( sky );
-
-    const pmremGenerator = new THREE.PMREMGenerator( env.local.renderer );
-    let renderTarget;
-
-    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
-    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
-
-    sun.setFromSphericalCoords( 1, phi, theta );
-
-    sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
-    env.local.sun = sun;
-    //water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
-
-    if ( renderTarget !== undefined ) renderTarget.dispose();
-
-    renderTarget = pmremGenerator.fromScene( sky );
-
-    env.local.scene.environment = renderTarget.texture;  
-  }
+  };
   
   g3d.Water = async (args, env) => {
     console.warn('temporary disabled');
     return;
-    
-    if (!Water) {
-      Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
-    }
-
-    let options = await core._getRules(args, env);
-    console.log('options:');
-
-
-    console.log(options);
-    options.dims = options.Dims || [10000, 10000];
-
-    let water;
-    // Water
-
-    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
-
-    water = new Water(
-      waterGeometry,
-      {
-        textureWidth: 512,
-        textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( 'https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/assets/waternormals.jpg', function ( texture ) {
-
-          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-
-        } ),
-        sunDirection: new THREE.Vector3(),
-        sunColor: 0xffffff,
-        waterColor: 0x001e0f,
-        distortionScale: 3.7,
-        fog: true
-      }
-    );
-
-    water.rotation.x = - Math.PI / 2;
-    
-    env.local.water = water;
-
-    env.local.scene.add( water );
-    
-    const sun = env.local.sun || (new THREE.Vector3(1,1,1));
-    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
-
-    //every frame
-    env.local.handlers.push(
-      function() {
-        env.local.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
-      }
-    );
-  }  
+  };  
 
 
   g3d.Large = (args, env) => {
     return 1.0;
-  }
+  };
 
 const setImageSize = async (options, env) => {
   let ImageSize;
@@ -1439,23 +1162,9 @@ const setImageSize = async (options, env) => {
   }
 
   return ImageSize;
-}
-
-const getControls = async (options) => {
-
-}
+};
 
 let RTX = {};
-
-const setupRTX = async () => {
-  if (RTX) return;
-  
-}
-
-const setupRenderer = async () => {
-
-
-}
 
 const addDefaultLighting = (scene) => {
   const light = new THREE.PointLight(0xffffff, 2, 10);
@@ -1463,7 +1172,7 @@ const addDefaultLighting = (scene) => {
   scene.add(light);
   var hemiLight = new THREE.HemisphereLight( 0xffffbb, 0x080820, 2 );
   scene.add( hemiLight );
-}
+};
 
 g3d.PointLight = async (args, env) => {
   const copy = {...env};
@@ -1487,18 +1196,18 @@ g3d.PointLight = async (args, env) => {
   light.position.set(...position);
   env.local.light = light;
   env.mesh.add(light);
-}
+};
 
 g3d.PointLight.update = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true});
   if (options.Position) {
     env.local.light.position.set(...(await interpretate(options.Position, env)));
   }  
-}
+};
 
-g3d.PointLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env)}
+g3d.PointLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env);};
 
-g3d.PointLight.virtual = true
+g3d.PointLight.virtual = true;
 
 g3d.HemisphereLight = async (args, env) => {
   const copy = {...env};
@@ -1508,22 +1217,21 @@ g3d.HemisphereLight = async (args, env) => {
 
   if (args.length > 1) await interpretate(args[1], copy); else copy.color = 0x080820;
   const groundColor = copy.color;
-  
-  let intensity = 1; if (args.length > 2) intensity = await interpretate(args[1], env);
+ if (args.length > 2) await interpretate(args[1], env);
 
   const hemiLight = new THREE.HemisphereLight( skyColor, groundColor, 2 );
   env.local.scene.add( hemiLight );
-}
+};
 
 g3d.MeshMaterial = async (args, env) => {
   const mat = await interpretate(args[0], env);
   env.material = mat;
-}
+};
 
-g3d.MeshPhysicalMaterial = () => THREE.MeshPhysicalMaterial
-g3d.MeshLambertMaterial = () => THREE.MeshLambertMaterial
-g3d.MeshPhongMaterial = () => THREE.MeshPhongMaterial
-g3d.MeshToonMaterial = () => THREE.MeshToonMaterial
+g3d.MeshPhysicalMaterial = () => THREE.MeshPhysicalMaterial;
+g3d.MeshLambertMaterial = () => THREE.MeshLambertMaterial;
+g3d.MeshPhongMaterial = () => THREE.MeshPhongMaterial;
+g3d.MeshToonMaterial = () => THREE.MeshToonMaterial;
 
 let RGBELoader;
 let OrbitControls;
@@ -1532,11 +1240,11 @@ let FullScreenQuad;
 core.Graphics3D = async (args, env) => {  
   //Lazy loading
 
-  THREE         = (await import('three'));
-  OrbitControls = (await import("three/examples/jsm/controls/OrbitControls.js")).OrbitControls;
-  GUI           = (await import('dat.gui')).GUI;  
-  RGBELoader    = (await import('three/examples/jsm/loaders/RGBELoader.js')).RGBELoader; 
-  FullScreenQuad = (await import('three/examples/jsm/postprocessing/Pass.js')).FullScreenQuad; 
+  THREE         = (await import('./three.module-2b52335b.js'));
+  OrbitControls = (await import('./OrbitControls-7696f0d4.js')).OrbitControls;
+  GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
+  RGBELoader    = (await import('./RGBELoader-2d491feb.js')).RGBELoader; 
+  FullScreenQuad = (await import('./Pass-85682623.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
 
   /**
@@ -1549,7 +1257,7 @@ core.Graphics3D = async (args, env) => {
   let PathRendering = false;
   if ('RTX' in options) {
     PathRendering = true;
-    RTX = (await import('three-gpu-pathtracer/build/index.module'));
+    RTX = (await import('./index.module-4af1c14c.js'));
   }
 
 
@@ -1594,8 +1302,10 @@ core.Graphics3D = async (args, env) => {
   	cameraProjection: 'Orthographic',
   };
 
-  if (options.ViewProjection) { 
+  if (options.ViewProjection) {
+    console.log(options.ViewProjection);
     params.cameraProjection = await interpretate(options.ViewProjection, env);
+    alert(params.cameraProjection);
   }
 
   if (!PathRendering) params.resolutionScale = 1;
@@ -1618,14 +1328,13 @@ core.Graphics3D = async (args, env) => {
     }, 'image/png', 1.0);
   }
 
-  const button = { Save:function(){ takeScheenshot() }};
+  const button = { Save:function(){ takeScheenshot(); }};
   gui.add(button, 'Save');
 
   //Setting up renderer
   let renderer, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
   let perspectiveCamera, orthoCamera, equirectCamera;
   let envMap, envMapGenerator, scene;
-  let samplesEl;
   let PT_PROGRAM_ID;
 
   const orthoWidth = 5;
@@ -1690,7 +1399,7 @@ core.Graphics3D = async (args, env) => {
   if (options.Controls) {
 
     if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
-      const o = (await import("three/examples/jsm/controls/PointerLockControls.js")).PointerLockControls;
+      const o = (await import('./PointerLockControls-60d1137b.js')).PointerLockControls;
       
 
       controlObject = {
@@ -1818,14 +1527,6 @@ core.Graphics3D = async (args, env) => {
           const controls = controlObject.o;
 
           if ( controls.isLocked === true ) {
-  
-            //raycaster.ray.origin.copy( controls.getObject().position );
-            //raycaster.ray.origin.y -= 10;
-  
-            //const intersections = raycaster.intersectObjects( objects, false );
-  
-            //const onObject = intersections.length > 0;
-            const onObject = false;
 
             const delta = ( time - controlObject.prevTime ) / 1000;
   
@@ -1840,13 +1541,6 @@ core.Graphics3D = async (args, env) => {
   
             if ( controlObject.moveForward || controlObject.moveBackward ) controlObject.velocity.z -= controlObject.direction.z * 40.0 * delta;
             if ( controlObject.moveLeft || controlObject.moveRight ) controlObject.velocity.x -= controlObject.direction.x * 40.0 * delta;
-  
-            if ( onObject === true ) {
-  
-              controlObject.velocity.y = Math.max( 0, controlObject.velocity.y );
-              controlObject.canJump = true;
-  
-            }
   
             controls.moveRight( - controlObject.velocity.x * delta );
             controls.moveForward( - controlObject.velocity.z * delta );
@@ -1934,7 +1628,7 @@ core.Graphics3D = async (args, env) => {
     Lerp: options.Lerp || true,
 
     Handlers: Handlers
-  }  
+  };  
 
   env.local.renderer = renderer;
   env.local.scene    = scene;
@@ -1943,7 +1637,7 @@ core.Graphics3D = async (args, env) => {
 
   var bbox = new THREE.Box3().setFromObject(group);
 
-  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0)
+  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0);
 
   group.applyMatrix4(new THREE.Matrix4().set(
     1, 0, 0, 0,
@@ -1960,10 +1654,7 @@ core.Graphics3D = async (args, env) => {
   scene.updateMatrixWorld();
 
   //add some lighting
-  if ('Lighting' in options) {
-    //if ((await interpretate(options.Lighting, env)) === 'None')
-
-  } else {
+  if ('Lighting' in options) ; else {
     addDefaultLighting(scene);
   }
   
@@ -2319,7 +2010,7 @@ core.Graphics3D = async (args, env) => {
 	cameraFolder.close();  
 
   animate();
-}
+};
 
 core.Graphics3D.destroy = (args, env) => {
   console.log('Graphics3D was removed');
@@ -2327,5 +2018,4 @@ core.Graphics3D.destroy = (args, env) => {
   console.log('env local:'); console.log(env.local);
   env.local.controlObject.dispose();
   cancelAnimationFrame(env.local.aid);
-}
-
+};

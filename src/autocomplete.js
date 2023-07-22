@@ -15,6 +15,11 @@ window.EditorAutocomplete.extend([
         "info": '"RTX"->True is an option for Graphics3D to switch to Path-tracing engine'  
     },
     {
+        "label": 'Lightmap',
+        "type": 'keyword',
+        'info': 'An option for Graphics3D to use HDRI light maps. Specify the url Lightmap->"https://..."'
+    },
+    {
         "label": "PointLight",
         "type": "keyword",
         "info": 'A point light object used in Graphics3D. Default parameters are PointLight[color=White, intensity=1, distance=0, decay=2, "Position"->{0,0,10}]'  
