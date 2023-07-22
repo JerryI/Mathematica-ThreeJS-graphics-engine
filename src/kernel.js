@@ -70,7 +70,13 @@
     const copy = {...env};
     await interpretate(args[0], copy);
     env.emissive = copy.color;
+    if (args.length > 1) {
+      env.emissiveIntensity = await interpretate(args[1], copy);
+    }
   }
+
+
+  
 
   g3d.RGBColor = async (args, env) => {
     if (args.length !== 3 && args.length !== 1) {
@@ -141,9 +147,10 @@
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-      reflectivity: env.reflectivity,
-      clearcoat: env.clearcoat,
-      ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+      
+      
+      
     });
 
     //points 1, 2
@@ -243,9 +250,10 @@
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-      reflectivity: env.reflectivity,
-      clearcoat: env.clearcoat,
-      ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+      
+      
+      
     });
 
     function addSphere(cr) {
@@ -455,9 +463,10 @@
       depthWrite: true,
       metalness: env.metalness,
       emissive: env.emissive,
-      reflectivity: env.reflectivity,
-      clearcoat: env.clearcoat,
-      ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+      
+      
+      
     });
 
     //material.side = THREE.DoubleSide;
@@ -502,9 +511,10 @@
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-      reflectivity: env.reflectivity,
-      clearcoat: env.clearcoat,
-      ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+      
+      
+      
     });
 
     console.log(coordinates);
@@ -986,9 +996,10 @@
       roughness: env.roughness,
       metalness: env.metalness,
       emissive: env.emissive,
-      reflectivity: env.reflectivity,
-      clearcoat: env.clearcoat,
-      ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+      
+      
+      
       //depthTest: false
       //depthWrite: false
     });
@@ -1029,9 +1040,10 @@
         roughness: env.roughness,
         metalness: env.metalness,
         emissive: env.emissive,
-        reflectivity: env.reflectivity,
-        clearcoat: env.clearcoat,
-        ior: env.ior
+emissiveIntensity: env.emissiveIntensity,
+        
+        
+        
       });
 
       const mesh = new THREE.Mesh(geometry, material);
@@ -1986,11 +1998,11 @@ core.Graphics3D = async (args, env) => {
 
       if (PathRendering) return;
 
-      var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+      const localEnv = pmremGenerator.fromEquirectangular( texture ).texture;
 
-      scene.environment = envMap;
+      scene.environment = localEnv;
 
-      scene.background = envMap;
+      scene.background = localEnv;
 
       texture.dispose();
       pmremGenerator.dispose();

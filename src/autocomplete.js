@@ -62,23 +62,13 @@ window.EditorAutocomplete.extend([
     {
         "label": "Emissive",
         "type": "keyword",
-        "info": 'Makes a surface emitt light Emissive[RGBColor[...]] used in Graphics3D'  
+        "info": 'Makes a surface emitt light Emissive[RGBColor[...], intensity_:1] used in Graphics3D'  
     },
     {
         "label": "Roughness",
         "type": "keyword",
         "info": 'Specify the roughness of the surface Roughness[1] used in Graphics3D'  
-    },
-    {
-        "label": "Reflectivity",
-        "type": "keyword",
-        "info": 'Specify the reflectivity of the surface Reflectivity[1] used in Graphics3D'  
-    },
-    {
-        "label": "Clearcoat",
-        "type": "keyword",
-        "info": 'Subsurface scattering Clearcoat[1] used in Graphics3D'  
-    }                              
+    }                            
 ])
 
 console.log('loaded!');
