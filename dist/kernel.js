@@ -196,6 +196,8 @@ emissiveIntensity: env.emissiveIntensity,
     geometry.dispose();
     conegeometry.dispose();
     material.dispose();
+
+    return group;
   };
 
   g3d.Arrow = async (args, env) => {
@@ -226,6 +228,8 @@ emissiveIntensity: env.emissiveIntensity,
     );
     env.mesh.add(arrowHelper);
     arrowHelper.line.material.linewidth = env.thickness;
+
+    return arrowHelper;
   };
 
   g3d.Sphere = async (args, env) => {
@@ -278,6 +282,8 @@ emissiveIntensity: env.emissiveIntensity,
     }
 
     material.dispose();
+
+    return env.local.object;
   };
 
   g3d.Sphere.update = async (args, env) => {
@@ -472,6 +478,8 @@ emissiveIntensity: env.emissiveIntensity,
 
     geometry.dispose();
     material.dispose();
+
+    return cude;
   };
 
   g3d.Center = (args, env) => {
@@ -557,7 +565,8 @@ emissiveIntensity: env.emissiveIntensity,
       ]);
     });
     console.log(fake);
-    await interpretate(fake, env);
+    
+    return await interpretate(fake, env);
   };
 
   g3d.Translate = async (args, env) => {
@@ -999,12 +1008,14 @@ emissiveIntensity: env.emissiveIntensity,
     //poly.frustumCulled = false;
     env.mesh.add(poly);
     material.dispose();
+
+    return poly;
   };
 
   g3d.Polyhedron = async (args, env) => {
     if (args[1][1].length > 4) {
       //non-optimised variant to work with 4 vertex per face
-      await interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
+      return await interpretate(["GraphicsComplex", args[0], ["Polygon", args[1]]], env);
     } else {
       //reguar one. gpu-fiendly
       /**
@@ -1038,6 +1049,8 @@ emissiveIntensity: env.emissiveIntensity,
       env.mesh.add(mesh);
       geometry.dispose();
       material.dispose();
+
+      return mesh;
     }
   };
 
@@ -1097,6 +1110,8 @@ emissiveIntensity: env.emissiveIntensity,
 
  
       env.mesh.add(line);
+
+      return line;
 
       //geometry.dispose();
       //material.dispose();
@@ -1208,12 +1223,38 @@ g3d.PointLight = async (args, env) => {
   light.position.set(...position);
   env.local.light = light;
   env.mesh.add(light);
+
+  return light;
 };
 
 g3d.PointLight.update = async (args, env) => {
-  const options = await core._getRules(args, {...env, hold: true});
+  const options = await core._getRules(args, {...env, hold: true}); 
+
   if (options.Position) {
-    env.local.light.position.set(...(await interpretate(options.Position, env)));
+    const pos = await interpretate(options.Position, env);
+
+    if (env.Lerp) {
+        if (!env.local.lerp) {
+          
+          console.log('creating worker for lerp of movements..');
+          const worker = {
+            alpha: 0.05,
+            target: new THREE.Vector3(...pos),
+            eval: () => {
+              env.local.light.position.lerp(worker.target, 0.05);
+            }
+          };
+  
+          env.local.lerp = worker;  
+  
+          env.Handlers.push(worker);
+        }
+  
+        env.local.lerp.target.fromArray(pos);
+        return;
+    } 
+
+    env.local.light.position.set(...pos);
   }  
 };
 
@@ -1244,6 +1285,50 @@ g3d.MeshPhysicalMaterial = () => THREE.MeshPhysicalMaterial;
 g3d.MeshLambertMaterial = () => THREE.MeshLambertMaterial;
 g3d.MeshPhongMaterial = () => THREE.MeshPhongMaterial;
 g3d.MeshToonMaterial = () => THREE.MeshToonMaterial;
+
+let TransformControls = false;
+
+g3d.EventListener = async (args, env) => {
+    const options = await core._getRules(args, env);
+
+    const copy = {...env};
+
+    const object = await interpretate(args[0], env);
+
+    if (!TransformControls) TransformControls = (await import('./TransformControls-3a4f6114.js')).TransformControls;
+
+    Object.keys(options).forEach((rule)=>{
+      g3d.EventListener[rule](options[rule], object, copy);
+    });
+
+    return null;
+};
+
+  g3d.EventListener.destroy = (args, env) => {interpretate(args[0], env);};
+
+  g3d.EventListener.transform = (uid, object, env) => {
+    console.log(env.camera);
+    const control = new TransformControls(env.camera, env.local.renderer.domElement);
+
+    const orbit = env.controlObject.o;
+
+    control.attach(object); 
+
+    env.local.scene.add(control); 
+
+    const updateData = throttle((x,y,z) => {
+      server.emitt(uid, `<|"position"->{${x}, ${y}, ${z}}|>`);
+    });
+
+    control.addEventListener( 'change', function(event) {
+      updateData(object.position.x,object.position.y,object.position.z);
+    } );
+
+    control.addEventListener( 'dragging-changed', function ( event ) {
+      console.log('changed');
+      orbit.enabled = !event.value;
+    } );
+  };
 
 let RGBELoader;
 let OrbitControls;
@@ -1328,7 +1413,7 @@ core.Graphics3D = async (args, env) => {
   container.appendChild( guiContainer );    
 
   function takeScheenshot() {
-    animate();
+    animateOnce();
     renderer.domElement.toBlob(function(blob){
       var a = document.createElement('a');
       var url = URL.createObjectURL(blob);
@@ -1364,9 +1449,13 @@ core.Graphics3D = async (args, env) => {
     perspectiveCamera = new THREE.PerspectiveCamera( 75, aspect, 0.025, 500 );
   }
 
+  
+
 	const orthoHeight = orthoWidth / aspect;
 	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
 	orthoCamera.position.set( - 4, 2, 3 );
+
+  activeCamera = orthoCamera;
 
   if (PathRendering) {
 	  equirectCamera = new RTX.EquirectCamera();
@@ -1598,8 +1687,11 @@ core.Graphics3D = async (args, env) => {
 
 
 
-  controlObject.init(orthoCamera, renderer.domElement);
+  controlObject.init(activeCamera, renderer.domElement);
   controls = controlObject.o;
+
+  env.local.controlObject = controlObject;
+  env.local.renderer = renderer;
 
   if (PathRendering) {
 	  controls.addEventListener( 'change', () => {
@@ -1636,12 +1728,16 @@ core.Graphics3D = async (args, env) => {
     clearcoat: 0,
     ior: 1.5,
     Lerp: options.Lerp || true,
+    camera: activeCamera,
+    controlObject: controlObject,
 
     Handlers: Handlers
   };  
 
   env.local.renderer = renderer;
   env.local.scene    = scene;
+  envcopy.camera   = activeCamera;
+  env.local.element  = container;
 
   await interpretate(args[0], envcopy);
 
@@ -1812,16 +1908,21 @@ core.Graphics3D = async (args, env) => {
   
     controls.update();
 
+    env.local.camera   = activeCamera;
+    envcopy.camera   = activeCamera;
+
 
   
     reset();
   
   }
-  
-  function animate() {
-  
-    env.local.aid = requestAnimationFrame( animate );
 
+  function animate() {
+    env.local.aid = requestAnimationFrame( animate );
+    animateOnce();
+  }
+  
+  function animateOnce() {
 
     
     if (PathRendering) {
