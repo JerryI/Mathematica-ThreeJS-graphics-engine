@@ -84,6 +84,7 @@ let g3d = {};
     const b = await interpretate(a[2], env);
 
     env.color = new THREE.Color(r, g, b);
+    return env.color;
   };
 
   g3d.Roughness = (args, env) => {
@@ -226,6 +227,9 @@ emissiveIntensity: env.emissiveIntensity,
       dir.length(),
       env.color,
     );
+    arrowHelper.castShadow = env.shadows;
+    arrowHelper.receiveShadow = env.shadows;
+
     env.mesh.add(arrowHelper);
     arrowHelper.line.material.linewidth = env.thickness;
 
@@ -254,6 +258,8 @@ emissiveIntensity: env.emissiveIntensity,
       const sphere = new THREE.Mesh(geometry, material);
 
       sphere.position.set(origin.x, origin.y, origin.z);
+      sphere.castShadow = env.shadows;
+      sphere.receiveShadow = env.shadows;
 
       env.mesh.add(sphere);
       geometry.dispose();
@@ -473,6 +479,8 @@ emissiveIntensity: env.emissiveIntensity,
     //cube.applyMatrix(params.matrix.clone().multiply(tr));
 
     cube.position.set(origin.x, origin.y, origin.z);
+    cube.receiveShadow = env.shadows;
+    cube.castShadow = env.shadows;
 
     env.mesh.add(cube);
 
@@ -529,6 +537,8 @@ emissiveIntensity: env.emissiveIntensity,
     // Make a mesh with the geometry
     var mesh = new THREE.Mesh(geometry, material);
     // Position it where we want
+    mesh.receiveShadow = env.shadows;
+    mesh.castShadow = env.shadows;
 
     mesh.position.copy(coordinates[0]);
     // And make it point to where we want
@@ -1004,6 +1014,8 @@ emissiveIntensity: env.emissiveIntensity,
     material.side = THREE.DoubleSide;
 
     const poly = new THREE.Mesh(geometry, material);
+    poly.receiveShadow = env.shadows;
+    poly.castShadow = true;
 
     //poly.frustumCulled = false;
     env.mesh.add(poly);
@@ -1046,6 +1058,8 @@ emissiveIntensity: env.emissiveIntensity,
       });
 
       const mesh = new THREE.Mesh(geometry, material);
+      mesh.receiveShadow = env.shadows;
+      mesh.castShadow = env.shadows;
       env.mesh.add(mesh);
       geometry.dispose();
       material.dispose();
@@ -1207,7 +1221,7 @@ g3d.PointLight = async (args, env) => {
 
   console.log(options);
 
-  if (args.length - options.length > 0) await interpretate(args[0], copy); else copy.color = 0xffffff;
+  let color = 0xffffff; if (args.length - options.length > 0) color = await interpretate(args[0], copy); 
   let intensity = 1; if (args.length - options.length > 1) intensity = await interpretate(args[1], env);
   let distance = 0; if (args.length - options.length > 2) distance = await interpretate(args[2], env);
   let decay = 2; if (args.length - options.length > 3) decay = await interpretate(args[3], env);
@@ -1218,8 +1232,10 @@ g3d.PointLight = async (args, env) => {
   }
 
   console.log(position);
+  console.log(color);
 
-  const light = new THREE.PointLight(copy.color, intensity, distance, decay);
+  const light = new THREE.PointLight(color, intensity, distance, decay);
+  light.castShadow = env.shadows;
   light.position.set(...position);
   env.local.light = light;
   env.mesh.add(light);
@@ -1261,6 +1277,117 @@ g3d.PointLight.update = async (args, env) => {
 g3d.PointLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env);};
 
 g3d.PointLight.virtual = true;
+
+g3d.SpotLight = async (args, env) => {
+  const copy = {...env};
+  const options = await core._getRules(args, {...env, hold: true});
+
+  console.log(options);
+
+  let color = 0xffffff; if (args.length - options.length > 0) color = await interpretate(args[0], copy); 
+  let intensity = 1; if (args.length - options.length > 1) intensity = await interpretate(args[1], env);
+  let distance = 0; if (args.length - options.length > 2) distance = await interpretate(args[2], env);
+  let angle = Math.PI/3; if (args.length - options.length > 3) angle = await interpretate(args[3], env);
+  let penumbra = 0; if (args.length - options.length > 4) penumbra = await interpretate(args[4], env);
+  let decay = 2; if (args.length - options.length > 5) decay = await interpretate(decay[5], env);
+
+  let position = [10, 10, 100];
+  if (options.Position) {
+    position = await interpretate(options.Position, env);
+  }
+
+  console.log(position);
+
+  let target = [0,0,0];
+  if (options.Target) {
+    target = await interpretate(options.Target, env);
+  }
+
+  console.log(target);  
+
+  const spotLight = new THREE.SpotLight( color, intensity, distance, angle, penumbra, decay );
+  spotLight.position.set(...position);
+  spotLight.target.position.set(...target);
+
+  spotLight.castShadow = env.shadows;
+
+  env.local.spotLight = spotLight;
+  env.mesh.add(spotLight);
+  env.mesh.add(spotLight.target);
+
+  return spotLight;
+};
+
+g3d.SpotLight.update = async (args, env) => {
+  const options = await core._getRules(args, {...env, hold: true}); 
+
+  if (options.Position) {
+    const pos = await interpretate(options.Position, env);
+
+    if (env.Lerp) {
+        if (!env.local.lerp1) {
+          
+          console.log('creating worker for lerp of movements..');
+          const worker = {
+            alpha: 0.05,
+            target: new THREE.Vector3(...pos),
+            eval: () => {
+              env.local.spotLight.position.lerp(worker.target, 0.05);
+            }
+          };
+  
+          env.local.lerp1 = worker;  
+  
+          env.Handlers.push(worker);
+        }
+  
+        env.local.lerp1.target.fromArray(pos);
+        
+    } else {
+
+      env.local.spotLight.position.set(...pos);
+    }
+  }
+  
+  if (options.Target) {
+    const target = await interpretate(options.Target, env);
+
+    if (env.Lerp) {
+        if (!env.local.lerp2) {
+          
+          console.log('creating worker for lerp of movements..');
+          const worker = {
+            alpha: 0.05,
+            target: new THREE.Vector3(...target),
+            eval: () => {
+              env.local.spotLight.target.position.lerp(worker.target, 0.05);
+            }
+          };
+  
+          env.local.lerp2 = worker;  
+  
+          env.Handlers.push(worker);
+        }
+  
+        env.local.lerp2.target.fromArray(target);
+        
+    } else {
+
+      env.local.spotLight.target.position.set(...target);
+    }
+  }  
+
+};
+
+g3d.SpotLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env);};
+
+g3d.SpotLight.virtual = true;
+
+g3d.Shadows = async (args, env) => {
+  env.shadows = await interpretate(args[0], env);
+};
+
+g3d.Shadows.destroy = g3d.Shadows;
 
 g3d.HemisphereLight = async (args, env) => {
   const copy = {...env};
@@ -1447,6 +1574,8 @@ core.Graphics3D = async (args, env) => {
 	  perspectiveCamera.position.set( - 4, 2, 3 );
   } else {
     perspectiveCamera = new THREE.PerspectiveCamera( 75, aspect, 0.025, 500 );
+
+    renderer.shadowMap.enabled = true;
   }
 
   
@@ -1726,7 +1855,7 @@ core.Graphics3D = async (args, env) => {
     arrowRadius: 5,
     reflectivity: 0.5,
     clearcoat: 0,
-    ior: 1.5,
+    shadows: false,
     Lerp: options.Lerp || true,
     camera: activeCamera,
     controlObject: controlObject,

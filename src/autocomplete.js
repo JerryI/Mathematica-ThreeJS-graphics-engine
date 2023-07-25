@@ -25,6 +25,16 @@ window.EditorAutocomplete.extend([
         "info": 'A point light object used in Graphics3D. Default parameters are PointLight[color=White, intensity=1, distance=0, decay=2, "Position"->{0,0,10}]'  
     },
     {
+        "label": "SpotLight",
+        "type": "keyword",
+        "info": 'A spot light object used in Graphics3D. Default parameters are SpotLight[color=White, intensity=1, distance=0, angle=Pi/3, penumbra=0, decay=2, "Position"->{10,10,100}, "Target"->{0,0,0}]'  
+    },  
+    {
+        "label": "Shadows",
+        "type": "keyword",
+        "info": 'used in Graphics3D. Decide if you need to cast shadows from objects. Shadows[True]'
+    },  
+    {
         "label": "HemisphereLight",
         "type": "keyword",
         "info": 'A hemisphere light object used in Graphics3D. Default parameters are HemisphereLight[skyColor=0xffffbb, groundColor=0x080820, intensity=1]'  
