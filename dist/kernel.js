@@ -487,7 +487,7 @@ emissiveIntensity: env.emissiveIntensity,
     geometry.dispose();
     material.dispose();
 
-    return cude;
+    return cube;
   };
 
   g3d.Center = (args, env) => {
