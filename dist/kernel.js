@@ -114,7 +114,15 @@ let g3d = {};
   };
 
 
-  
+  g3d.Hue = async (args, env) => {
+    const h = await interpretate(args[0], env);
+    const l = await interpretate(args[1], env) * 100.0;
+    const s = await interpretate(args[2], env) * 100.0;
+
+    env.color = new THREE.Color(`hsl(${h}, ${l}%, ${s}%)`);
+    return env.color;    
+    
+  };
 
   g3d.RGBColor = async (args, env) => {
     if (args.length !== 3 && args.length !== 1) {
@@ -188,7 +196,7 @@ let g3d = {};
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
+      emissiveIntensity: env.emissiveIntensity,
       
       
       
@@ -293,6 +301,14 @@ emissiveIntensity: env.emissiveIntensity,
     );
     arrowHelper.castShadow = env.shadows;
     arrowHelper.receiveShadow = env.shadows;
+
+    arrowHelper.line.material.emissive = env.emissive;
+    arrowHelper.cone.material.emissive = env.emissive;
+    arrowHelper.line.material.emissiveIntensity = env.emissiveIntensity;
+    arrowHelper.cone.material.emissiveIntensity = env.emissiveIntensity;
+
+
+   
 
     env.mesh.add(arrowHelper);
     arrowHelper.line.material.linewidth = env.thickness;
