@@ -18,6 +18,12 @@ let g3d = {};
     g3d[e] = () => e;
   });
 
+  g3d.Void = (args, env) => {console.warn(args); console.warn('went to the void...');};
+  g3d.Void.update = () => {};
+  g3d.Void.destroy = () => {};
+
+  g3d.CapForm = g3d.Void;
+  g3d.Appearance = g3d.Void;
 
 
   /**
@@ -25,6 +31,50 @@ let g3d = {};
   */
   let THREE;
   let MathUtils;
+
+
+  const lab2rgb = (lab) => {
+    var y = (lab[0] + 16) / 116,
+        x = lab[1] / 500 + y,
+        z = y - lab[2] / 200,
+        r, g, b;
+  
+    x = 0.95047 * ((x * x * x > 0.008856) ? x * x * x : (x - 16/116) / 7.787);
+    y = 1.00000 * ((y * y * y > 0.008856) ? y * y * y : (y - 16/116) / 7.787);
+    z = 1.08883 * ((z * z * z > 0.008856) ? z * z * z : (z - 16/116) / 7.787);
+  
+    r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+    g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+    b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+  
+    r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1/2.4) - 0.055) : 12.92 * r;
+    g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1/2.4) - 0.055) : 12.92 * g;
+    b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1/2.4) - 0.055) : 12.92 * b;
+  
+    return [Math.max(0, Math.min(1, r)) * 255, 
+            Math.max(0, Math.min(1, g)) * 255, 
+            Math.max(0, Math.min(1, b)) * 255]
+  };
+
+  g3d.LABColor =  async (args, env) => {
+    let lab;
+    if (args.length > 1)
+      lab = [await interpretate(args[0], env), await interpretate(args[1], env), await interpretate(args[2], env)];
+    else 
+      lab = await interpretate(args[0], env);
+
+    const color = lab2rgb(lab.map(e => e*255.0));
+    console.log('LAB color');
+    console.log(color);
+    
+    env.color = new THREE.Color(...(color.map(e => e/255.0)));
+    if (args.length > 3) env.opacity = await interpretate(args[3], env);
+    
+    return env.color;   
+  };
+
+  g3d.LABColor.update = () => {};
+  g3d.LABColor.destroy = () => {};
 
   g3d.Style = core.List;
 
@@ -115,6 +165,8 @@ let g3d = {};
     }
   };
 
+  
+
   g3d.TubeArrow = async (args, env) => {
     console.log('Context test');
     console.log(undefined);
@@ -202,7 +254,19 @@ emissiveIntensity: env.emissiveIntensity,
   };
 
   g3d.Arrow = async (args, env) => {
-    let arr = await interpretate(args[0], env);
+    let arr;
+
+    if (args.length === 1) {
+      if (args[0][0] === 'Tube') {
+        console.log('TUBE inside!');
+        arr = await interpretate(args[0][1], env);
+      } else {
+        arr = await interpretate(args[0], env);
+      }
+    } else {
+      arr = await interpretate(args[0], env);
+    }
+    
     if (arr.length === 1) arr = arr[0];
     if (arr.length !== 2) {
       console.error("Tube must have 2 vectors!");
@@ -236,6 +300,8 @@ emissiveIntensity: env.emissiveIntensity,
     return arrowHelper;
   };
 
+  g3d.Tube = g3d.Arrow;
+
   g3d.Sphere = async (args, env) => {
     var radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
@@ -254,7 +320,7 @@ emissiveIntensity: env.emissiveIntensity,
 
     function addSphere(cr) {
       const origin = new THREE.Vector4(...cr, 1);
-      const geometry = new THREE.SphereGeometry(radius, 20, 20);
+      const geometry = new THREE.SphereGeometry(radius, 40, 40);
       const sphere = new THREE.Mesh(geometry, material);
 
       sphere.position.set(origin.x, origin.y, origin.z);
@@ -1119,6 +1185,8 @@ emissiveIntensity: env.emissiveIntensity,
       const material = new THREE.LineBasicMaterial({
         linewidth: env.thickness,
         color: env.edgecolor,
+        opacity: env.opacity,
+        transparent: env.opacity < 1.0 ? true : false
       });
       const line = new THREE.Line(geometry, material);
 
@@ -1474,8 +1542,12 @@ core.Graphics3D = async (args, env) => {
   /**
    * @type {Object}
    */  
-  const options = await core._getRules(args, {...env, context: g3d, hold:true});
+  let options = await core._getRules(args, {...env, context: g3d, hold:true});
   console.log(options);  
+
+  if (Object.keys(options).length === 0 && args.length > 1) {
+    options = await core._getRules(args[1], {...env, context: g3d, hold:true});
+  }
 
 
   let PathRendering = false;
@@ -1874,7 +1946,22 @@ core.Graphics3D = async (args, env) => {
 
   group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0);
 
-  group.applyMatrix4(new THREE.Matrix4().set(
+  if (options.BoxRatios) {
+    const boxLine = [
+      [[bbox.min.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.min.y, bbox.min.z]],
+      [[bbox.min.x, bbox.min.y, bbox.max.z], [bbox.max.x, bbox.min.y, bbox.max.z], [bbox.max.x, bbox.max.y, bbox.max.z], [bbox.min.x, bbox.max.y, bbox.max.z], [bbox.min.x, bbox.min.y, bbox.max.z]],
+      [[bbox.min.x, bbox.min.y, bbox.min.z], [bbox.min.x, bbox.min.y, bbox.max.z]],
+      [[bbox.max.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.min.y, bbox.max.z]],
+      [[bbox.max.x, bbox.max.y, bbox.min.z], [bbox.max.x, bbox.max.y, bbox.max.z]],
+      [[bbox.min.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.max.y, bbox.max.z]]
+    ];
+
+    for (const l of boxLine) {
+      await interpretate(['Line', ['JSObject', l]], {...envcopy, opacity:0.5});
+    }  }
+  
+
+  group.applyMatrix4(new THREE.Matrix4().set( 
     1, 0, 0, 0,
     0, 0, 1, 0,
     0, -1, 0, 0,
