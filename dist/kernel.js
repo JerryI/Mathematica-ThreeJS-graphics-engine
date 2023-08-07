@@ -301,14 +301,13 @@ let g3d = {};
     );
     arrowHelper.castShadow = env.shadows;
     arrowHelper.receiveShadow = env.shadows;
-
-    arrowHelper.line.material.emissive = env.emissive;
-    arrowHelper.cone.material.emissive = env.emissive;
-    arrowHelper.line.material.emissiveIntensity = env.emissiveIntensity;
-    arrowHelper.cone.material.emissiveIntensity = env.emissiveIntensity;
-
-
-   
+     
+    if (env.PathRendering) {
+      arrowHelper.line.material.emissive = env.emissive;
+      arrowHelper.cone.material.emissive = env.emissive;
+      arrowHelper.line.material.emissiveIntensity = env.emissiveIntensity;
+      arrowHelper.cone.material.emissiveIntensity = env.emissiveIntensity;
+    }
 
     env.mesh.add(arrowHelper);
     arrowHelper.line.material.linewidth = env.thickness;
@@ -1939,6 +1938,7 @@ core.Graphics3D = async (args, env) => {
     mesh: group,
     metalness: 0,
     emissive: new THREE.Color(0, 0, 0),
+    emissiveIntensity: 1,
     arrowHeight: 20,
     arrowRadius: 5,
     reflectivity: 0.5,
@@ -1956,13 +1956,16 @@ core.Graphics3D = async (args, env) => {
   envcopy.camera   = activeCamera;
   env.local.element  = container;
 
+  if (PathRendering)
+    envcopy.PathRendering = true;
+
   await interpretate(args[0], envcopy);
 
   var bbox = new THREE.Box3().setFromObject(group);
 
   group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0);
 
-  if (options.BoxRatios) {
+  if (options.BoxRatios || options.Boxed) {
     const boxLine = [
       [[bbox.min.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.min.y, bbox.min.z]],
       [[bbox.min.x, bbox.min.y, bbox.max.z], [bbox.max.x, bbox.min.y, bbox.max.z], [bbox.max.x, bbox.max.y, bbox.max.z], [bbox.min.x, bbox.max.y, bbox.max.z], [bbox.min.x, bbox.min.y, bbox.max.z]],
