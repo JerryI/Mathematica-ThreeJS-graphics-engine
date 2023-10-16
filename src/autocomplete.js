@@ -78,7 +78,13 @@ window.EditorAutocomplete.extend([
         "label": "Roughness",
         "type": "keyword",
         "info": 'Specify the roughness of the surface Roughness[1] used in Graphics3D'  
-    }                            
+    },
+    
+    {
+        "label": 'Water',
+        "type": 'keyword',
+        "info": "A water shader for Graphics3D. Use it as Water[]"
+    }
 ])
 
 console.log('loaded!');

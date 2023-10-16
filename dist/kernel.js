@@ -470,7 +470,7 @@ emissiveIntensity: env.emissiveIntensity,
   	skyUniforms[ 'mieDirectionalG' ].value = 0.8;
   };
 
-  g3d.Water = (args, env) => {
+  g3d._Water = (args, env) => {
     const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
 
   	const water = new Water(
@@ -1266,8 +1266,57 @@ emissiveIntensity: env.emissiveIntensity,
   };
   
   g3d.Water = async (args, env) => {
-    console.warn('temporary disabled');
-    return;
+    
+    
+    if (!Water) {
+      Water         = (await import('./Water-e87e91a5.js')).Water;
+    }
+
+    let options = await core._getRules(args, env);
+    console.log('options:');
+
+
+    console.log(options);
+    options.dims = options.Size || [10000, 10000];
+
+    let water;
+    // Water
+
+    const waterGeometry = new THREE.PlaneGeometry(...options.dims);
+
+    water = new Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'https://cdn.statically.io/gh/JerryI/Mathematica-ThreeJS-graphics-engine/master/assets/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        sunDirection: new THREE.Vector3(1,1,1),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: true
+      }
+    );
+
+    water.rotation.x = - Math.PI / 2;
+    
+    env.local.water = water;
+
+    env.local.scene.add( water );
+    
+    const sun = env.local.sun || (new THREE.Vector3(1,1,1));
+    water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+
+    //every frame
+    env.local.handlers.push(
+      function() {
+        env.local.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+      }
+    );
   };  
 
 

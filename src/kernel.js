@@ -482,7 +482,7 @@ emissiveIntensity: env.emissiveIntensity,
   	skyUniforms[ 'mieDirectionalG' ].value = 0.8;
   }
 
-  g3d.Water = (args, env) => {
+  g3d._Water = (args, env) => {
     const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
 
   	const water = new Water(
@@ -1493,8 +1493,7 @@ emissiveIntensity: env.emissiveIntensity,
   }
   
   g3d.Water = async (args, env) => {
-    console.warn('temporary disabled');
-    return;
+    
     
     if (!Water) {
       Water         = (await import('three/examples/jsm/objects/Water.js')).Water;
@@ -1505,7 +1504,7 @@ emissiveIntensity: env.emissiveIntensity,
 
 
     console.log(options);
-    options.dims = options.Dims || [10000, 10000];
+    options.dims = options.Size || [10000, 10000];
 
     let water;
     // Water
@@ -1522,7 +1521,7 @@ emissiveIntensity: env.emissiveIntensity,
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
         } ),
-        sunDirection: new THREE.Vector3(),
+        sunDirection: new THREE.Vector3(1,1,1),
         sunColor: 0xffffff,
         waterColor: 0x001e0f,
         distortionScale: 3.7,

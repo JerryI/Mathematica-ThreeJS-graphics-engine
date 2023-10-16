@@ -1,6 +1,6 @@
 {
   "name": "wljs-graphics3d-threejs",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "jsmodule": "dist/kernel.js",
@@ -58,6 +58,8 @@
     "watch": "node --max-old-space-size=8192 ./node_modules/.bin/rollup --config rollup.config.mjs -w",
     "screenshot-diff": "node ./scripts/regression-test.js",
     "lint": "eslint \"./src/**/*.{js,ts}\" \"./example/*.js\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "restore": "mkdir _temp && cd _temp && git clone https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine && mv Mathematica-ThreeJS-graphics-engine/.git ../.git && cd .. && rm -rf _temp"
+ 
   }
 }
