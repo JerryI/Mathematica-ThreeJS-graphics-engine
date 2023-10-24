@@ -203,18 +203,15 @@ let g3d = {};
     });
 
     //points 1, 2
-    const p1 = new THREE.Vector3(...coordinates[0]);
-    const p2 = new THREE.Vector3(...coordinates[1]);
+    const p2 = new THREE.Vector3(...coordinates[0]);
+    const p1 = new THREE.Vector3(...coordinates[1]);
     //direction
     const dp = p2.clone().addScaledVector(p1, -1);
 
     const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
 
     //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
-    geometry.computeBoundingBox();
-    let position = geometry.boundingBox;
-
-    position.max.addScaledVector(position.min, -1);
+  
 
     //default geometry
     const cylinder = new THREE.Mesh(geometry, material);
@@ -227,30 +224,24 @@ let g3d = {};
     let group = new THREE.Group();
     group.add(cylinder, cone);
 
-    //the default axis of a Three.js cylinder is [010], then we rotate it to dp vector.
-    //using https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-    const v = new THREE.Vector3(0, 1, 0).cross(dp.normalize());
-    const theta = Math.asin(v.length() / dp.length());
-    const sc = Math.sin(theta);
-    const mcs = 1.0 - Math.cos(theta);
 
-    //Did not find how to write it using vectors
-    const matrix = new THREE.Matrix4().set(
-      1 - mcs * (v.y * v.y + v.z * v.z), mcs * v.x * v.y - sc * v.z,/*   */ sc * v.y + mcs * v.x * v.z,/*   */ 0,//
-      mcs * v.x * v.y + sc * v.z,/*   */ 1 - mcs * (v.x * v.x + v.z * v.z), -(sc * v.x) + mcs * v.y * v.z,/**/ 0,//
-      -(sc * v.y) + mcs * v.x * v.z,/**/ sc * v.x + mcs * v.y * v.z,/*   */ 1 - mcs * (v.x * v.x + v.y * v.y), 0,//
-      0,/*                            */0,/*                            */ 0,/**                           */ 1
-    );
+    var HALF_PI = Math.PI * .5;
+    var position  = p1.clone().add(p2).divideScalar(2);
 
-    //middle target point
-    const middle = p1.divideScalar(2.0).addScaledVector(p2, 0.5);
+    var orientation = new THREE.Matrix4();//a new orientation matrix to offset pivot
+    var offsetRotation = new THREE.Matrix4();//a matrix to fix pivot rotation
+    new THREE.Matrix4();//a matrix to fix pivot position
+    orientation.lookAt(p1,p2,new THREE.Vector3(0,1,0));//look at destination
+    offsetRotation.makeRotationX(HALF_PI);//rotate 90 degs on X
+    orientation.multiply(offsetRotation);//combine orientation with rotation transformations
+    group.applyMatrix4(orientation);
 
-    //shift to the center and rotate
-    //group.position = center;
-    group.applyMatrix4(matrix);
+
+    //group.position=position;    
+
 
     //translate its center to the middle target point
-    group.position.addScaledVector(middle, -1);
+    group.position.addScaledVector(position, 1);
 
     env.mesh.add(group);
 
