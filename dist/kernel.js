@@ -208,7 +208,7 @@ let g3d = {};
     //direction
     const dp = p2.clone().addScaledVector(p1, -1);
 
-    const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 20, 1);
+    const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 32, 1);
 
     //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
   
@@ -601,7 +601,7 @@ emissiveIntensity: env.emissiveIntensity,
     console.log(direction);
   
     // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), 6, 4, false);
+    var geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), 32, 4, false);
     // shift it so one end rests on the origin
     geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
     // rotate it the right way for lookAt to work
