@@ -366,7 +366,7 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.Sphere.update = async (args, env) => {
     console.log('Sphere: updating the data!');
-
+    env.wake();
 
     const c = await interpretate(args[0], env);
 
@@ -671,6 +671,7 @@ emissiveIntensity: env.emissiveIntensity,
   };
 
   g3d.Translate.update = async (args, env) => {
+    env.wake();
     const p = await interpretate(args[1], env);
     const group = env.local.mesh;
 
@@ -741,6 +742,7 @@ emissiveIntensity: env.emissiveIntensity,
   };
 
   g3d.LookAt.update = async (args, env) => {
+    env.wake();
     const dir = await interpretate(args[1], env);
     env.local.group.lookAt(...dir);
   };  
@@ -876,6 +878,7 @@ emissiveIntensity: env.emissiveIntensity,
   };
 
   g3d.GeometricTransformation.update = async (args, env) => {
+    env.wake();
     let p = [...(await interpretate(args[1], {...env, hold:false}))];
 
     const group = env.local.group;
@@ -1367,6 +1370,7 @@ g3d.PointLight = async (args, env) => {
 };
 
 g3d.PointLight.update = async (args, env) => {
+  env.wake();
   const options = await core._getRules(args, {...env, hold: true}); 
 
   if (options.Position) {
@@ -1442,6 +1446,7 @@ g3d.SpotLight = async (args, env) => {
 };
 
 g3d.SpotLight.update = async (args, env) => {
+  env.wake();
   const options = await core._getRules(args, {...env, hold: true}); 
 
   if (options.Position) {
@@ -1594,6 +1599,9 @@ core.Graphics3D = async (args, env) => {
   FullScreenQuad = (await import('./Pass-85682623.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
 
+  let sleeping = false;
+  let timeStamp = performance.now();
+
   /**
    * @type {Object}
    */  
@@ -1705,6 +1713,12 @@ core.Graphics3D = async (args, env) => {
     renderer.shadowMap.enabled = true;
   }
 
+  const wakeFunction = () => {
+    timeStamp = performance.now();
+    if (!sleeping) return;
+    env.local.wakeThreadUp(); 
+  };
+
   
 
 	const orthoHeight = orthoWidth / aspect;
@@ -1740,6 +1754,7 @@ core.Graphics3D = async (args, env) => {
   let controlObject = {
     init: (camera, dom) => {
       controlObject.o = new OrbitControls( camera, renderer.domElement );
+      controlObject.o.addEventListener('change', wakeFunction);
       controlObject.o.target.set( 0, 1, 0 );
       controlObject.o.update();
     },
@@ -1761,6 +1776,7 @@ core.Graphics3D = async (args, env) => {
         init: (camera, dom) => {
           controlObject.o = new o( camera, dom );
           env.local.scene.add( controlObject.o.getObject() );
+          controlObject.o.addEventListener('change', wakeFunction);
 
           controlObject.onKeyDown = function ( event ) {
             switch ( event.code ) {
@@ -1959,6 +1975,8 @@ core.Graphics3D = async (args, env) => {
 
   const group = new THREE.Group();
 
+
+
   const envcopy = {
     ...env,
     context: g3d,
@@ -1988,8 +2006,16 @@ core.Graphics3D = async (args, env) => {
     camera: activeCamera,
     controlObject: controlObject,
 
-    Handlers: Handlers
+    Handlers: Handlers,
+    wake: wakeFunction
   };  
+
+  env.local.wakeThreadUp = () => {
+    if (!sleeping) return;
+    sleeping = false;
+    console.warn("g3d >> waking up!");
+    animate();
+  };
 
   env.local.renderer = renderer;
   env.local.scene    = scene;
@@ -2182,12 +2208,31 @@ core.Graphics3D = async (args, env) => {
   
   }
 
-  function animate() {
-    animateOnce();
-    env.local.aid = requestAnimationFrame( animate );
+  let animate;
+
+  if (PathRendering) {
+    animate = () => {
+      animateOnce();
+      env.local.aid = requestAnimationFrame( animate );
+    };
+  } else {
+    animate = () => {
+      animateOnce();
+
+      if (performance.now() - timeStamp > 1000) {
+        sleeping = true;
+        console.warn('g3d >> Sleeping...');
+      } else {
+        env.local.aid = requestAnimationFrame( animate );
+      }
+
+    };    
   }
+
   
   function updateSettings() {
+    wakeFunction();
+
     if (PathRendering) {
       ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
 
@@ -2255,6 +2300,8 @@ core.Graphics3D = async (args, env) => {
       f();
     });    
     /**/
+
+    //env.wake();
   
     //samplesEl.innerText = `Samples: ${ Math.floor( ptRenderer.samples ) }`;
   
@@ -2406,6 +2453,7 @@ core.Graphics3D.destroy = (args, env) => {
   console.log('Graphics3D was removed');
   console.log('env global:'); console.log(env.global);
   console.log('env local:'); console.log(env.local);
+  env.local.wakeThreadUp = () => {};
   env.local.controlObject.dispose();
   cancelAnimationFrame(env.local.aid);
 };
