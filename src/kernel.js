@@ -2427,17 +2427,7 @@ core.Graphics3D = async (args, env) => {
   
       activeCamera = orthoCamera;
   
-    } else { // Equirect
-  
-      if ( activeCamera ) {
-  
-        equirectCamera.position.copy( activeCamera.position );
-  
-      }
-  
-      activeCamera = equirectCamera;
-  
-    }
+    } 
   
     controls.object = activeCamera;
     if (PathRendering)
@@ -2455,13 +2445,11 @@ core.Graphics3D = async (args, env) => {
   }
 
   function animate() {
-    env.local.aid = requestAnimationFrame( animate );
     animateOnce();
+    env.local.aid = requestAnimationFrame( animate );
   }
   
-  function animateOnce() {
-
-    
+  function updateSettings() {
     if (PathRendering) {
       ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
 
@@ -2485,6 +2473,9 @@ core.Graphics3D = async (args, env) => {
       scene.background = scene.environment;
   
     }
+  }
+
+  function animateOnce() {
     
     if (PathRendering) {
       // Get the path tracing shader id. It will be the next program compiled and used here.
@@ -2500,11 +2491,7 @@ core.Graphics3D = async (args, env) => {
   
       }
   
-      if ( ptRenderer.samples < 1 ) {
-  
-        renderer.render( scene, activeCamera );
-  
-      }
+
       denoiseQuad.material.sigma = params.denoiseSigma;
       denoiseQuad.material.threshold = params.denoiseThreshold;
       denoiseQuad.material.kSigma = params.denoiseKSigma;
@@ -2521,6 +2508,7 @@ core.Graphics3D = async (args, env) => {
     }
 
     for (let i=0; i<Handlers.length; ++i) {
+      //if (Handlers[i].sleep) continue;
       Handlers[i].eval();
     }
 
@@ -2545,34 +2533,40 @@ core.Graphics3D = async (args, env) => {
 	ptFolder.add( params, 'stableNoise' ).onChange( value => {
 
 		ptRenderer.stableNoise = value;
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'multipleImportanceSampling' ).onChange( value => {
 
 		ptRenderer.material.setDefine( 'FEATURE_MIS', Number( value ) );
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'tiles', 1, 4, 1 ).onChange( value => {
 
 		ptRenderer.tiles.set( value, value );
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'samplesPerFrame', 1, 10, 1 );
 	ptFolder.add( params, 'filterGlossyFactor', 0, 1 ).onChange( () => {
 
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'bounces', 1, 30, 1 ).onChange( () => {
 
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'transparentTraversals', 0, 40, 1 ).onChange( value => {
 
 		ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', value );
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	ptFolder.add( params, 'resolutionScale', 0.1, 1 ).onChange( () => {
@@ -2581,11 +2575,11 @@ core.Graphics3D = async (args, env) => {
 
 	} );
 
-	const denoiseFolder = gui.addFolder( 'Denoising' );
-	denoiseFolder.add( params, 'denoiseEnabled' );
-	denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 );
-	denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 );
-	denoiseFolder.add( params, 'denoiseKSigma', 0.0, 12.0 );
+	const denoiseFolder = gui.addFolder( 'Denoising' ).onChange(updateSettings);
+	denoiseFolder.add( params, 'denoiseEnabled' ).onChange(updateSettings);
+	denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 ).onChange(updateSettings);
+	denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 ).onChange(updateSettings);
+	denoiseFolder.add( params, 'denoiseKSigma', 0.0, 12.0 ).onChange(updateSettings);
 	denoiseFolder.close();
 
 
@@ -2593,36 +2587,42 @@ core.Graphics3D = async (args, env) => {
 	envFolder.add( params, 'environmentIntensity', 0, 10 ).onChange( () => {
 
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	envFolder.add( params, 'environmentRotation', 0, 2 * Math.PI ).onChange( v => {
 
 		ptRenderer.material.environmentRotation.makeRotationY( v );
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	envFolder.add( params, 'environmentBlur', 0, 1 ).onChange( () => {
 
 		updateEnvBlur();
+    updateSettings();
 
 	} );
 	envFolder.add( params, 'backgroundBlur', 0, 1 ).onChange( () => {
 
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	envFolder.add( params, 'backgroundAlpha', 0, 1 ).onChange( () => {
 
 		ptRenderer.reset();
+    updateSettings();
 
 	} );
 	envFolder.close();
   }
 
 	const cameraFolder = gui.addFolder( 'Camera' );
-	cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic', 'Equirectangular' ] ).onChange( v => {
+	cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic' ] ).onChange( v => {
 
 		updateCamera( v );
+    updateSettings();
 
 	} );
 
@@ -2631,6 +2631,8 @@ core.Graphics3D = async (args, env) => {
     renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
     if (PathRendering)
       blitQuad.material.needsUpdate = true;
+
+    updateSettings();
 
   } );
 
@@ -2641,6 +2643,7 @@ core.Graphics3D = async (args, env) => {
 		perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
 		this.updateDisplay();
 		reset();
+    updateSettings();
 
 	} );
 	cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
@@ -2651,6 +2654,7 @@ core.Graphics3D = async (args, env) => {
 
 		perspectiveCamera.updateProjectionMatrix();
 		reset();
+    updateSettings();
 
 	} ).listen();
   }
