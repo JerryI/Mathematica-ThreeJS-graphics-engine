@@ -1,4 +1,4 @@
-import { DataTextureLoader, HalfFloatType, FloatType, DataUtils, LinearEncoding, LinearFilter } from './three.module-2b52335b.js';
+import { DataTextureLoader, HalfFloatType, FloatType, DataUtils, LinearEncoding, LinearFilter } from './three.module-25f9122b.js';
 
 // https://github.com/mrdoob/three.js/issues/5552
 // http://en.wikipedia.org/wiki/RGBE_image_format

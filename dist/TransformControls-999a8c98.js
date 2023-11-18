@@ -1,4 +1,4 @@
-import { Raycaster, Vector3, Quaternion, Object3D, Euler, Matrix4, MeshBasicMaterial, LineBasicMaterial, CylinderGeometry, BoxGeometry, BufferGeometry, Float32BufferAttribute, Mesh, OctahedronGeometry, Line, SphereGeometry, TorusGeometry, PlaneGeometry, DoubleSide } from './three.module-2b52335b.js';
+import { Raycaster, Vector3, Quaternion, Object3D, Euler, Matrix4, MeshBasicMaterial, LineBasicMaterial, CylinderGeometry, BoxGeometry, BufferGeometry, Float32BufferAttribute, Mesh, OctahedronGeometry, Line, SphereGeometry, TorusGeometry, PlaneGeometry, DoubleSide } from './three.module-25f9122b.js';
 
 const _raycaster = new Raycaster();
 
@@ -1177,7 +1177,6 @@ class TransformControlsGizmo extends Object3D {
 
 				if ( handle.name === 'AXIS' ) {
 
-					handle.position.copy( this.worldPositionStart );
 					handle.visible = !! this.axis;
 
 					if ( this.axis === 'X' ) {

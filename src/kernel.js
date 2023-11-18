@@ -2523,6 +2523,7 @@ core.Graphics3D = async (args, env) => {
   function animateOnce() {
     
     if (PathRendering) {
+      activeCamera.updateMatrixWorld();
       // Get the path tracing shader id. It will be the next program compiled and used here.
       if ( PT_PROGRAM_ID === undefined ) {
   
@@ -2622,7 +2623,7 @@ core.Graphics3D = async (args, env) => {
 
 	} );
 
-	const denoiseFolder = gui.addFolder( 'Denoising' ).onChange(updateSettings);
+	const denoiseFolder = gui.addFolder( 'Denoising' );
 	denoiseFolder.add( params, 'denoiseEnabled' ).onChange(updateSettings);
 	denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 ).onChange(updateSettings);
 	denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 ).onChange(updateSettings);

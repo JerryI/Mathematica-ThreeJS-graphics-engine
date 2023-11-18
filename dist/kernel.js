@@ -1263,7 +1263,7 @@ emissiveIntensity: env.emissiveIntensity,
     
     
     if (!Water) {
-      Water         = (await import('./Water-e87e91a5.js')).Water;
+      Water         = (await import('./Water-d8b09bfb.js')).Water;
     }
 
     let options = await core._getRules(args, env);
@@ -1550,7 +1550,7 @@ g3d.EventListener = async (args, env) => {
 
     const object = await interpretate(args[0], env);
 
-    if (!TransformControls) TransformControls = (await import('./TransformControls-3a4f6114.js')).TransformControls;
+    if (!TransformControls) TransformControls = (await import('./TransformControls-999a8c98.js')).TransformControls;
 
     Object.keys(options).forEach((rule)=>{
       g3d.EventListener[rule](options[rule], object, copy);
@@ -1592,11 +1592,11 @@ let FullScreenQuad;
 core.Graphics3D = async (args, env) => {  
   //Lazy loading
 
-  THREE         = (await import('./three.module-2b52335b.js'));
-  OrbitControls = (await import('./OrbitControls-7696f0d4.js')).OrbitControls;
+  THREE         = (await import('./three.module-25f9122b.js'));
+  OrbitControls = (await import('./OrbitControls-a8818990.js')).OrbitControls;
   GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
-  RGBELoader    = (await import('./RGBELoader-2d491feb.js')).RGBELoader; 
-  FullScreenQuad = (await import('./Pass-85682623.js')).FullScreenQuad; 
+  RGBELoader    = (await import('./RGBELoader-67db8b5f.js')).RGBELoader; 
+  FullScreenQuad = (await import('./Pass-651ecd64.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
 
   let sleeping = false;
@@ -1616,7 +1616,7 @@ core.Graphics3D = async (args, env) => {
   let PathRendering = false;
   if ('RTX' in options) {
     PathRendering = true;
-    RTX = (await import('./index.module-4af1c14c.js'));
+    RTX = (await import('./index.module-eaed69cb.js'));
   }
 
 
@@ -1769,7 +1769,7 @@ core.Graphics3D = async (args, env) => {
   if (options.Controls) {
 
     if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
-      const o = (await import('./PointerLockControls-60d1137b.js')).PointerLockControls;
+      const o = (await import('./PointerLockControls-e4c585dd.js')).PointerLockControls;
       
 
       controlObject = {
@@ -2261,6 +2261,7 @@ core.Graphics3D = async (args, env) => {
   function animateOnce() {
     
     if (PathRendering) {
+      activeCamera.updateMatrixWorld();
       // Get the path tracing shader id. It will be the next program compiled and used here.
       if ( PT_PROGRAM_ID === undefined ) {
   
@@ -2360,7 +2361,7 @@ core.Graphics3D = async (args, env) => {
 
 	} );
 
-	const denoiseFolder = gui.addFolder( 'Denoising' ).onChange(updateSettings);
+	const denoiseFolder = gui.addFolder( 'Denoising' );
 	denoiseFolder.add( params, 'denoiseEnabled' ).onChange(updateSettings);
 	denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 ).onChange(updateSettings);
 	denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 ).onChange(updateSettings);

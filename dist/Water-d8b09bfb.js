@@ -1,4 +1,4 @@
-import { Mesh, Vector3, Color, FrontSide, Plane, Matrix4, Vector4, PerspectiveCamera, WebGLRenderTarget, UniformsUtils, UniformsLib, ShaderMaterial } from './three.module-2b52335b.js';
+import { Mesh, Vector3, Color, FrontSide, Plane, Matrix4, Vector4, PerspectiveCamera, WebGLRenderTarget, UniformsUtils, UniformsLib, ShaderMaterial } from './three.module-25f9122b.js';
 
 /**
  * Work based on :

@@ -1,5 +1,5 @@
-import { BufferAttribute, Vector3, Vector2, Plane, Line3, Triangle, Sphere, Matrix4, BackSide, DoubleSide, Box3, FrontSide, UnsignedIntType, DataTexture, NearestFilter, IntType, FloatType, UnsignedByteType, UnsignedShortType, ByteType, ShortType, RGBAFormat, RGBAIntegerFormat, RGFormat, RedFormat, RGIntegerFormat, RedIntegerFormat, BufferGeometry, Matrix3, Vector4, ShaderMaterial, Color, WebGLRenderTarget, PerspectiveCamera, Mesh, Camera, SpotLight, RectAreaLight, Spherical, EquirectangularReflectionMapping, RepeatWrapping, ClampToEdgeWrapping, LinearFilter, WebGLArrayRenderTarget, MeshBasicMaterial, NoToneMapping, Quaternion, Loader, FileLoader, PMREMGenerator, NoBlending, MeshStandardMaterial, NormalBlending, MathUtils, Source, HalfFloatType, DataUtils, BoxGeometry, DataArrayTexture } from './three.module-2b52335b.js';
-import { FullScreenQuad } from './Pass-85682623.js';
+import { BufferAttribute, Vector3, Vector2, Plane, Line3, Triangle, Sphere, Matrix4, BackSide, DoubleSide, Box3, FrontSide, UnsignedIntType, DataTexture, NearestFilter, IntType, FloatType, UnsignedByteType, UnsignedShortType, ByteType, ShortType, RGBAFormat, RGBAIntegerFormat, RGFormat, RedFormat, RGIntegerFormat, RedIntegerFormat, BufferGeometry, Matrix3, Vector4, ShaderMaterial, Color, WebGLRenderTarget, PerspectiveCamera, Mesh, Camera, SpotLight, RectAreaLight, Spherical, EquirectangularReflectionMapping, RepeatWrapping, ClampToEdgeWrapping, LinearFilter, WebGLArrayRenderTarget, MeshBasicMaterial, NoToneMapping, Quaternion, Loader, FileLoader, PMREMGenerator, NoBlending, MeshStandardMaterial, NormalBlending, MathUtils, Source, HalfFloatType, DataUtils, BoxGeometry, DataArrayTexture } from './three.module-25f9122b.js';
+import { FullScreenQuad } from './Pass-651ecd64.js';
 
 // Split strategy constants
 const CENTER = 0;
@@ -12738,7 +12738,8 @@ const directLightContributionGLSL = /*glsl*/`
 				// get the material pdf
 				vec3 sampleColor;
 				float lightMaterialPdf = bsdfResult( worldWo, lightRec.direction, surf, sampleColor );
-				if ( lightMaterialPdf > 0.0 ) {
+				bool isValidSampleColor = all( greaterThanEqual( sampleColor, vec3( 0.0 ) ) );
+				if ( lightMaterialPdf > 0.0 && isValidSampleColor ) {
 
 					// weight the direct light contribution
 					float lightPdf = lightRec.pdf / lightsDenom;
@@ -12780,7 +12781,8 @@ const directLightContributionGLSL = /*glsl*/`
 				// get the material pdf
 				vec3 sampleColor;
 				float envMaterialPdf = bsdfResult( worldWo, envDirection, surf, sampleColor );
-				if ( envMaterialPdf > 0.0 ) {
+				bool isValidSampleColor = all( greaterThanEqual( sampleColor, vec3( 0.0 ) ) );
+				if ( envMaterialPdf > 0.0 && isValidSampleColor ) {
 
 					// weight the direct light contribution
 					envPdf /= lightsDenom;

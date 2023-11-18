@@ -1,6 +1,6 @@
 {
   "name": "wljs-graphics3d-threejs",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "jsmodule": "dist/kernel.js",
@@ -21,8 +21,8 @@
   "dependencies": {
     "dat.gui": "^0.7.9",
     "node-sass": "^9.0.0",
-    "three-gpu-pathtracer": "^0.0.15",
-    "three-mesh-bvh": "^0.5.19"
+    "three-gpu-pathtracer": "^0.0.16",
+    "three-mesh-bvh": "^0.6.8"
   },
   "devDependencies": {
     "@lookingglass/webxr": "^0.3.1",
@@ -43,7 +43,7 @@
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-serve": "^2.0.2",
     "simple-git": "^3.10.0",
-    "three": "^0.147.0",
+    "three": "^0.148.0",
     "yargs": "^17.5.1"
   },
   "peerDependencies": {
@@ -60,6 +60,5 @@
     "lint": "eslint \"./src/**/*.{js,ts}\" \"./example/*.js\"",
     "prepublishOnly": "npm run build",
     "restore": "mkdir _temp && cd _temp && git clone https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine && mv Mathematica-ThreeJS-graphics-engine/.git ../.git && cd .. && rm -rf _temp"
- 
   }
 }
