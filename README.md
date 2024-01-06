@@ -84,17 +84,6 @@ Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, 
 - ``Roughness[]`` - roughness of the material
 - many other stuff, please, check `src/autocomplete.js`
 
-## Development
-
-```mathematica
-wolframscript -f buildtests.wls
-npm run watch
-```
-
-you can easily add new scenes by adding files into `tests/src` dir. 
-
-> For the complex scenes use `LoadPage["templates/signlepage_nodom.wsp"]` instead of `LoadPage["templates/signlepage.wsp",{data = json}]`.
-
 ## License
 
 Project is released under the GNU General Public License (GPL).
