@@ -14,7 +14,7 @@ let g3d = {};
   "PreserveImageOptions", "Prolog", "RotationAction", 
   "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
   "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
-  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
+  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls", "VertexNormals", "VertexColors"].map((e)=>{
     g3d[e] = () => e;
   });
 
@@ -941,11 +941,15 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
-
+    const options = await core._getRules(args, {...env, hold: true});
     
 
     const pts = (await interpretate(args[0], copy)).flat();
     copy.vertices = new Float32Array( pts );
+
+    if ('VertexColors' in options) {
+      copy.vertexcolors = await interpretate(options["VertexColors"], env);
+    }
 
     const group = new THREE.Group();
 
@@ -962,7 +966,6 @@ emissiveIntensity: env.emissiveIntensity,
     let vertices;
 
     if (env.hasOwnProperty("vertices")) {
-
       vertices = env.vertices;
 
       let a = await interpretate(args[0], env);
@@ -1071,20 +1074,42 @@ emissiveIntensity: env.emissiveIntensity,
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     geometry.computeVertexNormals();
 
-    const material = new env.material({
+    let material;
+    
+    if (env.vertexcolors) {
+      console.log('vertex colors');
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( new Float32Array( env.vertexcolors.flat() ), 3 ) );
+
+      console.log(env.material);
+      //!!! a bug. Cannot work with PhysicalBasedMaterial
+      material = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: env.opacity < 1,
+        opacity: env.opacity,
+        roughness: env.roughness,
+        metalness: env.metalness,
+        emissive: env.emissive,
+        emissiveIntensity: env.emissiveIntensity,        
+      });
+  } else {
+    material = new env.material({
       color: env.color,
       transparent: env.opacity < 1,
       opacity: env.opacity,
       roughness: env.roughness,
       metalness: env.metalness,
       emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
+      emissiveIntensity: env.emissiveIntensity,
       
       
       
       //depthTest: false
       //depthWrite: false
     });
+  }
+
+    
+
     console.log(env.opacity);
     material.side = THREE.DoubleSide;
 
@@ -1263,7 +1288,7 @@ emissiveIntensity: env.emissiveIntensity,
     
     
     if (!Water) {
-      Water         = (await import('./Water-d8b09bfb.js')).Water;
+      Water         = (await import('./Water-a573d7d4.js')).Water;
     }
 
     let options = await core._getRules(args, env);
@@ -1550,7 +1575,7 @@ g3d.EventListener = async (args, env) => {
 
     const object = await interpretate(args[0], env);
 
-    if (!TransformControls) TransformControls = (await import('./TransformControls-999a8c98.js')).TransformControls;
+    if (!TransformControls) TransformControls = (await import('./TransformControls-2614e9c1.js')).TransformControls;
 
     Object.keys(options).forEach((rule)=>{
       g3d.EventListener[rule](options[rule], object, copy);
@@ -1592,11 +1617,11 @@ let FullScreenQuad;
 core.Graphics3D = async (args, env) => {  
   //Lazy loading
 
-  THREE         = (await import('./three.module-25f9122b.js'));
-  OrbitControls = (await import('./OrbitControls-a8818990.js')).OrbitControls;
+  THREE         = (await import('./three.module-e66a3903.js'));
+  OrbitControls = (await import('./OrbitControls-07d4c9ef.js')).OrbitControls;
   GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
-  RGBELoader    = (await import('./RGBELoader-67db8b5f.js')).RGBELoader; 
-  FullScreenQuad = (await import('./Pass-651ecd64.js')).FullScreenQuad; 
+  RGBELoader    = (await import('./RGBELoader-132ece2d.js')).RGBELoader; 
+  FullScreenQuad = (await import('./Pass-bef7cacb.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
 
   let sleeping = false;
@@ -1616,7 +1641,7 @@ core.Graphics3D = async (args, env) => {
   let PathRendering = false;
   if ('RTX' in options) {
     PathRendering = true;
-    RTX = (await import('./index.module-eaed69cb.js'));
+    RTX = (await import('./index.module-c8bf6d87.js'));
   }
 
 
@@ -1769,7 +1794,7 @@ core.Graphics3D = async (args, env) => {
   if (options.Controls) {
 
     if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
-      const o = (await import('./PointerLockControls-e4c585dd.js')).PointerLockControls;
+      const o = (await import('./PointerLockControls-20643468.js')).PointerLockControls;
       
 
       controlObject = {

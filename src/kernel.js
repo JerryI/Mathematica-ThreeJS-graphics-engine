@@ -15,7 +15,7 @@
   "PreserveImageOptions", "Prolog", "RotationAction", 
   "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
   "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
-  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls"].map((e)=>{
+  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls", "VertexNormals", "VertexColors"].map((e)=>{
     g3d[e] = () => e;
   });
 
@@ -953,11 +953,15 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.GraphicsComplex = async (args, env) => {
     var copy = Object.assign({}, env);
-
+    const options = await core._getRules(args, {...env, hold: true});
     
 
     const pts = (await interpretate(args[0], copy)).flat();
-    copy.vertices = new Float32Array( pts )
+    copy.vertices = new Float32Array( pts );
+
+    if ('VertexColors' in options) {
+      copy.vertexcolors = await interpretate(options["VertexColors"], env);
+    }
 
     const group = new THREE.Group();
 
@@ -974,7 +978,6 @@ emissiveIntensity: env.emissiveIntensity,
     let vertices;
 
     if (env.hasOwnProperty("vertices")) {
-
       vertices = env.vertices;
 
       let a = await interpretate(args[0], env);
@@ -1083,20 +1086,42 @@ emissiveIntensity: env.emissiveIntensity,
     geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
     geometry.computeVertexNormals();
 
-    const material = new env.material({
+    let material;
+    
+    if (env.vertexcolors) {
+      console.log('vertex colors');
+      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( new Float32Array( env.vertexcolors.flat() ), 3 ) );
+
+      console.log(env.material);
+      //!!! a bug. Cannot work with PhysicalBasedMaterial
+      material = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: env.opacity < 1,
+        opacity: env.opacity,
+        roughness: env.roughness,
+        metalness: env.metalness,
+        emissive: env.emissive,
+        emissiveIntensity: env.emissiveIntensity,        
+      });
+  } else {
+    material = new env.material({
       color: env.color,
       transparent: env.opacity < 1,
       opacity: env.opacity,
       roughness: env.roughness,
       metalness: env.metalness,
       emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
+      emissiveIntensity: env.emissiveIntensity,
       
       
       
       //depthTest: false
       //depthWrite: false
     });
+  }
+
+    
+
     console.log(env.opacity);
     material.side = THREE.DoubleSide;
 

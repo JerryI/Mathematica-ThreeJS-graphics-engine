@@ -1,9 +1,1 @@
-.vscode
-.DS_Store
-node_modules/
-package-lock.json
-
-tests/*.html
-tests/public/
-tests/Packages/
-tests/.packages
+node_modules
