@@ -217,7 +217,7 @@ let g3d = {};
     const cylinder = new THREE.Mesh(geometry, material);
 
     //cone
-    const conegeometry = new THREE.ConeBufferGeometry(env.arrowRadius, env.arrowHeight, 32 );
+    const conegeometry = new THREE.ConeGeometry(env.arrowRadius, env.arrowHeight, 32 );
     const cone = new THREE.Mesh(conegeometry, material);
     cone.position.y = dp.length()/2 + env.arrowHeight/2;
 
