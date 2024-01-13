@@ -15,7 +15,7 @@
   "PreserveImageOptions", "Prolog", "RotationAction", 
   "SphericalRegion", "Ticks", "TicksStyle", "TouchscreenAutoZoom", 
   "ViewAngle", "ViewCenter", "ViewMatrix", "ViewPoint", 
-  "ViewProjection", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls", "VertexNormals", "VertexColors"].map((e)=>{
+  "ViewProjection", "VertexTextureCoordinates", "RTX","ViewRange", "ViewVector", "ViewVertical", "Controls", "PointerLockControls", "VertexNormals", "VertexColors"].map((e)=>{
     g3d[e] = () => e;
   });
 
