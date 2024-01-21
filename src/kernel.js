@@ -1935,7 +1935,8 @@ core.Graphics3D = async (args, env) => {
   if (!PathRendering) params.resolutionScale = 1;
 
   //Setting GUI
-  const gui = new GUI({ autoPlace: false });
+  const gui = new GUI({ autoPlace: false, name: '...', closed:true });
+
   const guiContainer = document.createElement('div');
   guiContainer.classList.add('graphics3d-controller');
   guiContainer.appendChild(gui.domElement);

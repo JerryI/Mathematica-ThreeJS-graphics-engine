@@ -1619,7 +1619,7 @@ core.Graphics3D = async (args, env) => {
 
   THREE         = (await import('./three.module-e66a3903.js'));
   OrbitControls = (await import('./OrbitControls-07d4c9ef.js')).OrbitControls;
-  GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
+  GUI           = (await import('./dat.gui.module-6246c119.js')).GUI;  
   RGBELoader    = (await import('./RGBELoader-132ece2d.js')).RGBELoader; 
   FullScreenQuad = (await import('./Pass-bef7cacb.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
@@ -1693,7 +1693,8 @@ core.Graphics3D = async (args, env) => {
   if (!PathRendering) params.resolutionScale = 1;
 
   //Setting GUI
-  const gui = new GUI({ autoPlace: false });
+  const gui = new GUI({ autoPlace: false, name: '...', closed:true });
+
   const guiContainer = document.createElement('div');
   guiContainer.classList.add('graphics3d-controller');
   guiContainer.appendChild(gui.domElement);

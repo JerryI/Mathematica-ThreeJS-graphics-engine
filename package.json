@@ -3,9 +3,9 @@
   "version": "0.3.1",
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
-    "jsmodule": "dist/kernel.js",
-    "wlkernel": "src/kernel.wl",
-    "autocomplete": "src/autocomplete.js"
+    "js": "dist/kernel.js",
+    "autocomplete": "src/autocomplete.js",
+    "styles": "src/styles.css"
   },
   "defaultPackage": true,
   "repository": {
