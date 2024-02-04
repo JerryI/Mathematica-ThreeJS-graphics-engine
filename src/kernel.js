@@ -1811,16 +1811,15 @@ g3d.MeshToonMaterial = () => THREE.MeshToonMaterial
 let TransformControls = false
 
 g3d.EventListener = async (args, env) => {
-    const options = await core._getRules(args, env);
+    const rules = await interpretate(args[1], env);
 
     const copy = {...env};
 
     const object = await interpretate(args[0], env);
 
     if (!TransformControls) TransformControls = (await import('three/examples/jsm/controls/TransformControls.js')).TransformControls;
-
-    Object.keys(options).forEach((rule)=>{
-      g3d.EventListener[rule](options[rule], object, copy);
+    rules.forEach((rule)=>{
+      g3d.EventListener[rule.lhs](rule.rhs, object, copy);
     });
 
     return null;
@@ -1839,7 +1838,7 @@ g3d.EventListener = async (args, env) => {
     env.local.scene.add(control); 
 
     const updateData = throttle((x,y,z) => {
-      server.emitt(uid, `<|"position"->{${x}, ${y}, ${z}}|>`)
+      server.kernel.emitt(uid, `<|"position"->{${x}, ${y}, ${z}}|>`, 'transform')
     });
 
     control.addEventListener( 'change', function(event) {
