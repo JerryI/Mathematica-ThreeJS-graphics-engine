@@ -5,7 +5,8 @@
   "wljs-meta": {
     "js": "dist/kernel.js",
     "kernel": "src/Kernel.wl",
-    "styles": "src/styles.css"
+    "styles": "src/styles.css",
+    "category": "Plotting & Graphics"
   },
   "defaultPackage": true,
   "repository": {
