@@ -86,7 +86,7 @@
   }
 
   g3d.LABColor.update = () => {}
-  g3d.LABColor.destroy = () => {}
+
 
   g3d.Style = core.List
 
@@ -448,12 +448,6 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.Sphere.destroy = async (args, env) => {
     console.log('Sphere: destroy');
-    console.log(args);
-    console.log(env);
-
-    for (const a of args)
-      await interpretate(a, env);
-
   }
 
   g3d.Sphere.virtual = true
@@ -1667,7 +1661,9 @@ g3d.PointLight.update = async (args, env) => {
   }  
 }
 
-g3d.PointLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env)}
+g3d.PointLight.destroy = async (args, env) => {
+  console.log('PointLight destroyed');
+}
 
 g3d.PointLight.virtual = true
 
@@ -1773,7 +1769,9 @@ g3d.SpotLight.update = async (args, env) => {
 
 }
 
-g3d.SpotLight.destroy = async (args, env) => {for (const i of args) await interpretate(i, env)}
+g3d.SpotLight.destroy = async (args, env) => {
+  console.log('SpotLight destoyed');
+}
 
 g3d.SpotLight.virtual = true
 
@@ -1781,7 +1779,7 @@ g3d.Shadows = async (args, env) => {
   env.shadows = await interpretate(args[0], env);
 }
 
-g3d.Shadows.destroy = g3d.Shadows
+
 
 g3d.HemisphereLight = async (args, env) => {
   const copy = {...env};
@@ -1824,8 +1822,6 @@ g3d.EventListener = async (args, env) => {
 
     return null;
 }
-
-  g3d.EventListener.destroy = (args, env) => {interpretate(args[0], env)}
 
   g3d.EventListener.transform = (uid, object, env) => {
     console.log(env.camera);
