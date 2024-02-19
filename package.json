@@ -4,6 +4,7 @@
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "js": "dist/kernel.js",
+    "minjs": "dist/kernel.min.js",
     "kernel": "src/Kernel.wl",
     "styles": "src/styles.css",
     "category": "Plotting & Graphics"
@@ -30,6 +31,7 @@
     "@rollup/plugin-commonjs": "^24.0.1",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "15.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
     "canvas-capture": "^2.0.5",
     "eslint": "^7.32.0",
     "eslint-config-mdcs": "^5.0.0",
