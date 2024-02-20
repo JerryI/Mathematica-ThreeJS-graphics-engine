@@ -18,7 +18,7 @@ listener[p_, list_] := With[{uid = CreateUUID[]}, With[{
 
 Unprotect[Sphere];
 
-Sphere      /: EventHandler[p_Point, list_List] := listener[p, list]
+Sphere      /: EventHandler[p_Sphere, list_List] := listener[p, list]
 
 Protect[Sphere];
 
