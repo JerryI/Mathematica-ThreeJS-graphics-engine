@@ -1990,8 +1990,8 @@ core.Graphics3D = async (args, env) => {
   
 
 	const orthoHeight = orthoWidth / aspect;
-	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
-	orthoCamera.position.set( - 4, 2, 3 );
+	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 200 );
+	orthoCamera.position.set( - 40, 20, 30 );
 
   activeCamera = orthoCamera;
 
@@ -2336,7 +2336,31 @@ core.Graphics3D = async (args, env) => {
     0, -1, 0, 0,
     0, 0, 0, 1));
 
-
+    if ('BoxRatios' in options) {
+      let size = [bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, bbox.max.y - bbox.min.y];
+      let max = Math.max(...size);
+      const reciprocal = size.map((e) => 1.0/(e/max));
+  
+      console.warn('Rescaling....');
+  
+      let ratios = await interpretate(options.BoxRatios, env);
+      max = Math.max(...ratios);
+      ratios = ratios.map((e, index) => reciprocal[index] * e/max);
+  
+      group.applyMatrix4(new THREE.Matrix4().makeScale(...ratios));
+    }  
+  
+    //recalculate
+    bbox = new THREE.Box3().setFromObject(group);
+    console.log(bbox);
+  
+    if (envcopy.camera.isOrthographicCamera) {
+      console.warn('fitting camera...');
+      const camera = envcopy.camera;
+      camera.zoom = Math.min(orthoWidth / (bbox.max.x - bbox.min.x),
+      orthoHeight / (bbox.max.y - bbox.min.y)) * 0.8;
+      camera.updateProjectionMatrix();
+    }
 
     
 
