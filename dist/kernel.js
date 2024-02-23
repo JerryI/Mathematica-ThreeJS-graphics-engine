@@ -1614,7 +1614,7 @@ core.Graphics3D = async (args, env) => {
 
   THREE         = (await import('./three.module-e66a3903.js'));
   OrbitControls = (await import('./OrbitControls-07d4c9ef.js')).OrbitControls;
-  GUI           = (await import('./dat.gui.module-6246c119.js')).GUI;  
+  GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
   RGBELoader    = (await import('./RGBELoader-132ece2d.js')).RGBELoader; 
   FullScreenQuad = (await import('./Pass-bef7cacb.js')).FullScreenQuad; 
   MathUtils     = THREE.MathUtils;
@@ -1631,6 +1631,12 @@ core.Graphics3D = async (args, env) => {
   if (Object.keys(options).length === 0 && args.length > 1) {
     options = await core._getRules(args[1], {...env, context: g3d, hold:true});
   }
+
+  const defaultMatrix = new THREE.Matrix4().set(
+    1, 0, 0, 0,//
+    0, 1, 0, 0,//
+    0, 0, 1, 0,//
+    0, 0, 0, 1);
 
 
   let PathRendering = false;
@@ -1743,8 +1749,8 @@ core.Graphics3D = async (args, env) => {
   
 
 	const orthoHeight = orthoWidth / aspect;
-	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 100 );
-	orthoCamera.position.set( - 4, 2, 3 );
+	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 200 );
+	orthoCamera.position.set( - 40, 20, 30 );
 
   activeCamera = orthoCamera;
 
@@ -2003,11 +2009,7 @@ core.Graphics3D = async (args, env) => {
     context: g3d,
     numerical: true,
     tostring: false,
-    matrix: new THREE.Matrix4().set(
-      1, 0, 0, 0,//
-      0, 1, 0, 0,//
-      0, 0, 1, 0,//
-      0, 0, 0, 1),
+    matrix: defaultMatrix,
     material: THREE.MeshPhysicalMaterial,
     color: new THREE.Color(1, 1, 1),
     opacity: 1,
@@ -2050,7 +2052,7 @@ core.Graphics3D = async (args, env) => {
 
   var bbox = new THREE.Box3().setFromObject(group);
 
-  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0);
+  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, -(bbox.min.z + bbox.max.z) / 2);
 
   if (options.BoxRatios || options.Boxed) {
     const boxLine = [
@@ -2073,8 +2075,31 @@ core.Graphics3D = async (args, env) => {
     0, -1, 0, 0,
     0, 0, 0, 1));
 
+  if ('BoxRatios' in options) {
+    let size = [bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, bbox.max.y - bbox.min.y];
+    let max = Math.max(...size);
+    const reciprocal = size.map((e) => 1.0/(e/max));
 
+    console.warn('Rescaling....');
 
+    let ratios = await interpretate(options.BoxRatios, env);
+    max = Math.max(...ratios);
+    ratios = ratios.map((e, index) => reciprocal[index] * e/max);
+
+    group.applyMatrix4(new THREE.Matrix4().makeScale(...ratios));
+  }  
+
+  //recalculate
+  bbox = new THREE.Box3().setFromObject(group);
+  console.log(bbox);
+
+  if (envcopy.camera.isOrthographicCamera) {
+    console.warn('fitting camera...');
+    const camera = envcopy.camera;
+    camera.zoom = Math.min(orthoWidth / (bbox.max.x - bbox.min.x),
+    orthoHeight / (bbox.max.y - bbox.min.y)) * 0.8;
+    camera.updateProjectionMatrix();
+  }
     
 
   scene.add(group);
