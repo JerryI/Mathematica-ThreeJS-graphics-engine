@@ -2054,7 +2054,7 @@ core.Graphics3D = async (args, env) => {
 
   var bbox = new THREE.Box3().setFromObject(group);
 
-  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, 0);
+  group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, -(bbox.min.z + bbox.max.z) / 2);
 
   if (options.BoxRatios || options.Boxed) {
     const boxLine = [
