@@ -350,7 +350,9 @@ emissiveIntensity: env.emissiveIntensity,
       return sphere;
     }
 
+    console.log(env.local);
     let list = await interpretate(args[0], env);
+    console.log('DRAW A SPHERE');
 
     if (list.length === 1) list = list[0];
     if (list.length === 1) list = list[0];
@@ -1546,7 +1548,7 @@ emissiveIntensity: env.emissiveIntensity,
     
     env.local.water = water;
 
-    env.local.scene.add( water );
+    env.global.scene.add( water );
     
     const sun = env.local.sun || (new THREE.Vector3(1,1,1));
     water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
@@ -1793,7 +1795,7 @@ g3d.HemisphereLight = async (args, env) => {
   let intensity = 1; if (args.length > 2) intensity = await interpretate(args[1], env);
 
   const hemiLight = new THREE.HemisphereLight( skyColor, groundColor, 2 );
-  env.local.scene.add( hemiLight );
+  env.global.scene.add( hemiLight );
 }
 
 g3d.MeshMaterial = async (args, env) => {
@@ -1824,17 +1826,17 @@ g3d.EventListener = async (args, env) => {
 }
 
   g3d.EventListener.transform = (uid, object, env) => {
-    console.log(env.camera);
-    const control = new TransformControls(env.camera, env.local.renderer.domElement);
+    console.log(env);
+    const control = new TransformControls(env.camera, env.global.renderer.domElement);
 
     const orbit = env.controlObject.o;
 
     control.attach(object); 
 
-    env.local.scene.add(control); 
+    env.global.scene.add(control); 
 
     const updateData = throttle((x,y,z) => {
-      server.kernel.emitt(uid, `<|"position"->{${x}, ${y}, ${z}}|>`, 'transform')
+      server.kernel.emitt(uid, `<|"position"->{${x.toFixed(4)}, ${y.toFixed(4)}, ${z.toFixed(4)}}|>`, 'transform')
     });
 
     control.addEventListener( 'change', function(event) {
@@ -2045,7 +2047,7 @@ core.Graphics3D = async (args, env) => {
       controlObject = {
         init: (camera, dom) => {
           controlObject.o = new o( camera, dom );
-          env.local.scene.add( controlObject.o.getObject() );
+          env.global.scene.add( controlObject.o.getObject() );
           controlObject.o.addEventListener('change', wakeFunction);
 
           controlObject.onKeyDown = function ( event ) {
@@ -2298,8 +2300,8 @@ core.Graphics3D = async (args, env) => {
     animate();
   }
 
-  env.local.renderer = renderer;
-  env.local.scene    = scene;
+  env.global.renderer = renderer;
+  env.global.scene    = scene;
   envcopy.camera   = activeCamera;
   env.local.element  = container;
 
