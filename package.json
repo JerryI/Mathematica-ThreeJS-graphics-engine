@@ -1,6 +1,6 @@
 {
   "name": "wljs-graphics3d-threejs",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "js": "dist/kernel.js",
@@ -49,7 +49,7 @@
     "yargs": "^17.5.1"
   },
   "peerDependencies": {
-    "three": ">=0.139.2",
+    "three": "^0.160.0",
     "xatlas-web": "^0.1.0"
   },
   "scripts": {

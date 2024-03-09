@@ -1608,15 +1608,17 @@ g3d.PointLight = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true});
 
   console.log(options);
+  const keys = Object.keys(options);
 
-  let color = 0xffffff; if (args.length - options.length > 0) color = await interpretate(args[0], copy); 
-  let intensity = 1; if (args.length - options.length > 1) intensity = await interpretate(args[1], env);
-  let distance = 0; if (args.length - options.length > 2) distance = await interpretate(args[2], env);
-  let decay = 2; if (args.length - options.length > 3) decay = await interpretate(args[3], env);
+  let color = 0xffffff; if (args.length - keys.length > 0) color = await interpretate(args[0], copy); 
+  let intensity = 100; if (args.length - keys.length > 1) intensity = await interpretate(args[1], env);
+  let distance = 0; if (args.length - keys.length > 2) distance = await interpretate(args[2], env);
+  let decay = 2; if (args.length - keys.length > 3) decay = await interpretate(args[3], env);
 
   let position = [0, 0, 10];
   if (options.Position) {
     position = await interpretate(options.Position, env);
+    position = [position[0], position[2], -position[1]];
   }
 
   console.log(position);
@@ -1626,7 +1628,7 @@ g3d.PointLight = async (args, env) => {
   light.castShadow = env.shadows;
   light.position.set(...position);
   env.local.light = light;
-  env.mesh.add(light);
+  env.global.scene.add(light);
 
   return light;
 }
@@ -1636,7 +1638,8 @@ g3d.PointLight.update = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true}); 
 
   if (options.Position) {
-    const pos = await interpretate(options.Position, env);
+    let pos = await interpretate(options.Position, env);
+    pos = [pos[0], pos[2], -pos[1]];
 
     if (env.Lerp) {
         if (!env.local.lerp) {
@@ -1674,17 +1677,19 @@ g3d.SpotLight = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true});
 
   console.log(options);
+  const keys = Object.keys(options);
 
-  let color = 0xffffff; if (args.length - options.length > 0) color = await interpretate(args[0], copy); 
-  let intensity = 1; if (args.length - options.length > 1) intensity = await interpretate(args[1], env);
-  let distance = 0; if (args.length - options.length > 2) distance = await interpretate(args[2], env);
-  let angle = Math.PI/3; if (args.length - options.length > 3) angle = await interpretate(args[3], env);
-  let penumbra = 0; if (args.length - options.length > 4) penumbra = await interpretate(args[4], env);
-  let decay = 2; if (args.length - options.length > 5) decay = await interpretate(decay[5], env);
+  let color = 0xffffff; if (args.length - keys.length > 0) color = await interpretate(args[0], copy); 
+  let intensity = 100; if (args.length - keys.length > 1) intensity = await interpretate(args[1], env);
+  let distance = 0; if (args.length - keys.length > 2) distance = await interpretate(args[2], env);
+  let angle = Math.PI/3; if (args.length - keys.length > 3) angle = await interpretate(args[3], env);
+  let penumbra = 0; if (args.length - keys.length > 4) penumbra = await interpretate(args[4], env);
+  let decay = 2; if (args.length - keys.length > 5) decay = await interpretate(decay[5], env);
 
-  let position = [10, 10, 100];
+  let position = [10, 100, 10];
   if (options.Position) {
     position = await interpretate(options.Position, env);
+    position = [position[0], position[2], -position[1]];
   }
 
   console.log(position);
@@ -1692,6 +1697,7 @@ g3d.SpotLight = async (args, env) => {
   let target = [0,0,0];
   if (options.Target) {
     target = await interpretate(options.Target, env);
+    target = [target[0], target[2], -target[1]];
   }
 
   console.log(target);  
@@ -1701,10 +1707,12 @@ g3d.SpotLight = async (args, env) => {
   spotLight.target.position.set(...target);
 
   spotLight.castShadow = env.shadows;
+  spotLight.shadow.mapSize.height = 1024;
+  spotLight.shadow.mapSize.width = 1024;
 
   env.local.spotLight = spotLight;
-  env.mesh.add(spotLight);
-  env.mesh.add(spotLight.target);
+  env.global.scene.add(spotLight);
+  env.global.scene.add(spotLight.target);
 
   return spotLight;
 }
@@ -1714,7 +1722,8 @@ g3d.SpotLight.update = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true}); 
 
   if (options.Position) {
-    const pos = await interpretate(options.Position, env);
+    let pos = await interpretate(options.Position, env);
+    pos = [pos[0], pos[2], -pos[1]];
 
     if (env.Lerp) {
         if (!env.local.lerp1) {
@@ -1742,7 +1751,8 @@ g3d.SpotLight.update = async (args, env) => {
   }
   
   if (options.Target) {
-    const target = await interpretate(options.Target, env);
+    let target = await interpretate(options.Target, env);
+    target = [target[0], target[2], -target[1]];
 
     if (env.Lerp) {
         if (!env.local.lerp2) {
