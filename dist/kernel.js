@@ -2063,9 +2063,9 @@ core.Graphics3D = async (args, env) => {
   await interpretate(args[0], envcopy);
 
   var bbox = new THREE.Box3().setFromObject(group);
-
+  //console.error(bbox);
   group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, -(bbox.min.z + bbox.max.z) / 2);
-
+  //throw 'fuk';
   if (options.BoxRatios || options.Boxed) {
     const boxLine = [
       [[bbox.min.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.min.y, bbox.min.z], [bbox.max.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.max.y, bbox.min.z], [bbox.min.x, bbox.min.y, bbox.min.z]],
@@ -2077,7 +2077,7 @@ core.Graphics3D = async (args, env) => {
     ];
 
     for (const l of boxLine) {
-      await interpretate(['Line', ['JSObject', l]], {...envcopy, opacity:0.5});
+      await interpretate(['Line', ['JSObject', l]], {...envcopy});
     }  }
   
 
@@ -2101,9 +2101,10 @@ core.Graphics3D = async (args, env) => {
     group.applyMatrix4(new THREE.Matrix4().makeScale(...ratios));
   }  
 
+  group.position.add(new THREE.Vector3(0,1,0));
   //recalculate
   bbox = new THREE.Box3().setFromObject(group);
-  console.log(bbox);
+  //console.log(bbox);
 
   if (envcopy.camera.isOrthographicCamera) {
     console.warn('fitting camera...');
@@ -2113,10 +2114,13 @@ core.Graphics3D = async (args, env) => {
     camera.updateProjectionMatrix();
   }
     
-
+ 
   scene.add(group);
+  //console.error(new THREE.Box3().setFromObject(scene));
 
   scene.updateMatrixWorld();
+
+  //console.error(new THREE.Box3().setFromObject(scene));
 
   //add some lighting
   if ('Lighting' in options) ; else {
