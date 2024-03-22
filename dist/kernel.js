@@ -115,13 +115,17 @@ let g3d = {};
 
 
   g3d.Hue = async (args, env) => {
-    const h = await interpretate(args[0], env);
+    const h = await interpretate(args[0], env) * 360.0;
     const l = await interpretate(args[1], env) * 100.0;
     const s = await interpretate(args[2], env) * 100.0;
 
     env.color = new THREE.Color(`hsl(${h}, ${l}%, ${s}%)`);
     return env.color;    
     
+  };
+
+  g3d.EdgeForm = async (args, env) => {
+    env.edgecolor = await interpretate(args[0], {...env});
   };
 
   g3d.RGBColor = async (args, env) => {
@@ -145,6 +149,16 @@ let g3d = {};
     return env.color;
   };
 
+  g3d.GrayLevel = async (args, env) => { 
+    const r = await interpretate(args[0], env);
+
+    env.color = new THREE.Color(r, r, r);
+    return env.color;
+
+  };
+
+
+
   g3d.Roughness = (args, env) => {
     const o = interpretate(args[0], env);
     if (typeof o !== "number") console.error("Opacity must have number value!");
@@ -164,6 +178,9 @@ let g3d = {};
   g3d.Thickness = async (args, env) => { env.thickness = await interpretate(args[0], env);
   };
 
+  g3d.AbsoluteThickness = async (args, env) => { env.thickness = await interpretate(args[0], env);
+  };
+
   g3d.Arrowheads = async (args, env) => {
     if (args.length == 1) {
       env.arrowRadius = await interpretate(args[0], env);
@@ -176,8 +193,7 @@ let g3d = {};
   
 
   g3d.TubeArrow = async (args, env) => {
-    console.log('Context test');
-    console.log(undefined);
+  
 
     let radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
@@ -234,6 +250,8 @@ let g3d = {};
     orientation.lookAt(p1,p2,new THREE.Vector3(0,1,0));//look at destination
     offsetRotation.makeRotationX(HALF_PI);//rotate 90 degs on X
     orientation.multiply(offsetRotation);//combine orientation with rotation transformations
+    
+    env.local.matrix = group.matrix.clone();
     group.applyMatrix4(orientation);
 
 
@@ -243,6 +261,8 @@ let g3d = {};
     //translate its center to the middle target point
     group.position.addScaledVector(position, 1);
 
+    env.local.group = group;
+
     env.mesh.add(group);
 
     geometry.dispose();
@@ -251,6 +271,63 @@ let g3d = {};
 
     return group;
   };
+
+  g3d.TubeArrow.update = async (args, env) => {
+    /**
+     * @type {THREE.Vector3}}
+     */
+    
+    
+    const coordinates = await interpretate(args[0], env);
+    //points 1, 2
+    const p2 = new THREE.Vector3(...coordinates[0]);
+    const p1 = new THREE.Vector3(...coordinates[1]);
+    //direction
+    p2.clone().addScaledVector(p1, -1);
+
+    //const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 32, 1);
+
+    //calculate the center (might be done better, i hope BoundingBox doest not envolve heavy computations)
+  
+
+    //default geometry
+    //const cylinder = new THREE.Mesh(geometry, material);
+
+    //cone
+    //const conegeometry = new THREE.ConeGeometry(env.arrowRadius, env.arrowHeight, 32 );
+    //const cone = new THREE.Mesh(conegeometry, material);
+    //cone.position.y = dp.length()/2 + env.arrowHeight/2;
+
+    ///let group = new THREE.Group();
+    //group.add(cylinder, cone);
+
+
+    var HALF_PI = Math.PI * .5;
+    var position  = p1.clone().add(p2).divideScalar(2);
+
+    var orientation = new THREE.Matrix4();//a new orientation matrix to offset pivot
+    var offsetRotation = new THREE.Matrix4();//a matrix to fix pivot rotation
+    new THREE.Matrix4();//a matrix to fix pivot position
+    orientation.lookAt(p1,p2,new THREE.Vector3(0,1,0));//look at destination
+    offsetRotation.makeRotationX(HALF_PI);//rotate 90 degs on X
+    orientation.multiply(offsetRotation);//combine orientation with rotation transformations
+
+    env.local.matrix.decompose( env.local.group.position, env.local.group.quaternion, env.local.group.scale );
+    env.local.group.matrix.copy( env.local.matrix );
+
+    env.local.group.applyMatrix4(orientation);
+
+
+    //group.position=position;    
+
+
+    //translate its center to the middle target point
+    env.local.group.position.addScaledVector(position, 1);
+
+    env.wake();
+  };
+
+  g3d.TubeArrow.virtual = true; 
 
   g3d.Arrow = async (args, env) => {
     let arr;
@@ -267,14 +344,30 @@ let g3d = {};
     }
     
     if (arr.length === 1) arr = arr[0];
-    if (arr.length !== 2) {
-      console.error("Tube must have 2 vectors!");
-      return;
+ 
+
+    if (arr.length > 2) {
+      var geometry = new THREE.BufferGeometry();
+      const points = arr.slice(0, -1);
+
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.flat()), 3 ) );
+
+      const material = new THREE.LineBasicMaterial({
+        linewidth: env.thickness,
+        color: env.color,
+        opacity: env.opacity,
+        transparent: env.opacity < 1.0 ? true : false
+      });
+      const line = new THREE.Line(geometry, material);
+
+      env.local.line = line;
+ 
+      env.mesh.add(line);
     }
 
     const points = [
-      new THREE.Vector4(...arr[0], 1),
-      new THREE.Vector4(...arr[1], 1),
+      new THREE.Vector4(...arr[arr.length-2], 1),
+      new THREE.Vector4(...arr[arr.length-1], 1),
     ];
 
     points.forEach((p) => {
@@ -283,12 +376,13 @@ let g3d = {};
 
     const origin = points[0].clone();
     const dir = points[1].add(points[0].negate());
+    const len = dir.length();
 
     const arrowHelper = new THREE.ArrowHelper(
       dir.normalize(),
       origin,
-      dir.length(),
-      env.color,
+      len,
+      env.color
     );
     arrowHelper.castShadow = env.shadows;
     arrowHelper.receiveShadow = env.shadows;
@@ -303,8 +397,71 @@ let g3d = {};
     env.mesh.add(arrowHelper);
     arrowHelper.line.material.linewidth = env.thickness;
 
+    env.local.arrow = arrowHelper;
+
     return arrowHelper;
   };
+
+  g3d.Arrow.update = async (args, env) => {
+    let arr;
+
+    if (args.length === 1) {
+      if (args[0][0] === 'Tube') {
+        console.log('TUBE inside!');
+        arr = await interpretate(args[0][1], env);
+      } else {
+        arr = await interpretate(args[0], env);
+      }
+    } else {
+      arr = await interpretate(args[0], env);
+    }
+    
+    if (arr.length === 1) arr = arr[0];
+
+    if (env.local.line) {
+      //update line geometry
+      const positionAttribute = env.local.line.geometry.getAttribute( 'position' );
+      const points = arr.slice(0, -1);
+
+      positionAttribute.needsUpdate = true;
+  
+      for ( let i = 0; i < positionAttribute.count; i ++ ) {
+        positionAttribute.setXYZ( i, ...(points[i]));
+      }
+  
+      env.local.line.geometry.computeBoundingBox();
+      env.local.line.geometry.computeBoundingSphere();
+    }
+
+    const points = [
+      new THREE.Vector4(...arr[arr.length-2], 1),
+      new THREE.Vector4(...arr[arr.length-1], 1),
+    ];
+
+    points.forEach((p) => {
+      p = p.applyMatrix4(env.matrix);
+    });
+
+
+    env.local.arrow.position.copy(points[0]);
+
+    const dir = points[1].add(points[0].negate());
+
+    const len = dir.length();
+
+    env.local.arrow.setDirection(dir.normalize());
+    env.local.arrow.setLength(len);
+
+    env.wake();
+
+  };
+
+  g3d.Arrow.destroy = async (args, env) => {
+    if (env.local.line) env.local.line.dispose();
+    env.local.arrow.dispose();
+  };
+
+  g3d.Arrow.virtual = true;
 
   g3d.Tube = g3d.Arrow;
 
@@ -342,24 +499,17 @@ emissiveIntensity: env.emissiveIntensity,
     let list = await interpretate(args[0], env);
     console.log('DRAW A SPHERE');
 
-    if (list.length === 1) list = list[0];
-    if (list.length === 1) list = list[0];
-
     if (list.length === 3) {
-      env.local.object = addSphere(list);
-    } else if (list.length > 3) {
+      env.local.object = [addSphere(list)];
+    } else {
 
-      env.local.multiple = true;
+      //env.local.multiple = true;
       env.local.object = [];
 
       list.forEach((el) => {
         env.local.object.push(addSphere(el));
       });
-    } else {
-      console.log(list);
-      console.error("List of coords. for sphere object is less 1");
-      return;
-    }
+    } 
 
     material.dispose();
 
@@ -370,11 +520,13 @@ emissiveIntensity: env.emissiveIntensity,
     console.log('Sphere: updating the data!');
     env.wake();
 
-    const c = await interpretate(args[0], env);
+    let c = await interpretate(args[0], env);
+
+    if (env.local.object.length == 1) {
+      c = [c];
+    }
 
     if (env.Lerp) {
-
-      if (env.local.multiple) {
 
         if (!env.local.lerp) {
           console.log('creating worker for lerp of movements multiple..');
@@ -395,33 +547,14 @@ emissiveIntensity: env.emissiveIntensity,
         }
         
         for (let i=0; i<c.length; ++i)
-          env.local.lerp.target[i].fromArray(c);
+          env.local.lerp.target[i].fromArray(c[i]);
 
         return;
 
-      } else {
-
-        if (!env.local.lerp) {
-          console.log('creating worker for lerp of movements..');
-          const worker = {
-            alpha: 0.05,
-            target: new THREE.Vector3(...c),
-            eval: () => {
-              env.local.object.position.lerp(worker.target, 0.05);
-            }
-          };
   
-          env.local.lerp = worker;  
-  
-          env.Handlers.push(worker);
-        }
-  
-        env.local.lerp.target.fromArray(c);
-        return;
-      }
     }
 
-    if (env.local.multiple) {
+    {
       let i = 0;
       c.forEach((cc)=>{
         env.local.object[i].position.set(...cc);
@@ -430,9 +563,6 @@ emissiveIntensity: env.emissiveIntensity,
 
       return;
     }
-
-    
-    env.local.object.position.set(...c);
 
   };
 
@@ -522,7 +652,9 @@ emissiveIntensity: env.emissiveIntensity,
       return;
     }
 
-    const geometry = new THREE.BoxGeometry(diff.x, diff.y, diff.z);
+    //env.local.prev = [diff.x, diff.y, diff.z];
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new env.material({
       color: env.color,
       transparent: true,
@@ -547,16 +679,74 @@ emissiveIntensity: env.emissiveIntensity,
     //cube.applyMatrix(params.matrix.clone().multiply(tr));
 
     cube.position.set(origin.x, origin.y, origin.z);
+
+    env.local.geometry = cube.geometry.clone();
+    cube.geometry.applyMatrix4(new THREE.Matrix4().makeScale(diff.x, diff.y, diff.z));
+
     cube.receiveShadow = env.shadows;
     cube.castShadow = env.shadows;
 
     env.mesh.add(cube);
+
+    env.local.box = cube;
 
     geometry.dispose();
     material.dispose();
 
     return cube;
   };
+
+  g3d.Cuboid.update = async (args, env) => {
+    /**
+         * @type {THREE.Vector4}
+         */
+    var diff;
+    /**
+     * @type {THREE.Vector4}
+     */
+    var origin;
+    var p;
+
+    if (args.length === 2) {
+      var points = [
+        new THREE.Vector4(...(await interpretate(args[1], env)), 1),
+        new THREE.Vector4(...(await interpretate(args[0], env)), 1),
+      ];
+    
+      origin = points[0]
+        .clone()
+        .add(points[1])
+        .divideScalar(2);
+      diff = points[0].clone().add(points[1].clone().negate());
+    } else {
+      p = await interpretate(args[0], env);
+      origin = new THREE.Vector4(...p, 1);
+      diff = new THREE.Vector4(1, 1, 1, 1);
+    
+      //shift it
+      origin.add(diff.clone().divideScalar(2));
+    }
+
+
+    console.log(diff.x, diff.y, diff.z);
+
+    env.local.box.position.copy(origin);
+    env.local.box.geometry.copy(env.local.geometry);
+    env.local.box.geometry.applyMatrix4(new THREE.Matrix4().makeScale(diff.x, diff.y, diff.z));
+
+    //env.local.box.updateMatrix();
+
+ 
+    env.wake();
+
+  }; 
+
+  g3d.Cuboid.destroy = async (args, env) => {
+    env.local.box.geometry.dispose();
+  };
+
+  g3d.Cuboid.virtual = true;
+
 
   g3d.Center = (args, env) => {
     return "Center";
@@ -1088,6 +1278,7 @@ emissiveIntensity: env.emissiveIntensity,
         emissiveIntensity: env.emissiveIntensity,        
       });
   } else {
+    //console.log(env.color);
     material = new env.material({
       color: env.color,
       transparent: env.opacity < 1,
@@ -1164,15 +1355,17 @@ emissiveIntensity: env.emissiveIntensity,
     }
   };
 
-  g3d.GrayLevel = (args, env) => { };
 
-  g3d.EdgeForm = (args, env) => { };
 
   g3d.Specularity = (args, env) => { };
 
   g3d.Text = (args, env) => { };
 
-  g3d.Directive = (args, env) => { };
+  g3d.Directive = async (args, env) => { 
+    for (const i of args) {
+      await interpretate(i, env);
+    }
+  };
 
   g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
 
@@ -1197,29 +1390,20 @@ emissiveIntensity: env.emissiveIntensity,
     } else { 
    
       const points = await interpretate(args[0], env);
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.flat()), 3 ) );
 
-      const pts = [];
-
-      for (let i=0; i<points.length; ++i)
-        pts.push(new THREE.Vector3().fromArray(points[i]));
-
-        console.log(points);
-   
-
-      geometry.setFromPoints( pts );
     }
 
-    
-    
 
       const material = new THREE.LineBasicMaterial({
         linewidth: env.thickness,
-        color: env.edgecolor,
+        color: env.color,
         opacity: env.opacity,
         transparent: env.opacity < 1.0 ? true : false
       });
       const line = new THREE.Line(geometry, material);
 
+      env.local.line = line;
  
       env.mesh.add(line);
 
@@ -1228,6 +1412,30 @@ emissiveIntensity: env.emissiveIntensity,
       //geometry.dispose();
       //material.dispose();
   };
+
+  g3d.Line.update = async (args, env) => {
+    
+    const points = await interpretate(args[0], env);
+
+    const positionAttribute = env.local.line.geometry.getAttribute( 'position' );
+
+    positionAttribute.needsUpdate = true;
+
+    for ( let i = 0; i < positionAttribute.count; i ++ ) {
+      positionAttribute.setXYZ( i, ...(points[i]));
+    }
+
+    env.local.line.geometry.computeBoundingBox();
+    env.local.line.geometry.computeBoundingSphere();
+
+    env.wake();
+  };
+
+  g3d.Line.destroy = async (args, env) => {
+    if (env.local.line) env.local.line.dispose();
+  };
+
+  g3d.Line.virtual = true;
 
   let GUI;
 
@@ -1364,21 +1572,25 @@ const addDefaultLighting = (scene) => {
 
 g3d.PointLight = async (args, env) => {
   const copy = {...env};
-  const options = await core._getRules(args, {...env, hold: true});
+  //const options = await core._getRules(args, {...env, hold: true});
 
-  console.log(options);
-  const keys = Object.keys(options);
-
-  let color = 0xffffff; if (args.length - keys.length > 0) color = await interpretate(args[0], copy); 
-  let intensity = 100; if (args.length - keys.length > 1) intensity = await interpretate(args[1], env);
-  let distance = 0; if (args.length - keys.length > 2) distance = await interpretate(args[2], env);
-  let decay = 2; if (args.length - keys.length > 3) decay = await interpretate(args[3], env);
+  //console.log(options);
+  //const keys = Object.keys(options);
 
   let position = [0, 0, 10];
-  if (options.Position) {
-    position = await interpretate(options.Position, env);
+  let color = 0xffffff; 
+  
+  if (args.length > 0) color = await interpretate(args[0], copy); 
+
+  if (args.length > 1) {
+    position = await interpretate(args[1], env);
     position = [position[0], position[2], -position[1]];
   }
+
+  
+  let intensity = 100; if (args.length > 2) intensity = await interpretate(args[2], env);
+  let distance = 0; if (args.length > 3) distance = await interpretate(args[3], env);
+  let decay = 2; if (args.length  > 4) decay = await interpretate(args[4], env);
 
   console.log(position);
   console.log(color);
@@ -1394,10 +1606,10 @@ g3d.PointLight = async (args, env) => {
 
 g3d.PointLight.update = async (args, env) => {
   env.wake();
-  const options = await core._getRules(args, {...env, hold: true}); 
+  //const options = await core._getRules(args, {...env, hold: true}); 
 
-  if (options.Position) {
-    let pos = await interpretate(options.Position, env);
+  if (args.length > 1) {
+    let pos = await interpretate(args[1], env);
     pos = [pos[0], pos[2], -pos[1]];
 
     if (env.Lerp) {
@@ -1433,33 +1645,34 @@ g3d.PointLight.virtual = true;
 
 g3d.SpotLight = async (args, env) => {
   const copy = {...env};
-  const options = await core._getRules(args, {...env, hold: true});
+  //const options = await core._getRules(args, {...env, hold: true});
 
-  console.log(options);
-  const keys = Object.keys(options);
+  //console.log(options);
+  //const keys = Object.keys(options);
 
-  let color = 0xffffff; if (args.length - keys.length > 0) color = await interpretate(args[0], copy); 
-  let intensity = 100; if (args.length - keys.length > 1) intensity = await interpretate(args[1], env);
-  let distance = 0; if (args.length - keys.length > 2) distance = await interpretate(args[2], env);
-  let angle = Math.PI/3; if (args.length - keys.length > 3) angle = await interpretate(args[3], env);
-  let penumbra = 0; if (args.length - keys.length > 4) penumbra = await interpretate(args[4], env);
-  let decay = 2; if (args.length - keys.length > 5) decay = await interpretate(decay[5], env);
+  let color = 0xffffff; if (args.length > 0) color = await interpretate(args[0], copy);
 
   let position = [10, 100, 10];
-  if (options.Position) {
-    position = await interpretate(options.Position, env);
+  let target = [0,0,0];
+
+  if (args.length > 1) {
+    position = await interpretate(args[1], env);
+    if (position.length == 2) {
+      target = position[1];
+      target = [target[0], target[2], -target[1]];
+      position = position[0];
+    }
     position = [position[0], position[2], -position[1]];
   }
 
-  console.log(position);
-
-  let target = [0,0,0];
-  if (options.Target) {
-    target = await interpretate(options.Target, env);
-    target = [target[0], target[2], -target[1]];
-  }
-
-  console.log(target);  
+  let angle = Math.PI/3; if (args.length > 2) angle = await interpretate(args[2], env);
+  
+  let intensity = 100; if (args.length > 3) intensity = await interpretate(args[3], env);
+  let distance = 0; if (args.length > 4) distance = await interpretate(args[4], env);
+  
+  let penumbra = 0; if (args.length > 5) penumbra = await interpretate(args[5], env);
+  let decay = 2; if (args.length > 6) decay = await interpretate(args[6], env);
+ 
 
   const spotLight = new THREE.SpotLight( color, intensity, distance, angle, penumbra, decay );
   spotLight.position.set(...position);
@@ -1478,19 +1691,23 @@ g3d.SpotLight = async (args, env) => {
 
 g3d.SpotLight.update = async (args, env) => {
   env.wake();
-  const options = await core._getRules(args, {...env, hold: true}); 
+  //const options = await core._getRules(args, {...env, hold: true}); 
 
-  if (options.Position) {
-    let pos = await interpretate(options.Position, env);
-    pos = [pos[0], pos[2], -pos[1]];
+  if (args.length > 1) {
+    let position = await interpretate(args[1], env);
+    if (position.length == 2) {
+      target = position[1];
+      target = [target[0], target[2], -target[1]];
+      position = position[0];
+      position = [position[0], position[2], -position[1]];
 
-    if (env.Lerp) {
+      if (env.Lerp) {
         if (!env.local.lerp1) {
           
           console.log('creating worker for lerp of movements..');
           const worker = {
             alpha: 0.05,
-            target: new THREE.Vector3(...pos),
+            target: new THREE.Vector3(...position),
             eval: () => {
               env.local.spotLight.position.lerp(worker.target, 0.05);
             }
@@ -1501,19 +1718,8 @@ g3d.SpotLight.update = async (args, env) => {
           env.Handlers.push(worker);
         }
   
-        env.local.lerp1.target.fromArray(pos);
-        
-    } else {
+        env.local.lerp1.target.fromArray(position);
 
-      env.local.spotLight.position.set(...pos);
-    }
-  }
-  
-  if (options.Target) {
-    let target = await interpretate(options.Target, env);
-    target = [target[0], target[2], -target[1]];
-
-    if (env.Lerp) {
         if (!env.local.lerp2) {
           
           console.log('creating worker for lerp of movements..');
@@ -1530,13 +1736,45 @@ g3d.SpotLight.update = async (args, env) => {
           env.Handlers.push(worker);
         }
   
-        env.local.lerp2.target.fromArray(target);
-        
+        env.local.lerp2.target.fromArray(target);  
+
+
+      } else {
+        env.local.spotLight.position.set(...position);
+        env.local.spotLight.target.position.set(...target);
+      }
     } else {
 
-      env.local.spotLight.target.position.set(...target);
+      position = [position[0], position[2], -position[1]];
+
+      if (env.Lerp) {
+        if (!env.local.lerp1) {
+          
+          console.log('creating worker for lerp of movements..');
+          const worker = {
+            alpha: 0.05,
+            target: new THREE.Vector3(...position),
+            eval: () => {
+              env.local.spotLight.position.lerp(worker.target, 0.05);
+            }
+          };
+  
+          env.local.lerp1 = worker;  
+  
+          env.Handlers.push(worker);
+        }
+  
+        env.local.lerp1.target.fromArray(position);
+
+              
+      } else {
+        env.local.spotLight.position.set(...position);
+      }
     }
-  }  
+    
+
+
+  }
 
 };
 
@@ -1583,7 +1821,8 @@ g3d.EventListener = async (args, env) => {
 
     const copy = {...env};
 
-    const object = await interpretate(args[0], env);
+    let object = await interpretate(args[0], env);
+    if (Array.isArray(object)) object = object[0];
 
     if (!TransformControls) TransformControls = (await import('./TransformControls-2614e9c1.js')).TransformControls;
     rules.forEach((rule)=>{
@@ -1595,6 +1834,7 @@ g3d.EventListener = async (args, env) => {
 
   g3d.EventListener.transform = (uid, object, env) => {
     console.log(env);
+    console.warn('Controls transform is enabled');
     const control = new TransformControls(env.camera, env.global.renderer.domElement);
 
     const orbit = env.controlObject.o;
@@ -1703,7 +1943,7 @@ core.Graphics3D = async (args, env) => {
     params.cameraProjection = await interpretate(options.ViewProjection, env);
   }
 
-  if (!PathRendering) params.resolutionScale = 1;
+  if (!PathRendering) params.resolutionScale = 0.5;
 
   //Setting GUI
   const gui = new GUI({ autoPlace: false, name: '...', closed:true });
@@ -2095,6 +2335,8 @@ core.Graphics3D = async (args, env) => {
     console.warn('Rescaling....');
 
     let ratios = await interpretate(options.BoxRatios, env);
+    ratios = [ratios[0], ratios[2], ratios[1]];
+
     max = Math.max(...ratios);
     ratios = ratios.map((e, index) => reciprocal[index] * e/max);
 
