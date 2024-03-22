@@ -1379,7 +1379,7 @@ emissiveIntensity: env.emissiveIntensity,
     }
   };
 
-  g3d.PlaneGeometry = () => { new THREE.PlaneGeometry;  };
+  g3d.PlaneGeometry = () => { };
 
   const arrayRange = (start, stop, step) =>
   Array.from(
@@ -1450,7 +1450,7 @@ emissiveIntensity: env.emissiveIntensity,
   }
 
   g3d.Line.destroy = async (args, env) => {
-    if (env.local.line) env.local.line.dispose();
+    if (env.local.line) env.local.line.geometry.dispose();
   }
 
   g3d.Line.virtual = true
@@ -2535,7 +2535,7 @@ core.Graphics3D = async (args, env) => {
     reflectivity: 0.5,
     clearcoat: 0,
     shadows: false,
-    Lerp: options.Lerp || true,
+    Lerp: options.Lerp,
     camera: activeCamera,
     controlObject: controlObject,
 
