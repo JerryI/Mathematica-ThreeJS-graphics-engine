@@ -787,26 +787,79 @@ emissiveIntensity: env.emissiveIntensity,
     console.log(direction);
   
     // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(radius, radius, direction.length(), 32, 4, false);
+    var geometry = new THREE.CylinderGeometry(radius, radius, 1, 32, 4, false);
     // shift it so one end rests on the origin
-    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
+    geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 1 / 2.0, 0));
     // rotate it the right way for lookAt to work
     geometry.applyMatrix4(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(90)));
     // Make a mesh with the geometry
+
+    //env.local.geometry = geometry.clone();
+
+    //geometry.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, direction.length()));
+
+
     var mesh = new THREE.Mesh(geometry, material);
     // Position it where we want
     mesh.receiveShadow = env.shadows;
     mesh.castShadow = env.shadows;
 
+    //env.local.bmatrix = mesh.matrix.clone();
+
     mesh.position.copy(coordinates[0]);
+
+    env.local.g = mesh.geometry.clone();
+    mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(1,1,direction.length()));
+    //mesh.scale.set( 1,1,direction.length() );
+
     // And make it point to where we want
-    mesh.lookAt(coordinates[1]); 
+    mesh.geometry.lookAt(direction); 
+
+    
+
+    env.local.cylinder = mesh;
+    //env.local.coordinates = coordinates;
+    //mesh.matrixAutoUpdate = false;
 
     env.mesh.add(mesh);
 
     //geometry.dispose();
     //material.dispose();
   };
+
+  g3d.Cylinder.update = async (args, env) => {
+    let coordinates = await interpretate(args[0], env);
+    if (coordinates.length === 1) {
+      coordinates = coordinates[0];
+    }
+
+    coordinates[0] = new THREE.Vector3(...coordinates[0]);
+    coordinates[1] = new THREE.Vector3(...coordinates[1]);   
+    
+    var direction = new THREE.Vector3().subVectors(coordinates[1], coordinates[0]);
+
+
+    env.local.cylinder.position.copy(coordinates[0]);
+
+    //env.local.cylinder.matrix.identity();
+    env.local.cylinder.geometry.copy(env.local.g);
+    env.local.cylinder.geometry.applyMatrix4(new THREE.Matrix4().makeScale(1,1,direction.length()));
+
+    //env.local.cylinder.applyMatrix4(new THREE.Matrix4().makeScale(1, 1, direction.length()));
+    //env.local.cylinder.scale.set( 1,1,direction.length() );
+    // And make it point to where we want
+    env.local.cylinder.geometry.lookAt(direction); 
+
+    env.wake();
+
+  };
+
+  g3d.Cylinder.destroy = async (args, env) => {
+    env.local.cylinder.geometry.dispose();
+    env.local.g.dispose();
+  };
+
+  g3d.Cylinder.virtual = true;
 
   g3d.Tetrahedron = async (args, env) => {
     /**
@@ -935,22 +988,8 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.LookAt.virtual = true;
 
-  g3d.GeometricTransformation = async (args, env) => {
-    var group = new THREE.Group();
-    //Если center, то наверное надо приметь matrix
-    //к каждому объекту относительно родительской группы.
-    var p = [...(await interpretate(args[1], {...env, hold:false}))];
 
-    if (!p[0][0]) {
-      //most likely this is Translate
-      env.local.translationOnly = true;
-    } else {
-      //make it like Matrix4
-      p.forEach((el) => {
-        el.push(0);
-      });
-      p.push([0, 0, 0, 1]);
-    }
+  const decodeTransformation = (arrays, env) => {
 
     /*console.log(p);
     var centering = false;
@@ -1029,99 +1068,201 @@ emissiveIntensity: env.emissiveIntensity,
     } else {
       group.applyMatrix4(matrix);
     }*/
+    let matrix = [];
 
-    await interpretate(args[0], {...env, mesh: group});
+    if (!env.local.type) {
+      if (arrays.length == 2) {
+        console.warn('apply matrix3x3 + translation');
+        //translation matrix + normal 3x3
+        env.local.type = 'complex';
+      } else {
+        if (!Array.isArray(arrays[0])) {
+          //most likely this is Translate
+          console.warn('apply translation');
+          env.local.type = 'translation';
 
-    let matrix;
-    
-    if (env.local.translationOnly) {
-      matrix = new THREE.Matrix4().makeTranslation(...p);
-    } else {
-      matrix = new THREE.Matrix4().set(...aflatten(p));
+        } else {
+          env.local.type = 'normal';
+          console.warn('apply matrix 3x3');
+        }
+      }
     }
 
-    group.matrixAutoUpdate = false;
+    switch(env.local.type) {
+      case 'normal':
+        //make it like Matrix4
 
-    env.local.quaternion = new THREE.Quaternion();
-    env.local.position = new THREE.Vector3();
-    env.local.scale = new THREE.Vector3();    
+        arrays.forEach((el) => {
+          el.push(0);
+        });
 
-    matrix.decompose(env.local.position, env.local.quaternion, env.local.scale);
+        matrix = arrays;
+        matrix.push([0, 0, 0, 1]);
+        matrix = new THREE.Matrix4().set(...aflatten(matrix));
+      break;
 
-    group.quaternion.copy( env.local.quaternion );
-    group.position.copy( env.local.position );
-    group.scale.copy( env.local.scale );
+      case 'translate':
+        matrix = arrays;
+        matrix = new THREE.Matrix4().makeTranslation(...matrix);
+      break;
 
-     // set initial values
+      case 'complex':
+        matrix = arrays[0];
+        const v = arrays[1];
+  
+        matrix[0].push(v[0]);
+        matrix[1].push(v[1]);
+        matrix[2].push(v[2]);
+  
+        matrix.push([0, 0, 0, 1]);
+        matrix = new THREE.Matrix4().set(...aflatten(matrix));
+      break;
 
-    //group.quaternion.set(newQ);
+      default:
+        throw 'undefined type of matrix or vector';
+    }
 
-    group.updateMatrix();
+    return matrix;
+  };
 
-    env.local.group = group;
+  g3d.GeometricTransformation = async (args, env) => {  
+    const data = await interpretate(args[1], env);
 
-    env.mesh.add(group);
+    if (data.length > 3) {
+      //list of matrixes
+      console.warn('multiple matrixes');
+      env.local.entities = [];
+
+      for (const m of data) {
+        const group = new THREE.Group();
+        const matrix = decodeTransformation(m, env);
+  
+        await interpretate(args[0], {...env, mesh: group});
+  
+        group.matrixAutoUpdate = false;
+        
+        const object = {};
+
+        object.quaternion = new THREE.Quaternion();
+        object.position = new THREE.Vector3();
+        object.scale = new THREE.Vector3();    
+    
+        matrix.decompose(object.position, object.quaternion, object.scale);
+    
+        group.quaternion.copy( object.quaternion );
+        group.position.copy( object.position );
+        group.scale.copy( object.scale );
+    
+        group.updateMatrix();
+    
+        object.group = group;
+    
+        env.mesh.add(group);
+        env.local.entities.push(object);
+      }
+  
+
+      return env.local.entities[0];
+
+    } else {
+      console.warn('single matrix');
+
+      const group = new THREE.Group();
+      const matrix = decodeTransformation(data, env);
+
+      await interpretate(args[0], {...env, mesh: group});
+
+      group.matrixAutoUpdate = false;
+  
+      env.local.quaternion = new THREE.Quaternion();
+      env.local.position = new THREE.Vector3();
+      env.local.scale = new THREE.Vector3();    
+  
+      matrix.decompose(env.local.position, env.local.quaternion, env.local.scale);
+  
+      group.quaternion.copy( env.local.quaternion );
+      group.position.copy( env.local.position );
+      group.scale.copy( env.local.scale );
+  
+      group.updateMatrix();
+  
+      env.local.group = group;
+  
+      env.mesh.add(group);
+
+      return group;
+    }
+    
   };
 
   g3d.GeometricTransformation.update = async (args, env) => {
     env.wake();
-    let p = [...(await interpretate(args[1], {...env, hold:false}))];
+    const data = await interpretate(args[1], env);
+  
+    if (env.local.entities) {
+      //list of matrixes
+      console.log('multiple matrixes');
 
-    const group = env.local.group;
+      for (let i =0; i<env.local.entities.length; ++i) {
+        const group = env.local.entities[i].group;
+
+        const matrix = decodeTransformation(data[i], env);
+  
+        //await interpretate(args[0], {...env, mesh: group});
+  
+        
+ 
+
+        const quaternion = new THREE.Quaternion();
+        const position = new THREE.Vector3();
+        const scale = new THREE.Vector3();    
     
-    if (!env.local.translationOnly) {
-      p.forEach((el) => {
-        el.push(0);
-      });
-      p.push([0, 0, 0, 1]);
-
-      const matrix = new THREE.Matrix4().set(...aflatten(p));
-
-      matrix.decompose(env.local.position, env.local.quaternion, env.local.scale); // set initial values
-    }
-
-    if (env.Lerp) {
-
-      if (!env.local.lerp) {
-        console.log('creating worker for lerp of matrix movements..');
-
-        const worker = {
-          alpha: 0.05,
-          quaternion: env.local.quaternion.clone(), //target
-          scale: env.local.scale.clone(), //target
-          position: env.local.position.clone(), //target
-          eval: () => {
-            group.quaternion.slerp(worker.quaternion, worker.alpha); 
-            group.position.lerp(worker.position, worker.alpha);
-            group.updateMatrix();
-          }
-        };
-
-        env.local.lerp = worker;  
-
-        env.Handlers.push(worker);
+        matrix.decompose(position, quaternion, scale);
+    
+        group.quaternion.copy( quaternion );
+        group.position.copy( position );
+        group.scale.copy( scale );
+    
+        group.updateMatrix();
+    
+        //object.group = group;
+    
+        //env.mesh.add(group);
+        //env.local.entities.push(object);
       }
+  
 
-      if (!env.local.translationOnly)
-        env.local.lerp.quaternion.copy(env.local.quaternion);
-      else
-        env.local.lerp.position.copy(env.local.position.set(...p));
+      return env.local.entities[0];
 
-      return;
-    }
+    } else {
+      console.log('single matrix');
 
-    if (!env.local.translationOnly) {
+      const group = env.local.group;
+      const matrix = decodeTransformation(data, env);
+
+ 
+  
+      env.local.quaternion = new THREE.Quaternion();
+      env.local.position = new THREE.Vector3();
+      env.local.scale = new THREE.Vector3();    
+  
+      matrix.decompose(env.local.position, env.local.quaternion, env.local.scale);
+  
       group.quaternion.copy( env.local.quaternion );
       group.position.copy( env.local.position );
       group.scale.copy( env.local.scale );
-    } else {
-      group.position.copy( env.local.position.set(...p) );
+  
+      group.updateMatrix();
+
+
+      return group;
     }
-
-    group.updateMatrix();
-
-    env.mesh.add(group);
+    
   };  
+
+  g3d.GeometricTransformation.destroy = (args, env) => {
+    console.warn('Nothing to dispose!');
+  };
 
   g3d.GeometricTransformation.virtual = true;
 
