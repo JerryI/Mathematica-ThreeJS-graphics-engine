@@ -1279,18 +1279,34 @@ emissiveIntensity: env.emissiveIntensity,
   g3d.GeometricTransformation.virtual = true
 
   g3d.GraphicsComplex = async (args, env) => {
+    
     var copy = Object.assign({}, env);
     const options = await core._getRules(args, {...env, hold: true});
     
 
     const pts = (await interpretate(args[0], copy)).flat();
-    copy.vertices = new Float32Array( pts );
+    const vertices = new Float32Array( pts );
+
+    //local storage
+    copy.vertices = {
+      //geometry: new THREE.BufferGeometry(),
+      position: new THREE.BufferAttribute( vertices, 3 ),
+      colored: false,
+      handlers: []
+    }
+
+    env.local.vertices = copy.vertices;
+
+    //copy.vertices.geometry.setAttribute( 'position',  );
 
     if ('VertexColors' in options) {
-      copy.vertexcolors = await interpretate(options["VertexColors"], env);
+      const colors = await interpretate(options["VertexColors"], env);
+      copy.vertices.colored = true;
+      copy.vertices.colors = new THREE.Float32BufferAttribute( new Float32Array( colors.flat() ), 3 );
     }
 
     const group = new THREE.Group();
+    env.local.group = group;
 
     await interpretate(args[1], copy);
 
@@ -1298,14 +1314,43 @@ emissiveIntensity: env.emissiveIntensity,
     //copy.geometry.dispose();
   };
 
-  g3d.AbsoluteThickness = (args, env) => {}
+  g3d.GraphicsComplex.update = async (args, env) => {
+    env.wake();
+
+    const pts = (await interpretate(args[0], env)).flat();
+    const vertices = new Float32Array( pts );
+
+    env.local.vertices.position.set( vertices );
+    env.local.vertices.position.needsUpdate = true;
+
+    if (env.local.vertices.colored) {
+      const options = await core._getRules(args, {...env, hold: true});
+      const colors = await interpretate(options["VertexColors"], env);
+      env.local.vertices.colors.set(new Float32Array( colors.flat() ));
+      env.local.vertices.colors.needsUpdate = true;
+    }
+
+    for (let i=0; i<env.local.vertices.handlers.length; ++i) {
+      env.local.vertices.handlers[i]();
+    }
+  }  
+
+  g3d.GraphicsComplex.destroy = async (args, env) => {
+    //env.local.vertices.position.dispose();
+    //if (env.local.vertices.colored) env.local.vertices.colors.dispose();
+  }  
+
+  g3d.GraphicsComplex.virtual = true
+
 
   g3d.Polygon = async (args, env) => {
-    var geometry = new THREE.BufferGeometry();
-    let vertices;
+    var geometry;
+    let material;
 
     if (env.hasOwnProperty("vertices")) {
-      vertices = env.vertices;
+      geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', env.vertices.position);
+      //env.vertices.geometry.clone();
 
       let a = await interpretate(args[0], env);
       
@@ -1362,18 +1407,50 @@ emissiveIntensity: env.emissiveIntensity,
       } else {
         extendedIndexes = a.flat();
       }
-
+        console.log('Set Index');
         geometry.setIndex( extendedIndexes.flat().map((e)=>e-1) );
         
         
       }
 
+      //handler for future recomputations (in a case of update)
+      env.vertices.handlers.push(() => {
+        geometry.computeVertexNormals();
+      });
+
+      geometry.computeVertexNormals();
+
+      //check if colored (Material BUG) !!!
+      if (env.vertices.colored) {
+        //geometry.setAttribute()
+        geometry.setAttribute( 'color', env.vertices.colors );
+
+        material = new THREE.MeshBasicMaterial({
+          vertexColors: true,
+          transparent: env.opacity < 1,
+          opacity: env.opacity,
+          roughness: env.roughness,
+          metalness: env.metalness,
+          emissive: env.emissive,
+          emissiveIntensity: env.emissiveIntensity,        
+        });
+      } else {
+        material = new env.material({
+          color: env.color,
+          transparent: env.opacity < 1,
+          opacity: env.opacity,
+          roughness: env.roughness,
+          metalness: env.metalness,
+          emissive: env.emissive,
+          emissiveIntensity: env.emissiveIntensity
+        });         
+      }
 
     } else { 
-      
+      geometry = new THREE.BufferGeometry();
       let points = await interpretate(args[0], env);
 
-      vertices = new Float32Array( points.flat() );
+      let vertices = new Float32Array( points.flat() );
 
   
 
@@ -1408,49 +1485,28 @@ emissiveIntensity: env.emissiveIntensity,
           console.log(points);
           console.error("Cant build complex polygon ::");
       }
-    }
 
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-    geometry.computeVertexNormals();
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+      geometry.computeVertexNormals();
 
-    let material;
-    
-    if (env.vertexcolors) {
-      console.log('vertex colors');
-      geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( new Float32Array( env.vertexcolors.flat() ), 3 ) );
-
-      console.log(env.material);
-      //!!! a bug. Cannot work with PhysicalBasedMaterial
-      material = new THREE.MeshBasicMaterial({
-        vertexColors: true,
+      material = new env.material({
+        color: env.color,
         transparent: env.opacity < 1,
         opacity: env.opacity,
         roughness: env.roughness,
         metalness: env.metalness,
         emissive: env.emissive,
-        emissiveIntensity: env.emissiveIntensity,        
-      });
-  } else {
-    //console.log(env.color);
-    material = new env.material({
-      color: env.color,
-      transparent: env.opacity < 1,
-      opacity: env.opacity,
-      roughness: env.roughness,
-      metalness: env.metalness,
-      emissive: env.emissive,
-      emissiveIntensity: env.emissiveIntensity,
-      
-      
-      
-      //depthTest: false
-      //depthWrite: false
-    });
-  }
+        emissiveIntensity: env.emissiveIntensity,
+        
+        
+        
+        //depthTest: false
+        //depthWrite: false
+      });      
+    }
 
-    
 
-    console.log(env.opacity);
+    //console.log(env.opacity);
     material.side = THREE.DoubleSide;
 
     const poly = new THREE.Mesh(geometry, material);
@@ -1531,23 +1587,25 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.Line = async (args, env) => {
     
-    var geometry = new THREE.BufferGeometry();
-    let vertices;
+    var geometry;
+    //let vertices;
 
     if (env.hasOwnProperty("vertices")) {
       
-      vertices = env.vertices;
+      //vertices = env.vertices;
+      geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', env.vertices.position);
 
       let a = await interpretate(args[0], env);
       
 
       geometry.setIndex( a.flat().map((e)=>e-1) );
      
-      geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+      //geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
 
 
     } else { 
-   
+      geometry = new THREE.BufferGeometry()
       const points = await interpretate(args[0], env);
       geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.flat()), 3 ) );
 
