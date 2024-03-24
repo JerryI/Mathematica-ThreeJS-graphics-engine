@@ -1,3 +1,34 @@
+var node = {};
+
+Object.defineProperty(node, "__esModule", {
+  value: true
+});
+var default_1 = node.default = void 0;
+const t1 = 6 / 29;
+const t2 = 3 * t1 * t1;
+
+const lrgb2rgb = x => Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055)) || 0;
+
+const lab2xyz = t => t > t1 ? t * t * t : t2 * (t - 4 / 29);
+
+var _default = ({
+  luminance,
+  a,
+  b
+}) => {
+  const baseY = (luminance + 16) / 116;
+  const x = 0.96422 * lab2xyz(baseY + a / 500);
+  const y = Number(lab2xyz(baseY));
+  const z = 0.82521 * lab2xyz(baseY - b / 200);
+  return {
+    red: lrgb2rgb(3.1338561 * x - 1.6168667 * y - 0.4906146 * z),
+    green: lrgb2rgb(-0.9787684 * x + 1.9161415 * y + 0.0334540 * z),
+    blue: lrgb2rgb(0.0719453 * x - 0.2289914 * y + 1.4052427 * z)
+  };
+};
+
+default_1 = node.default = _default;
+
 let g3d = {};
   g3d.name = "WebObjects/Graphics3D";
   interpretate.contextExpand(g3d); 
@@ -32,30 +63,6 @@ let g3d = {};
   let THREE;
   let MathUtils;
 
-
-  const lab2rgb = (lab) => {
-    var y = (lab[0] + 16) / 116,
-        x = lab[1] / 500 + y,
-        z = y - lab[2] / 200,
-        r, g, b;
-  
-    x = 0.95047 * ((x * x * x > 0.008856) ? x * x * x : (x - 16/116) / 7.787);
-    y = 1.00000 * ((y * y * y > 0.008856) ? y * y * y : (y - 16/116) / 7.787);
-    z = 1.08883 * ((z * z * z > 0.008856) ? z * z * z : (z - 16/116) / 7.787);
-  
-    r = x *  3.2406 + y * -1.5372 + z * -0.4986;
-    g = x * -0.9689 + y *  1.8758 + z *  0.0415;
-    b = x *  0.0557 + y * -0.2040 + z *  1.0570;
-  
-    r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1/2.4) - 0.055) : 12.92 * r;
-    g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1/2.4) - 0.055) : 12.92 * g;
-    b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1/2.4) - 0.055) : 12.92 * b;
-  
-    return [Math.max(0, Math.min(1, r)) * 255, 
-            Math.max(0, Math.min(1, g)) * 255, 
-            Math.max(0, Math.min(1, b)) * 255]
-  };
-
   g3d.LABColor =  async (args, env) => {
     let lab;
     if (args.length > 1)
@@ -63,11 +70,11 @@ let g3d = {};
     else 
       lab = await interpretate(args[0], env);
 
-    const color = lab2rgb(lab.map(e => e*255.0));
+      const color = default_1({luminance: 100*lab[0], a: 100*lab[1], b: 100*lab[2]});
     console.log('LAB color');
     console.log(color);
     
-    env.color = new THREE.Color(...(color.map(e => e/255.0)));
+    env.color = new THREE.Color(color.red / 255.0, color.green / 255.0, color.blue / 255.0);
     if (args.length > 3) env.opacity = await interpretate(args[3], env);
     
     return env.color;   
@@ -475,10 +482,8 @@ let g3d = {};
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
-      
-      
-      
+      emissiveIntensity: env.emissiveIntensity,
+  
     });
 
     function addSphere(cr) {
@@ -1304,7 +1309,7 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.GraphicsComplex.update = async (args, env) => {
     env.wake();
-    
+
     const pts = (await interpretate(args[0], env)).flat();
     const vertices = new Float32Array( pts );
 
@@ -1330,7 +1335,6 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.GraphicsComplex.virtual = true;
 
-  g3d.AbsoluteThickness = (args, env) => {};
 
   g3d.Polygon = async (args, env) => {
     var geometry;
@@ -1648,6 +1652,36 @@ emissiveIntensity: env.emissiveIntensity,
   g3d.Lightmap = () => "Lightmap";
   g3d.Automatic = () => "Automatic"; 
 
+  g3d.AnimationFrameListener = async (args, env) => {
+    await interpretate(args[0], env);
+
+    const options = await core._getRules(args, {...env, hold:true});
+    env.local.event = await interpretate(options.Event, env);
+    
+    const worker = {
+      state: true,
+      eval: () => {
+        if (!env.local.worker.state) return;
+        server.kernel.emitt(env.local.event, 'True', 'Frame');
+        env.local.worker.state = false;
+      }
+    };
+
+    env.local.worker = worker;  
+    env.Handlers.push(worker);
+  };
+
+  g3d.AnimationFrameListener.update = async (args, env) => {
+    env.local.worker.state = true;
+  };
+
+  g3d.AnimationFrameListener.destroy = async (args, env) => {
+    console.warn('AnimationFrameListener does not exist anymore');
+    env.local.worker.eval = () => {};
+  };
+
+  g3d.AnimationFrameListener.virtual = true;
+
   let Water = false;
   let Sky   = false;
 
@@ -1656,17 +1690,7 @@ emissiveIntensity: env.emissiveIntensity,
     return;
   };
 
-  g3d.Reflectivity = (args, env) => {
-    env.reflectivity = interpretate(args[0], env);
-  };
 
-  g3d.IOR = (args, env) => {
-    env.ior = interpretate(args[0], env);
-  };
-
-  g3d.Clearcoat = (args, env) => {
-    env.clearcoat = interpretate(args[0], env);
-  };
 
   g3d.LightProbe = (args, env) => {
     //THREE.js light probe irradiance
@@ -1784,7 +1808,7 @@ g3d.PointLight = async (args, env) => {
 
   if (args.length > 1) {
     position = await interpretate(args[1], env);
-    position = [position[0], position[2], -position[1]];
+    //position = [position[0], position[1], position[2]];
   }
 
   
@@ -1799,7 +1823,7 @@ g3d.PointLight = async (args, env) => {
   light.castShadow = env.shadows;
   light.position.set(...position);
   env.local.light = light;
-  env.global.scene.add(light);
+  env.mesh.add(light);
 
   return light;
 };
@@ -1810,7 +1834,7 @@ g3d.PointLight.update = async (args, env) => {
 
   if (args.length > 1) {
     let pos = await interpretate(args[1], env);
-    pos = [pos[0], pos[2], -pos[1]];
+    //pos = [pos[0], pos[1], pos[2]];
 
     if (env.Lerp) {
         if (!env.local.lerp) {
@@ -1883,8 +1907,8 @@ g3d.SpotLight = async (args, env) => {
   spotLight.shadow.mapSize.width = 1024;
 
   env.local.spotLight = spotLight;
-  env.global.scene.add(spotLight);
-  env.global.scene.add(spotLight.target);
+  env.mesh.add(spotLight);
+  env.mesh.add(spotLight.target);
 
   return spotLight;
 };
@@ -1896,10 +1920,10 @@ g3d.SpotLight.update = async (args, env) => {
   if (args.length > 1) {
     let position = await interpretate(args[1], env);
     if (position.length == 2) {
-      target = position[1];
-      target = [target[0], target[2], -target[1]];
+      let target = position[1];
+      //target = [target[0], target[2], target[1]];
       position = position[0];
-      position = [position[0], position[2], -position[1]];
+      //position = [position[0], position[2], -position[1]];
 
       if (env.Lerp) {
         if (!env.local.lerp1) {
@@ -1945,7 +1969,7 @@ g3d.SpotLight.update = async (args, env) => {
       }
     } else {
 
-      position = [position[0], position[2], -position[1]];
+      //position = [position[0], position[2], -position[1]];
 
       if (env.Lerp) {
         if (!env.local.lerp1) {

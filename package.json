@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/JerryI/Mathematica-ThreeJS-graphics-engine#readme",
   "dependencies": {
+    "@fantasy-color/lab-to-rgb": "^2.1.0",
     "dat.gui": "^0.7.9",
     "node-sass": "^9.0.0",
     "three-gpu-pathtracer": "^0.0.16",

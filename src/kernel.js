@@ -45,28 +45,7 @@
   }
 
 
-  const lab2rgb = (lab) => {
-    var y = (lab[0] + 16) / 116,
-        x = lab[1] / 500 + y,
-        z = y - lab[2] / 200,
-        r, g, b;
-  
-    x = 0.95047 * ((x * x * x > 0.008856) ? x * x * x : (x - 16/116) / 7.787);
-    y = 1.00000 * ((y * y * y > 0.008856) ? y * y * y : (y - 16/116) / 7.787);
-    z = 1.08883 * ((z * z * z > 0.008856) ? z * z * z : (z - 16/116) / 7.787);
-  
-    r = x *  3.2406 + y * -1.5372 + z * -0.4986;
-    g = x * -0.9689 + y *  1.8758 + z *  0.0415;
-    b = x *  0.0557 + y * -0.2040 + z *  1.0570;
-  
-    r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1/2.4) - 0.055) : 12.92 * r;
-    g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1/2.4) - 0.055) : 12.92 * g;
-    b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1/2.4) - 0.055) : 12.92 * b;
-  
-    return [Math.max(0, Math.min(1, r)) * 255, 
-            Math.max(0, Math.min(1, g)) * 255, 
-            Math.max(0, Math.min(1, b)) * 255]
-  }
+  import labToRgb from '@fantasy-color/lab-to-rgb'
 
   g3d.LABColor =  async (args, env) => {
     let lab;
@@ -75,11 +54,11 @@
     else 
       lab = await interpretate(args[0], env);
 
-    const color = lab2rgb(lab.map(e => e*255.0));
+      const color = labToRgb({luminance: 100*lab[0], a: 100*lab[1], b: 100*lab[2]});
     console.log('LAB color');
     console.log(color);
     
-    env.color = new THREE.Color(...(color.map(e => e/255.0)));
+    env.color = new THREE.Color(color.red / 255.0, color.green / 255.0, color.blue / 255.0);
     if (args.length > 3) env.opacity = await interpretate(args[3], env);
     
     return env.color;   
@@ -487,10 +466,8 @@
       opacity: env.opacity,
       metalness: env.metalness,
       emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
-      
-      
-      
+      emissiveIntensity: env.emissiveIntensity,
+  
     });
 
     function addSphere(cr) {
@@ -1669,6 +1646,36 @@ emissiveIntensity: env.emissiveIntensity,
   g3d.Lightmap = () => "Lightmap"
   g3d.Automatic = () => "Automatic" 
 
+  g3d.AnimationFrameListener = async (args, env) => {
+    const dummy = await interpretate(args[0], env);
+
+    const options = await core._getRules(args, {...env, hold:true});
+    env.local.event = await interpretate(options.Event, env);
+    
+    const worker = {
+      state: true,
+      eval: () => {
+        if (!env.local.worker.state) return;
+        server.kernel.emitt(env.local.event, 'True', 'Frame');
+        env.local.worker.state = false;
+      }
+    };
+
+    env.local.worker = worker;  
+    env.Handlers.push(worker);
+  }
+
+  g3d.AnimationFrameListener.update = async (args, env) => {
+    env.local.worker.state = true;
+  }
+
+  g3d.AnimationFrameListener.destroy = async (args, env) => {
+    console.warn('AnimationFrameListener does not exist anymore');
+    env.local.worker.eval = () => {}
+  }
+
+  g3d.AnimationFrameListener.virtual = true
+
   let Water = false;
   let Sky   = false;
 
@@ -1680,17 +1687,7 @@ emissiveIntensity: env.emissiveIntensity,
     env.cameraMesh.set(env.mesh, pos);
   }
 
-  g3d.Reflectivity = (args, env) => {
-    env.reflectivity = interpretate(args[0], env);
-  }
 
-  g3d.IOR = (args, env) => {
-    env.ior = interpretate(args[0], env);
-  }
-
-  g3d.Clearcoat = (args, env) => {
-    env.clearcoat = interpretate(args[0], env);
-  }
 
   g3d.LightProbe = (args, env) => {
     //THREE.js light probe irradiance
@@ -2024,7 +2021,7 @@ g3d.PointLight = async (args, env) => {
 
   if (args.length > 1) {
     position = await interpretate(args[1], env);
-    position = [position[0], position[2], -position[1]];
+    //position = [position[0], position[1], position[2]];
   }
 
   
@@ -2039,7 +2036,7 @@ g3d.PointLight = async (args, env) => {
   light.castShadow = env.shadows;
   light.position.set(...position);
   env.local.light = light;
-  env.global.scene.add(light);
+  env.mesh.add(light);
 
   return light;
 }
@@ -2050,7 +2047,7 @@ g3d.PointLight.update = async (args, env) => {
 
   if (args.length > 1) {
     let pos = await interpretate(args[1], env);
-    pos = [pos[0], pos[2], -pos[1]];
+    //pos = [pos[0], pos[1], pos[2]];
 
     if (env.Lerp) {
         if (!env.local.lerp) {
@@ -2123,8 +2120,8 @@ g3d.SpotLight = async (args, env) => {
   spotLight.shadow.mapSize.width = 1024;
 
   env.local.spotLight = spotLight;
-  env.global.scene.add(spotLight);
-  env.global.scene.add(spotLight.target);
+  env.mesh.add(spotLight);
+  env.mesh.add(spotLight.target);
 
   return spotLight;
 }
@@ -2136,10 +2133,10 @@ g3d.SpotLight.update = async (args, env) => {
   if (args.length > 1) {
     let position = await interpretate(args[1], env);
     if (position.length == 2) {
-      target = position[1];
-      target = [target[0], target[2], -target[1]];
+      let target = position[1];
+      //target = [target[0], target[2], target[1]];
       position = position[0];
-      position = [position[0], position[2], -position[1]];
+      //position = [position[0], position[2], -position[1]];
 
       if (env.Lerp) {
         if (!env.local.lerp1) {
@@ -2185,7 +2182,7 @@ g3d.SpotLight.update = async (args, env) => {
       }
     } else {
 
-      position = [position[0], position[2], -position[1]];
+      //position = [position[0], position[2], -position[1]];
 
       if (env.Lerp) {
         if (!env.local.lerp1) {

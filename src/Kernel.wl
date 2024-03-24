@@ -5,6 +5,13 @@ Emissive::usage = "Makes a surface emitt light Emissive[RGBColor[...], intensity
 Roughness::usage = "Specify the roughness of the surface Roughness[1] used in Graphics3D"
 Shadows::usage = "used in Graphics3D. Decide if you need to cast shadows from objects. Shadows[True]"
 
+HemisphereLight::usage = "HemisphereLight[skyColor_RGBColor, groundColor_RGBColor, intensity_] used in Graphics3D"
+
+MeshMaterial::usage = "specifies the material for 3D primitives. MeshMaterial[MeshPhysicalMaterial[]], MeshMaterial[MeshToonMaterial[]]"
+
+MeshPhysicalMaterial::usage = ""
+MeshToonMaterial::usage = ""
+
 EventListener::usage = "Internal wrapper for Graphics object to catch events"
 
 Begin["`Private`"]
