@@ -391,8 +391,8 @@ let g3d = {};
       len,
       env.color
     );
-    arrowHelper.castShadow = env.shadows;
-    arrowHelper.receiveShadow = env.shadows;
+    //arrowHelper.castShadow = env.shadows;
+    //arrowHelper.receiveShadow = env.shadows;
      
     if (env.PathRendering) {
       arrowHelper.line.material.emissive = env.emissive;
@@ -1822,6 +1822,7 @@ g3d.PointLight = async (args, env) => {
   const light = new THREE.PointLight(color, intensity, distance, decay);
   light.castShadow = env.shadows;
   light.position.set(...position);
+  light.shadow.bias = -0.01;
   env.local.light = light;
   env.mesh.add(light);
 
@@ -1903,6 +1904,7 @@ g3d.SpotLight = async (args, env) => {
   spotLight.target.position.set(...target);
 
   spotLight.castShadow = env.shadows;
+  spotLight.shadow.bias = -0.01;
   spotLight.shadow.mapSize.height = 1024;
   spotLight.shadow.mapSize.width = 1024;
 
