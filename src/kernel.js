@@ -2447,6 +2447,8 @@ core.Graphics3D = async (args, env) => {
 
   activeCamera = orthoCamera;
 
+  scene = new THREE.Scene();
+
   if (PathRendering) {
 	  equirectCamera = new RTX.EquirectCamera();
 	  equirectCamera.position.set( - 4, 2, 3 );
@@ -2489,14 +2491,17 @@ core.Graphics3D = async (args, env) => {
   if (options.Controls) {
 
     if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
-      const o = (await import("three/examples/jsm/controls/PointerLockControls.js")).PointerLockControls;
+      const o = (await import('three/addons/controls/PointerLockControls.js')).PointerLockControls;
       
+    
 
       controlObject = {
         init: (camera, dom) => {
           controlObject.o = new o( camera, dom );
-          env.global.scene.add( controlObject.o.getObject() );
+          scene.add( controlObject.o.getObject() );
           controlObject.o.addEventListener('change', wakeFunction);
+
+          
 
           controlObject.onKeyDown = function ( event ) {
             switch ( event.code ) {
@@ -2692,6 +2697,7 @@ core.Graphics3D = async (args, env) => {
 
   env.local.controlObject = controlObject;
 
+  
 
 
   controlObject.init(activeCamera, renderer.domElement);
@@ -2706,11 +2712,15 @@ core.Graphics3D = async (args, env) => {
 	  } ); 
   } 
 
-	scene = new THREE.Scene();
+	
 
   const group = new THREE.Group();
 
-
+  const allowLerp = false;
+  if (options.TransitionType) {
+    const type = await interpretate(options.TransitionType, env);
+    if (type === 'Linear') allowLerp = true;
+  }
 
   const envcopy = {
     ...env,
@@ -2733,7 +2743,7 @@ core.Graphics3D = async (args, env) => {
     reflectivity: 0.5,
     clearcoat: 0,
     shadows: false,
-    Lerp: options.Lerp,
+    Lerp: allowLerp,
     camera: activeCamera,
     controlObject: controlObject,
 
