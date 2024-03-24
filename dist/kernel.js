@@ -1884,10 +1884,10 @@ g3d.SpotLight = async (args, env) => {
     position = await interpretate(args[1], env);
     if (position.length == 2) {
       target = position[1];
-      target = [target[0], target[2], -target[1]];
+      //target = [target[0], target[2], -target[1]];
       position = position[0];
     }
-    position = [position[0], position[2], -position[1]];
+    //position = [position[0], position[2], -position[1]];
   }
 
   let angle = Math.PI/3; if (args.length > 2) angle = await interpretate(args[2], env);
