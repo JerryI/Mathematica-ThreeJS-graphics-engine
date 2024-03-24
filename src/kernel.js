@@ -2357,7 +2357,7 @@ core.Graphics3D = async (args, env) => {
   const ImageSize = await setImageSize(options, env); 
 
   const params = 	{
-    multipleImportanceSampling: true,
+    multipleImportanceSampling: false,
   	stableNoise: false,
   	denoiseEnabled: true,
   	denoiseSigma: 2.5,
@@ -2450,8 +2450,8 @@ core.Graphics3D = async (args, env) => {
   scene = new THREE.Scene();
 
   if (PathRendering) {
-	  equirectCamera = new RTX.EquirectCamera();
-	  equirectCamera.position.set( - 4, 2, 3 );
+	  //equirectCamera = new RTX.EquirectCamera();
+	  //equirectCamera.position.set( - 4, 2, 3 );
 
 	  ptRenderer = new RTX.PathTracingRenderer( renderer );
 	  ptRenderer.alpha = true;
