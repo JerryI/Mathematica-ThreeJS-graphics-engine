@@ -1106,9 +1106,9 @@ emissiveIntensity: env.emissiveIntensity,
         matrix = new THREE.Matrix4().set(...aflatten(matrix));
       break;
 
-      case 'translate':
-        matrix = arrays;
-        matrix = new THREE.Matrix4().makeTranslation(...matrix);
+      case 'translation':
+ 
+        matrix = new THREE.Matrix4().makeTranslation(...arrays);
       break;
 
       case 'complex':
@@ -1305,6 +1305,10 @@ emissiveIntensity: env.emissiveIntensity,
 
     env.mesh.add(group);
     //copy.geometry.dispose();
+  };
+
+  g3d.Reflectivity = () => {
+    console.warn('not implemented');
   };
 
   g3d.GraphicsComplex.update = async (args, env) => {
