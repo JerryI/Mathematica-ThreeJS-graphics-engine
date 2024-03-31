@@ -2374,7 +2374,7 @@ core.Graphics3D = async (args, env) => {
   	bounces: 5,
   	samplesPerFrame: 1,
   	acesToneMapping: true,
-  	resolutionScale: 0.5,
+  	resolutionScale: 1.0,
   	transparentTraversals: 20,
   	filterGlossyFactor: 0.5,
   	tiles: 1,
@@ -2387,7 +2387,7 @@ core.Graphics3D = async (args, env) => {
     params.cameraProjection = await interpretate(options.ViewProjection, env);
   }
 
-  if (!PathRendering) params.resolutionScale = 0.5;
+  if (!PathRendering) params.resolutionScale = 1.0;
 
   //Setting GUI
   const gui = new GUI({ autoPlace: false, name: '...', closed:true });
