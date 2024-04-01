@@ -1,7 +1,5 @@
-# Graphics3D Parser based on THREE.js
+# Graphics3D engine based on THREE.js
 *written with love in Javascript*
-
-***Warning: Early Development Stage!***
 
 ![](imgs/screenshot(17).png)
 
@@ -12,16 +10,11 @@ Graphics3D[{
 }, Lighting->None, RTX->True]
 ```
 
-😋 Realtime pathtracing is now supported! See [dev.blog](https://jerryi.github.io/wljs-docs/blog/intro-transform-3d)
-
 ---
 
 See disscussion at [mathematica.stackexchange](https://mathematica.stackexchange.com/a/215025/53728).
 
-__This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__,
-but you can __use it independently as well__ - [here is how](https://jerryi.github.io/wljs-docs/docs/interpreter/intro).
-
-__Live demo @ [WLJS Interpreter](https://jerryi.github.io/wljs-interpreter/?example=boat.txt) sandbox__ and [here](https://jerryi.github.io/wljs-docs/docs/interpreter/intro) is DOCS for it
+__This is a core component of [Wolfram JS Frontend](https://github.com/JerryI/wolfram-js-frontend) project__
 
 ## Examples
 Most Mathematica's functions for 3D plotting expands into a bunch of `Graphics3D` primitives
@@ -50,39 +43,13 @@ Custom lighting, mesh materials, shadows propeties are provided
 ![](imgs/screenshot(8).png)
 
 ## Docs?
-Will be soon!
+See [HERE](https://jerryi.github.io/wljs-docs/frontend/Reference/Graphics3D/)
 
 ## Contributing
 
 Please feel encouraged to contribute and expand features.
 
 ![](imgs/screenshot(16).png)
-
-Issues
-------
-There a lot a functions which are not implemented such as ``Style[]``, ``Tube[]``, ``Ball[]``, ``Cone[]``, ``BezierCurve[]``...
-
-Currently the minimum necessary set for the functioning of ``SphericalPlot3D``, ``Plot3D`` is already done
-- ``Graphics3D`` - supported without styling, themes
-- ``List`` - supported
-- ``GraphicsGroup`` - supported
-- ``RGBColor`` - supported
-- ``Opacity`` - supported
-- ``Tube`` - renders like arrows
-- ``Sphere`` - supported
-- ``Center`` - supported
-- ``Tetrahedron`` - supported
-- ``Cylinder`` - supported
-- ``Polyhedron`` - supported
-- ``GeometricTransformation`` - fully supported
-- ``GraphicsComplex`` - supported
-- ``Polygon`` - fully supported
-- ``Line`` - supported
-
-### Extra features
-- ``Emissive[]`` - property fro the object to emitt light
-- ``Roughness[]`` - roughness of the material
-- many other stuff, please, check `src/autocomplete.js`
 
 ## License
 
