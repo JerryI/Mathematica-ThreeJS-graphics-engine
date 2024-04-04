@@ -63,6 +63,50 @@ let g3d = {};
   let THREE;
   let MathUtils;
 
+
+  function createAGrid(x, y, div) {
+    var config = {
+        height: y/2.0,
+        width: x/2.0,
+        linesHeight: div,
+        linesWidth: div,
+        color: 0x000000
+    };
+
+
+    
+
+    const points = [];
+
+    var material = new THREE.LineBasicMaterial({
+      toneMapped: false, color: new THREE.Color("gray")
+    });
+
+    
+    var stepw = 2 * config.width / div;
+    var steph = 2 * config.height / div;
+
+    // Add horizontal lines
+    for (var i = -config.height; i <= config.height; i += steph) {
+        points.push(new THREE.Vector3(-config.width, i, 0));
+        points.push(new THREE.Vector3(config.width, i, 0));
+    }
+
+    // Add vertical lines
+    for (var i = -config.width; i <= config.width; i += stepw) {
+        points.push(new THREE.Vector3(i, -config.height, 0));
+        points.push(new THREE.Vector3(i, config.height, 0));
+    }
+
+ 
+    var gridGeo = new THREE.BufferGeometry().setFromPoints(points);
+    var line = new THREE.LineSegments(gridGeo, material);
+
+
+    return line
+
+}
+
   g3d.LABColor =  async (args, env) => {
     let lab;
     if (args.length > 1)
@@ -190,17 +234,21 @@ let g3d = {};
 
   g3d.Arrowheads = async (args, env) => {
     if (args.length == 1) {
-      env.arrowRadius = await interpretate(args[0], env);
-    } else {
-      env.arrowHeight = await interpretate(args[1], env);
-      env.arrowRadius = await interpretate(args[0], env);
+      const obj = await interpretate(args[0], env);
+      if (Array.isArray(obj)) {
+        env.arrowHeight = obj[1];
+        env.arrowRadius = obj[0];
+      } else {
+        env.arrowRadius = obj;
+      }
+      
     }
   };
 
   
 
   g3d.TubeArrow = async (args, env) => {
-  
+
 
     let radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
@@ -208,6 +256,7 @@ let g3d = {};
      * @type {THREE.Vector3}}
      */
     const coordinates = await interpretate(args[0], env);
+    //throw coordinates;
 
     /**
      * @type {env.material}}
@@ -240,9 +289,9 @@ let g3d = {};
     const cylinder = new THREE.Mesh(geometry, material);
 
     //cone
-    const conegeometry = new THREE.ConeGeometry(env.arrowRadius, env.arrowHeight, 32 );
+    const conegeometry = new THREE.ConeGeometry(env.arrowRadius/100.0, env.arrowHeight/60.0, 32 );
     const cone = new THREE.Mesh(conegeometry, material);
-    cone.position.y = dp.length()/2 + env.arrowHeight/2;
+    cone.position.y = dp.length()/2 + env.arrowHeight/120.0;
 
     let group = new THREE.Group();
     group.add(cylinder, cone);
@@ -334,15 +383,16 @@ let g3d = {};
     env.wake();
   };
 
-  g3d.TubeArrow.virtual = true; 
+  //g3d.TubeArrow.virtual = true 
 
   g3d.Arrow = async (args, env) => {
     let arr;
 
     if (args.length === 1) {
-      if (args[0][0] === 'Tube') {
-        console.log('TUBE inside!');
-        arr = await interpretate(args[0][1], env);
+      if (args[0][0] === 'Tube' || args[0][0] === 'TubeArrow') {
+        //console.log('TUBE inside!');
+        args[0][0] = 'TubeArrow';
+        return await interpretate(args[0], env);
       } else {
         arr = await interpretate(args[0], env);
       }
@@ -413,9 +463,10 @@ let g3d = {};
     let arr;
 
     if (args.length === 1) {
-      if (args[0][0] === 'Tube') {
+      if (args[0][0] === 'Tube' || args[0][0] === 'TubeArrow') {
         console.log('TUBE inside!');
-        arr = await interpretate(args[0][1], env);
+        //args[0][0] = 'TubeArrow';
+        return await interpretate(args[0], env);
       } else {
         arr = await interpretate(args[0], env);
       }
@@ -470,7 +521,7 @@ let g3d = {};
 
   g3d.Arrow.virtual = true;
 
-  g3d.Tube = g3d.Arrow;
+  g3d.Tube = g3d.TubeArrow;
 
   g3d.Sphere = async (args, env) => {
     var radius = 1;
@@ -2065,7 +2116,7 @@ g3d.EventListener = async (args, env) => {
   g3d.EventListener.transform = (uid, object, env) => {
     console.log(env);
     console.warn('Controls transform is enabled');
-    const control = new TransformControls(env.camera, env.global.renderer.domElement);
+    const control = new TransformControls(env.camera, env.global.domElement);
 
     const orbit = env.controlObject.o;
 
@@ -2091,6 +2142,8 @@ let RGBELoader;
 let OrbitControls;
 let FullScreenQuad;
 
+let CSS2D = undefined;
+
 core.Graphics3D = async (args, env) => {  
   //Lazy loading
 
@@ -2113,6 +2166,14 @@ core.Graphics3D = async (args, env) => {
   if (Object.keys(options).length === 0 && args.length > 1) {
     options = await core._getRules(args[1], {...env, context: g3d, hold:true});
   }
+
+  let noGrid = true;
+
+  if (options.Axes) {
+    if (!CSS2D)  CSS2D = await import('./CSS2DRenderer-55d89268.js');
+  }
+
+
 
   const defaultMatrix = new THREE.Matrix4().set(
     1, 0, 0, 0,//
@@ -2197,8 +2258,10 @@ core.Graphics3D = async (args, env) => {
   const button = { Save:function(){ takeScheenshot(); }};
   gui.add(button, 'Save');
 
+
+
   //Setting up renderer
-  let renderer, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
+  let renderer, domElement, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
   let perspectiveCamera, orthoCamera;
   let envMap, envMapGenerator, scene;
   let PT_PROGRAM_ID;
@@ -2210,6 +2273,18 @@ core.Graphics3D = async (args, env) => {
 	renderer.outputEncoding = THREE.sRGBEncoding;
 	renderer.setClearColor( 0, 0 );
 	container.appendChild( renderer.domElement );
+
+  domElement = renderer.domElement;
+
+  /*if (CSS2D) {
+    const labelRenderer = new CSS2D.CSS2DRenderer();
+		labelRenderer.setSize( ImageSize[0], ImageSize[1] );
+		labelRenderer.domElement.style.position = 'absolute';
+		labelRenderer.domElement.style.top = '0px';
+		container.appendChild( labelRenderer.domElement );
+
+    domElement = labelRenderer.domElement;
+  }*/
 
 	const aspect = ImageSize[0]/ImageSize[1];
 
@@ -2264,7 +2339,7 @@ core.Graphics3D = async (args, env) => {
 
   let controlObject = {
     init: (camera, dom) => {
-      controlObject.o = new OrbitControls( camera, renderer.domElement );
+      controlObject.o = new OrbitControls( camera, domElement );
       controlObject.o.addEventListener('change', wakeFunction);
       controlObject.o.target.set( 0, 1, 0 );
       controlObject.o.update();
@@ -2377,10 +2452,10 @@ core.Graphics3D = async (args, env) => {
           
           env.element.appendChild(inst);
 
-          renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
-          renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
+          domElement.addEventListener( 'keydown', controlObject.onKeyDown );
+          domElement.addEventListener( 'keyup', controlObject.onKeyUp );
 
-          renderer.domElement.tabIndex = 1;
+          domElement.tabIndex = 1;
 
           inst.addEventListener( 'click', function () {
 
@@ -2474,11 +2549,12 @@ core.Graphics3D = async (args, env) => {
   
 
 
-  controlObject.init(activeCamera, renderer.domElement);
+  controlObject.init(activeCamera, domElement);
   controls = controlObject.o;
 
   env.local.controlObject = controlObject;
   env.local.renderer = renderer;
+  env.local.domElement = domElement;
 
   if (PathRendering) {
 	  controls.addEventListener( 'change', () => {
@@ -2533,8 +2609,11 @@ core.Graphics3D = async (args, env) => {
   };
 
   env.global.renderer = renderer;
+  env.global.domElement = domElement;
   env.global.scene    = scene;
   envcopy.camera   = activeCamera;
+  //activeCamera.layers.enableAll();
+
   env.local.element  = container;
 
   if (PathRendering)
@@ -2542,7 +2621,137 @@ core.Graphics3D = async (args, env) => {
 
   await interpretate(args[0], envcopy);
 
+  /* GET RANGES */
+
   var bbox = new THREE.Box3().setFromObject(group);
+
+  if (options.Axes) {
+    
+    //envcopy.mesh.layers.enableAll();
+
+    const length = Math.min(bbox.max.x, bbox.max.y, bbox.max.z, bbox.min.x, bbox.min.y, bbox.min.z);
+    const axesHelper = new THREE.AxesHelper( length );
+    axesHelper.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+    axesHelper.rotateX(Math.PI);
+    group.add( axesHelper );
+    
+
+    if ((options.BoxRatios || options.Boxed)) {
+
+      const divisions = 10;
+
+      const gridHelperZ = createAGrid(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, divisions);
+      //gridHelperZ.rotateX(Math.PI/2.0);
+      gridHelperZ.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,bbox.min.z);
+      gridHelperZ.layers.set(15);
+      group.add( gridHelperZ );
+
+      const gridHelperIZ = createAGrid(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, divisions);
+      //gridHelperIZ.rotateX(Math.PI/2.0);
+      gridHelperIZ.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,bbox.max.z);
+      gridHelperIZ.layers.set(14);
+      group.add( gridHelperIZ );
+      
+
+      const gridHelperY = createAGrid( bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, divisions );
+      //gridHelperY.rotateX(Math.PI/2.0);
+      gridHelperY.rotateX(Math.PI/2.0);
+      gridHelperY.position.set((bbox.max.x + bbox.min.x)/2.0,bbox.min.y,(bbox.max.z + bbox.min.z)/2.0);
+      gridHelperY.layers.set(12);
+      group.add( gridHelperY );
+
+      const gridHelperIY = createAGrid( bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, divisions );
+      //gridHelperIY.rotateX(Math.PI/2.0);
+      gridHelperIY.rotateX(Math.PI/2.0);
+      gridHelperIY.position.set((bbox.max.x + bbox.min.x)/2.0,bbox.max.y,(bbox.max.z + bbox.min.z)/2.0);
+      gridHelperIY.layers.set(13);
+      group.add( gridHelperIY );
+
+
+      const gridHelperX = createAGrid( bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z, divisions );
+      //gridHelperX.rotateX(Math.PI/2.0);
+      gridHelperX.rotateY(Math.PI/2.0);
+      gridHelperX.rotateZ(Math.PI/2.0);
+      gridHelperX.position.set(bbox.max.x,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+      gridHelperX.layers.set(10);
+      group.add( gridHelperX );
+
+      const gridHelperIX =createAGrid( bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z, divisions );
+      //gridHelperIX.rotateX(Math.PI/2.0);
+      gridHelperIX.rotateY(Math.PI/2.0);
+      gridHelperIX.rotateZ(Math.PI/2.0);
+      gridHelperIX.position.set(bbox.min.x,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+      gridHelperIX.layers.set(11);
+      group.add( gridHelperIX );
+
+
+
+      const calcGrid = () => {
+        if (noGrid) return;
+
+        const azimuth = controls.getAzimuthalAngle();
+        const vertical = controls.getPolarAngle();
+
+        orthoCamera.layers.disable(10);
+        orthoCamera.layers.disable(11);
+        orthoCamera.layers.disable(12);
+        orthoCamera.layers.disable(13);
+        orthoCamera.layers.disable(14);
+        orthoCamera.layers.disable(15);
+
+        //if (azimuth < 1.57 + 0.78 && azimuth > 1.57 - 0.78 ) 
+        if (azimuth < 1.57  && azimuth > 0 ) {
+            orthoCamera.layers.enable(13);
+            orthoCamera.layers.enable(11);
+        }
+
+        if (azimuth < 1.57+1.57  && azimuth > 1.57 ) {
+          orthoCamera.layers.enable(11);
+          orthoCamera.layers.enable(12);
+        }
+
+        if (azimuth < 0  && azimuth > -1.57 ) {
+          orthoCamera.layers.enable(13);
+          orthoCamera.layers.enable(10);
+        }
+
+        if (azimuth < -1.57  && azimuth > -2*1.57 ) {
+          orthoCamera.layers.enable(10);
+          orthoCamera.layers.enable(12);
+        }
+
+        if (vertical > 1.57) {
+          orthoCamera.layers.enable(14);
+        } else {
+          orthoCamera.layers.enable(15);
+        }
+        //if (azimuth < 0.78 - 1.57  && azimuth > - 0.78 - 1.57 ) orthoCamera.layers.enable(11);
+        //if (azimuth < 0.78 - 2*1.57  && azimuth > - 0.78 + 2*1.57 ) orthoCamera.layers.enable(13);
+      };
+
+      calcGrid();
+
+      controls.addEventListener('end', calcGrid);
+
+      //if (!noGrid) {
+        gui.add({'Grid':false}, 'Grid').name('Grid').listen().onChange( (value) => {
+          if (!value) { 
+            orthoCamera.layers.disable(10);
+            orthoCamera.layers.disable(11);
+            orthoCamera.layers.disable(12);
+            orthoCamera.layers.disable(13);
+            orthoCamera.layers.disable(14);
+            orthoCamera.layers.disable(15);
+            noGrid = true;
+          } else {
+            noGrid = false;
+            calcGrid();
+          }
+        });
+      //}
+    }
+  }
+
   //console.error(bbox);
   group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, -(bbox.min.z + bbox.max.z) / 2);
   //throw 'fuk';
