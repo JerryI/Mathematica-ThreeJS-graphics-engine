@@ -45,6 +45,49 @@
   }
 
 
+  function createAGrid(x, y, div) {
+    var config = {
+        height: y/2.0,
+        width: x/2.0,
+        linesHeight: div,
+        linesWidth: div,
+        color: 0x000000
+    };
+
+
+    
+
+    const points = [];
+
+    var material = new THREE.LineBasicMaterial({
+      toneMapped: false, color: new THREE.Color("gray")
+    });
+
+    
+    var stepw = 2 * config.width / div;
+    var steph = 2 * config.height / div;
+
+    // Add horizontal lines
+    for (var i = -config.height; i <= config.height; i += steph) {
+        points.push(new THREE.Vector3(-config.width, i, 0));
+        points.push(new THREE.Vector3(config.width, i, 0));
+    }
+
+    // Add vertical lines
+    for (var i = -config.width; i <= config.width; i += stepw) {
+        points.push(new THREE.Vector3(i, -config.height, 0));
+        points.push(new THREE.Vector3(i, config.height, 0));
+    }
+
+ 
+    var gridGeo = new THREE.BufferGeometry().setFromPoints(points);
+    var line = new THREE.LineSegments(gridGeo, material);
+
+
+    return line
+
+}
+
   import labToRgb from '@fantasy-color/lab-to-rgb'
 
   g3d.LABColor =  async (args, env) => {
@@ -2279,7 +2322,7 @@ g3d.EventListener = async (args, env) => {
   g3d.EventListener.transform = (uid, object, env) => {
     console.log(env);
     console.warn('Controls transform is enabled');
-    const control = new TransformControls(env.camera, env.global.renderer.domElement);
+    const control = new TransformControls(env.camera, env.global.domElement);
 
     const orbit = env.controlObject.o;
 
@@ -2305,6 +2348,8 @@ let RGBELoader;
 let OrbitControls;
 let FullScreenQuad;
 
+let CSS2D = undefined;
+
 core.Graphics3D = async (args, env) => {  
   //Lazy loading
 
@@ -2327,6 +2372,11 @@ core.Graphics3D = async (args, env) => {
   if (Object.keys(options).length === 0 && args.length > 1) {
     options = await core._getRules(args[1], {...env, context: g3d, hold:true});
   }
+
+  if (options.Axes) {
+    if (!CSS2D)  CSS2D = await import('three/examples/jsm/renderers/CSS2DRenderer.js');
+  }
+
 
   const defaultMatrix = new THREE.Matrix4().set(
     1, 0, 0, 0,//
@@ -2412,7 +2462,7 @@ core.Graphics3D = async (args, env) => {
   gui.add(button, 'Save');
 
   //Setting up renderer
-  let renderer, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
+  let renderer, domElement, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
   let perspectiveCamera, orthoCamera, equirectCamera;
   let envMap, envMapGenerator, scene;
   let samplesEl;
@@ -2425,6 +2475,18 @@ core.Graphics3D = async (args, env) => {
 	renderer.outputEncoding = THREE.sRGBEncoding;
 	renderer.setClearColor( 0, 0 );
 	container.appendChild( renderer.domElement );
+
+  domElement = renderer.domElement;
+
+  /*if (CSS2D) {
+    const labelRenderer = new CSS2D.CSS2DRenderer();
+		labelRenderer.setSize( ImageSize[0], ImageSize[1] );
+		labelRenderer.domElement.style.position = 'absolute';
+		labelRenderer.domElement.style.top = '0px';
+		container.appendChild( labelRenderer.domElement );
+
+    domElement = labelRenderer.domElement;
+  }*/
 
 	const aspect = ImageSize[0]/ImageSize[1];
 
@@ -2479,7 +2541,7 @@ core.Graphics3D = async (args, env) => {
 
   let controlObject = {
     init: (camera, dom) => {
-      controlObject.o = new OrbitControls( camera, renderer.domElement );
+      controlObject.o = new OrbitControls( camera, domElement );
       controlObject.o.addEventListener('change', wakeFunction);
       controlObject.o.target.set( 0, 1, 0 );
       controlObject.o.update();
@@ -2592,10 +2654,10 @@ core.Graphics3D = async (args, env) => {
           
           env.element.appendChild(inst);
 
-          renderer.domElement.addEventListener( 'keydown', controlObject.onKeyDown );
-          renderer.domElement.addEventListener( 'keyup', controlObject.onKeyUp );
+          domElement.addEventListener( 'keydown', controlObject.onKeyDown );
+          domElement.addEventListener( 'keyup', controlObject.onKeyUp );
 
-          renderer.domElement.tabIndex = 1;
+          domElement.tabIndex = 1;
 
           inst.addEventListener( 'click', function () {
 
@@ -2704,11 +2766,12 @@ core.Graphics3D = async (args, env) => {
   
 
 
-  controlObject.init(activeCamera, renderer.domElement);
+  controlObject.init(activeCamera, domElement);
   controls = controlObject.o;
 
   env.local.controlObject = controlObject;
   env.local.renderer = renderer;
+  env.local.domElement = domElement;
 
   if (PathRendering) {
 	  controls.addEventListener( 'change', () => {
@@ -2763,8 +2826,11 @@ core.Graphics3D = async (args, env) => {
   }
 
   env.global.renderer = renderer;
+  env.global.domElement = domElement;
   env.global.scene    = scene;
   envcopy.camera   = activeCamera;
+  //activeCamera.layers.enableAll();
+
   env.local.element  = container;
 
   if (PathRendering)
@@ -2772,7 +2838,116 @@ core.Graphics3D = async (args, env) => {
 
   await interpretate(args[0], envcopy);
 
+  /* GET RANGES */
+
   var bbox = new THREE.Box3().setFromObject(group);
+
+  if (options.Axes) {
+    
+    //envcopy.mesh.layers.enableAll();
+
+    const length = Math.min(bbox.max.x, bbox.max.y, bbox.max.z, bbox.min.x, bbox.min.y, bbox.min.z);
+    const axesHelper = new THREE.AxesHelper( length );
+    axesHelper.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+    axesHelper.rotateX(Math.PI);
+    group.add( axesHelper );
+    
+
+    const divisions = 10;
+
+    const gridHelperZ = createAGrid(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, divisions);
+    //gridHelperZ.rotateX(Math.PI/2.0);
+    gridHelperZ.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,bbox.min.z);
+    gridHelperZ.layers.set(15);
+    group.add( gridHelperZ );
+
+    const gridHelperIZ = createAGrid(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, divisions);
+    //gridHelperIZ.rotateX(Math.PI/2.0);
+    gridHelperIZ.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,bbox.max.z);
+    gridHelperIZ.layers.set(14);
+    group.add( gridHelperIZ );
+    
+
+    const gridHelperY = createAGrid( bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, divisions );
+    //gridHelperY.rotateX(Math.PI/2.0);
+    gridHelperY.rotateX(Math.PI/2.0);
+    gridHelperY.position.set((bbox.max.x + bbox.min.x)/2.0,bbox.min.y,(bbox.max.z + bbox.min.z)/2.0);
+    gridHelperY.layers.set(12);
+    group.add( gridHelperY );
+
+    const gridHelperIY = createAGrid( bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, divisions );
+    //gridHelperIY.rotateX(Math.PI/2.0);
+    gridHelperIY.rotateX(Math.PI/2.0);
+    gridHelperIY.position.set((bbox.max.x + bbox.min.x)/2.0,bbox.max.y,(bbox.max.z + bbox.min.z)/2.0);
+    gridHelperIY.layers.set(13);
+    group.add( gridHelperIY );
+
+
+    const gridHelperX = createAGrid( bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z, divisions );
+    //gridHelperX.rotateX(Math.PI/2.0);
+    gridHelperX.rotateY(Math.PI/2.0);
+    gridHelperX.rotateZ(Math.PI/2.0);
+    gridHelperX.position.set(bbox.max.x,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+    gridHelperX.layers.set(10);
+    group.add( gridHelperX );
+
+    const gridHelperIX =createAGrid( bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z, divisions );
+    //gridHelperIX.rotateX(Math.PI/2.0);
+    gridHelperIX.rotateY(Math.PI/2.0);
+    gridHelperIX.rotateZ(Math.PI/2.0);
+    gridHelperIX.position.set(bbox.min.x,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
+    gridHelperIX.layers.set(11);
+    group.add( gridHelperIX );
+
+    const calcGrid = () => {
+      const azimuth = controls.getAzimuthalAngle();
+      const vertical = controls.getPolarAngle();
+
+      orthoCamera.layers.disable(10);
+      orthoCamera.layers.disable(11);
+      orthoCamera.layers.disable(12);
+      orthoCamera.layers.disable(13);
+      orthoCamera.layers.disable(14);
+      orthoCamera.layers.disable(15);
+      
+      //if (azimuth < 1.57 + 0.78 && azimuth > 1.57 - 0.78 ) 
+      if (azimuth < 1.57  && azimuth > 0 ) {
+          orthoCamera.layers.enable(13);
+          orthoCamera.layers.enable(11);
+      }
+
+      if (azimuth < 1.57+1.57  && azimuth > 1.57 ) {
+        orthoCamera.layers.enable(11);
+        orthoCamera.layers.enable(12);
+      }
+
+      if (azimuth < 0  && azimuth > -1.57 ) {
+        orthoCamera.layers.enable(13);
+        orthoCamera.layers.enable(10);
+      }
+
+      if (azimuth < -1.57  && azimuth > -2*1.57 ) {
+        orthoCamera.layers.enable(10);
+        orthoCamera.layers.enable(12);
+      }
+
+      if (vertical > 1.57) {
+        orthoCamera.layers.enable(14);
+      } else {
+        orthoCamera.layers.enable(15);
+      }
+      //if (azimuth < 0.78 - 1.57  && azimuth > - 0.78 - 1.57 ) orthoCamera.layers.enable(11);
+      //if (azimuth < 0.78 - 2*1.57  && azimuth > - 0.78 + 2*1.57 ) orthoCamera.layers.enable(13);
+    };
+
+    calcGrid();
+
+    controls.addEventListener('end', calcGrid);
+  }
+
+  
+
+
   //console.error(bbox);
   group.position.set(-(bbox.min.x + bbox.max.x) / 2, -(bbox.min.y + bbox.max.y) / 2, -(bbox.min.z + bbox.max.z) / 2);
   //throw 'fuk';
