@@ -2032,6 +2032,12 @@ const setImageSize = async (options, env) => {
   if (options.ImageSize) {
     ImageSize = await interpretate(options.ImageSize, env);
     if (!(ImageSize instanceof Array)) ImageSize = [ImageSize, ImageSize*0.618034];
+  } else if (env.imageSize) {
+    if (Array.isArray(env.imageSize)) {
+      ImageSize = env.imageSize;
+    } else {
+      ImageSize = [env.imageSize, env.imageSize*0.618034];
+    }
   } else {
     ImageSize = [core.DefaultWidth, core.DefaultWidth*0.618034];
   }
