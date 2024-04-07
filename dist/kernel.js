@@ -2635,10 +2635,10 @@ core.Graphics3D = async (args, env) => {
     
     //envcopy.mesh.layers.enableAll();
 
-    const length = Math.min(bbox.max.x, bbox.max.y, bbox.max.z, bbox.min.x, bbox.min.y, bbox.min.z);
+    const length = Math.abs(Math.min(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z));
     const axesHelper = new THREE.AxesHelper( length );
     axesHelper.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
-    axesHelper.rotateX(Math.PI);
+    axesHelper.rotateX(0);
     group.add( axesHelper );
     
 
