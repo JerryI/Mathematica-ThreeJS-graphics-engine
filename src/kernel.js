@@ -90,6 +90,7 @@
 
   import labToRgb from '@fantasy-color/lab-to-rgb'
 
+
   g3d.LABColor =  async (args, env) => {
     let lab;
     if (args.length > 1)
@@ -2856,7 +2857,15 @@ core.Graphics3D = async (args, env) => {
   if (PathRendering)
     envcopy.PathRendering = true;
 
+  if (options.Prolog) {
+    await interpretate(options.Prolog, envcopy);
+  }
+
   await interpretate(args[0], envcopy);
+
+  if (options.Epilog) {
+    await interpretate(options.Epilog, envcopy);
+  }
 
   /* GET RANGES */
 
