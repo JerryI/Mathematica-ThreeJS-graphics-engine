@@ -2313,7 +2313,7 @@ core.Graphics3D = async (args, env) => {
   
 
 	const orthoHeight = orthoWidth / aspect;
-	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 200 );
+	orthoCamera = new THREE.OrthographicCamera( orthoWidth / - 2, orthoWidth / 2, orthoHeight / 2, orthoHeight / - 2, 0, 2000 );
 	orthoCamera.position.set( - 40, 20, 30 );
 
   activeCamera = orthoCamera;
@@ -2644,11 +2644,7 @@ core.Graphics3D = async (args, env) => {
     
     //envcopy.mesh.layers.enableAll();
 
-    const length = Math.abs(Math.min(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z));
-    const axesHelper = new THREE.AxesHelper( length );
-    axesHelper.position.set((bbox.max.x + bbox.min.x)/2.0,(bbox.max.y + bbox.min.y)/2.0,(bbox.max.z + bbox.min.z)/2.0);
-    axesHelper.rotateX(0);
-    group.add( axesHelper );
+
     
 
     if ((options.BoxRatios || options.Boxed)) {
@@ -2784,6 +2780,13 @@ core.Graphics3D = async (args, env) => {
       await interpretate(['Line', ['JSObject', l]], {...envcopy});
     }  }
   
+  if (options.Axes) {
+    const length = Math.abs(Math.min(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z));
+    const axesHelper = new THREE.AxesHelper( length/2.0 );
+    axesHelper.position.set((bbox.max.x + bbox.min.x)/2.0, (bbox.max.y + bbox.min.y)/2.0, (bbox.max.z + bbox.min.z)/2.0);
+    //axesHelper.rotateX(Math.Pi /2.0);
+    group.add( axesHelper );
+  }
 
   group.applyMatrix4(new THREE.Matrix4().set( 
     1, 0, 0, 0,
@@ -2791,9 +2794,12 @@ core.Graphics3D = async (args, env) => {
     0, -1, 0, 0,
     0, 0, 0, 1));
 
-  if ('BoxRatios' in options) {
     let size = [bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z, bbox.max.y - bbox.min.y];
     let max = Math.max(...size);
+    const maxSize = Math.max(...size);
+
+  if ('BoxRatios' in options) {
+
     const reciprocal = size.map((e) => 1.0/(e/max));
 
     console.warn('Rescaling....');
@@ -2804,24 +2810,62 @@ core.Graphics3D = async (args, env) => {
     max = Math.max(...ratios);
     ratios = ratios.map((e, index) => reciprocal[index] * e/max);
 
+    
+    console.log(max);
+    if (maxSize > 80) {
+      console.warn('Model is too large!');
+      ratios = ratios.map((e) => (e / maxSize) * 10.0);
+    }
+
     group.applyMatrix4(new THREE.Matrix4().makeScale(...ratios));
-  }  
+  } else {
+    let ratios = [1,1,1];
+    if (maxSize > 80) {
+      console.warn('Model is too large!');
+      ratios = ratios.map((e) => (e / maxSize) * 10.0);
+    }
+
+    group.applyMatrix4(new THREE.Matrix4().makeScale(...ratios));
+  }
 
   group.position.add(new THREE.Vector3(0,1,0));
+
+  scene.add(group);
   //recalculate
   bbox = new THREE.Box3().setFromObject(group);
+  //const sbox = new THREE.Box3().setFromObject(scene);
   //console.log(bbox);
 
   if (envcopy.camera.isOrthographicCamera) {
     console.warn('fitting camera...');
     const camera = envcopy.camera;
+
+    console.log(bbox);
+    const center = [bbox.max.x + bbox.min.x, bbox.max.y + bbox.min.y, bbox.max.z + bbox.min.z].map((e) => -e/2);
+    const maxL = Math.max(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z);
+    console.log(maxL);
+    console.log(center);
+    //console.log(sbox);
+    /*let scale = 2.99 / maxL;
+    if (scale > 0.9) scale = 1;
+
+    //scale = 1;
+    
+    scene.applyMatrix4((new THREE.Matrix4()).compose(new THREE.Vector3(0,center[1],0), new THREE.Quaternion(), new THREE.Vector3(1,1,1)));
+    scene.applyMatrix4((new THREE.Matrix4()).compose(new THREE.Vector3(0,1,0), new THREE.Quaternion(), new THREE.Vector3(scale, scale, scale)));
+    //scene.applyMatrix4((new THREE.Matrix4()).compose(new THREE.Vector3(-center[0] * scale, -center[1] * scale, -center[2] * scale), new THREE.Quaternion(), new THREE.Vector3(1,1,1)));
+    //scene.position.set(...center);
+    //scene.scale.set(scale, scale, scale);
+    //scene.position.set(...(center.map((e) => -e)));
+    */
+
     camera.zoom = Math.min(orthoWidth / (bbox.max.x - bbox.min.x),
-    orthoHeight / (bbox.max.y - bbox.min.y)) * 0.8;
+    orthoHeight / (bbox.max.y - bbox.min.y)) * 0.8 ;
     camera.updateProjectionMatrix();
   }
-    
+  
  
-  scene.add(group);
+  
   //console.error(new THREE.Box3().setFromObject(scene));
 
   scene.updateMatrixWorld();
