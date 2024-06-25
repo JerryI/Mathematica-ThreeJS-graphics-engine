@@ -509,6 +509,41 @@
 
   g3d.Tube = g3d.TubeArrow
 
+  g3d.Point = async (args, env) => {
+    let data = await interpretate(args[0], env);
+
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+
+    const material = new THREE.PointsMaterial( { color: env.color, opacity: env.opacity } );
+    const points = new THREE.Points( geometry, material );
+
+    env.local.geometry = geometry;
+
+    env.mesh.add(points);
+    env.local.points = points;
+
+    material.dispose();
+
+    return env.local.points;
+  };
+
+  g3d.Point.update = async (args, env) => {
+    let data = await interpretate(args[0], env);
+  
+
+    env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+    return env.local.points;
+  }
+
+  g3d.Point.destroy = async (args, env) => {
+
+  }
+
+  g3d.Point.virtual = true
+
+
   g3d.Sphere = async (args, env) => {
     var radius = 1;
     if (args.length > 1) radius = await interpretate(args[1], env);
