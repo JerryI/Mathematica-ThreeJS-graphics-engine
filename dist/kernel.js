@@ -531,7 +531,7 @@ let g3d = {};
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
 
-    const material = new THREE.PointsMaterial( { color: env.color, opacity: env.opacity } );
+    const material = new THREE.PointsMaterial( { color: env.color, opacity: env.opacity, size: 3.1 * env.pointSize / (0.011111111111111112)} );
     const points = new THREE.Points( geometry, material );
 
     env.local.geometry = geometry;
@@ -2640,7 +2640,8 @@ core.Graphics3D = async (args, env) => {
     controlObject: controlObject,
 
     Handlers: Handlers,
-    wake: wakeFunction
+    wake: wakeFunction,
+    pointSize: 0.8/10.0
   };  
 
   env.local.wakeThreadUp = () => {
