@@ -148,16 +148,22 @@
     }
   }
 
+  g3d.Glow = g3d.Emissive
+
+  let hsv2hsl = (h,s,v,l=v-v*s/2, m=Math.min(l,1-l)) => [h,m?(v-l)/m:0,l];
 
   g3d.Hue = async (args, env) => {
-    const h = await interpretate(args[0], env) * 360.0;
-    const l = await interpretate(args[1], env) * 100.0;
-    const s = await interpretate(args[2], env) * 100.0;
+      let color = await Promise.all(args.map(el => interpretate(el, env)));
+      if (color.length < 3) {
+        color = [color[0], 1,1];
+      }
+      color = hsv2hsl(...color);
+      color = [color[0], (color[1]*100).toFixed(2), (color[2]*100).toFixed(2)];
 
-    env.color = new THREE.Color(`hsl(${h}, ${l}%, ${s}%)`);
-    return env.color;    
-    
-  }
+      env.color = new THREE.Color("hsl("+(3.14*100*color[0]).toFixed(2)+","+color[1]+"%,"+color[2]+"%)");
+      return env.color; 
+
+  }   
 
   g3d.EdgeForm = async (args, env) => {
     env.edgecolor = await interpretate(args[0], {...env});
@@ -2900,7 +2906,7 @@ core.Graphics3D = async (args, env) => {
   await interpretate(args[0], envcopy);
 
   if (options.Epilog) {
-    await interpretate(options.Epilog, envcopy);
+    interpretate(options.Epilog, envcopy);
   }
 
   /* GET RANGES */
