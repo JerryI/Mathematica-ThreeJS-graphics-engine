@@ -8,6 +8,10 @@
     opacity:1;
 }
 
+.g3d-label {
+    font-size: small;
+}
+
 .dg.main {
     color:#777;
     text-shadow: none;
