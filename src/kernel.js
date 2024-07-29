@@ -1643,7 +1643,18 @@ emissiveIntensity: env.emissiveIntensity,
 
   g3d.Specularity = (args, env) => { };
 
-  g3d.Text = (args, env) => { };
+  g3d.Text = async (args, env) => { 
+    const text = document.createElement( 'span' );
+		text.className = 'label';
+		//text.style.color = 'rgb(' + atom[ 3 ][ 0 ] + ',' + atom[ 3 ][ 1 ] + ',' + atom[ 3 ][ 2 ] + ')';
+    const label = await interpretate(args[0], env);
+    const pos   = await interpretate(args[1], env);
+		text.textContent = String(label);
+
+		const labelObject = new CSS2D.CSS2DObject( text );
+		labelObject.position.copy( new THREE.Vector3(...pos) );
+    env.mesh.add(labelObject);
+  };
 
   g3d.Directive = async (args, env) => { 
     for (const i of args) {
@@ -2432,8 +2443,16 @@ core.Graphics3D = async (args, env) => {
 
   let noGrid = true;
 
-  if (options.Axes) {
+  //if (options.Axes) {
     if (!CSS2D)  CSS2D = await import('three/examples/jsm/renderers/CSS2DRenderer.js');
+    
+  //}
+
+  let plotRange;
+
+  if (options.Axes) {
+    console.warn(options.PlotRange);
+    plotRange = await interpretate(options.PlotRange, env);
   }
 
 
@@ -2505,7 +2524,7 @@ core.Graphics3D = async (args, env) => {
   const guiContainer = document.createElement('div');
   guiContainer.classList.add('graphics3d-controller');
   guiContainer.appendChild(gui.domElement);
-  container.appendChild( guiContainer );    
+      
 
   function takeScheenshot() {
     animateOnce();
@@ -2540,15 +2559,19 @@ core.Graphics3D = async (args, env) => {
 
   domElement = renderer.domElement;
 
-  /*if (CSS2D) {
+  //if (CSS2D) {
     const labelRenderer = new CSS2D.CSS2DRenderer();
 		labelRenderer.setSize( ImageSize[0], ImageSize[1] );
 		labelRenderer.domElement.style.position = 'absolute';
 		labelRenderer.domElement.style.top = '0px';
+   // labelRenderer.domElement.style.pointerEvents = 'none';
 		container.appendChild( labelRenderer.domElement );
 
     domElement = labelRenderer.domElement;
-  }*/
+  //}
+
+
+  container.appendChild( guiContainer );
 
 	const aspect = ImageSize[0]/ImageSize[1];
 
@@ -2889,6 +2912,7 @@ core.Graphics3D = async (args, env) => {
   }
 
   env.global.renderer = renderer;
+  env.global.labelRenderer = labelRenderer;
   env.global.domElement = domElement;
   env.global.scene    = scene;
   envcopy.camera   = activeCamera;
@@ -2901,6 +2925,11 @@ core.Graphics3D = async (args, env) => {
 
   if (options.Prolog) {
     await interpretate(options.Prolog, envcopy);
+  }
+
+  if (options.Axes && plotRange) {
+    console.log('Drawing grid...');
+
   }
 
   await interpretate(args[0], envcopy);
@@ -3378,6 +3407,7 @@ core.Graphics3D = async (args, env) => {
 
     } else {
       renderer.render( scene, activeCamera );
+      labelRenderer.render(scene, activeCamera);
     }
 
     for (let i=0; i<Handlers.length; ++i) {
