@@ -2444,7 +2444,7 @@ if (Object.keys(options).length === 0 && args.length > 1) {
 let noGrid = true;
 
 //if (options.Axes) {
-  if (!CSS2D)  CSS2D = await import('three/examples/jsm/renderers/CSS2DRenderer.js');
+  if (!CSS2D)  CSS2D = await import('./../libs/labels.js');
   
 //}
 
@@ -2560,11 +2560,20 @@ container.appendChild( renderer.domElement );
 
 domElement = renderer.domElement;
 
+//fix for translate-50% layout
+const layoutOffset = {x:0, y:0};
+if (container.classList.contains('slide-frontend-object')) {
+  layoutOffset.x = -1.0;
+}
+
 //if (CSS2D) {
-  const labelRenderer = new CSS2D.CSS2DRenderer();
+  const labelRenderer = new CSS2D.CSS2DRenderer({globalOffset: layoutOffset});
   labelRenderer.setSize( ImageSize[0], ImageSize[1] );
   labelRenderer.domElement.style.position = 'absolute';
   labelRenderer.domElement.style.top = '0px';
+  labelRenderer.domElement.style.bottom = '0px';
+  labelRenderer.domElement.style.marginTop = 'auto';
+  labelRenderer.domElement.style.marginBottom = 'auto';
  // labelRenderer.domElement.style.pointerEvents = 'none';
   container.appendChild( labelRenderer.domElement );
 
