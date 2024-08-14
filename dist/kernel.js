@@ -3566,3 +3566,5 @@ env.local.wakeThreadUp = () => {};
 env.local.controlObject.dispose();
 cancelAnimationFrame(env.local.aid);
 };
+
+core.Graphics3D.virtual = true;
