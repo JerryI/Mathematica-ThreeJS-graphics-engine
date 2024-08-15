@@ -508,7 +508,7 @@ g3d.Arrow.update = async (args, env) => {
 
 g3d.Arrow.destroy = async (args, env) => {
   if (env.local.line) env.local.line.dispose();
-  env.local.arrow.dispose();
+  if (env.local.arrow) env.local.arrow.dispose();
 }
 
 g3d.Arrow.virtual = true
