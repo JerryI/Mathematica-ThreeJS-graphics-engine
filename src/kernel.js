@@ -2581,7 +2581,8 @@ if (container.classList.contains('slide-frontend-object')) {
 //}
 
 
-container.appendChild( guiContainer );
+if (ImageSize[0] > 250 && ImageSize[1] > 150)
+  container.appendChild( guiContainer );
 
 const aspect = ImageSize[0]/ImageSize[1];
 
