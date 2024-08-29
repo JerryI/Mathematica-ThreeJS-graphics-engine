@@ -553,6 +553,7 @@ g3d.Point = async (args, env) => {
 g3d.Point.update = async (args, env) => {
   let data = await interpretate(args[0], env);
 
+  env.wake();
 
   env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
   return env.local.points;
