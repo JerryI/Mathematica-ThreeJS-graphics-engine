@@ -535,9 +535,37 @@ g3d.Point = async (args, env) => {
 
 
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
 
-  const material = new THREE.PointsMaterial( { color: env.color, opacity: env.opacity, size: 3.1 * env.pointSize / (0.011111111111111112)} );
+  if (env.hasOwnProperty("vertices")) {
+    //geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', env.vertices.position);
+    //env.vertices.geometry.clone();
+
+    let a = await interpretate(args[0], env);
+    geometry.setIndex( a.flat().map((e)=>e-1) );
+
+  } else {
+    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+  }
+
+  let material;
+  
+  if (env.vertices.colored) {
+    //geometry.setAttribute()
+    geometry.setAttribute( 'color', env.vertices.colors );
+
+    material = new THREE.PointsMaterial({
+      vertexColors: true,
+      transparent: env.opacity < 1,
+      opacity: env.opacity, 
+      size: 3.1 * env.pointSize / (0.011111111111111112)       
+    });
+
+  } else {
+    material = new THREE.PointsMaterial( { color: env.color, opacity: env.opacity, size: 3.1 * env.pointSize / (0.011111111111111112)} );
+  }  
+  
+  
   const points = new THREE.Points( geometry, material );
 
   env.local.geometry = geometry;
@@ -551,6 +579,8 @@ g3d.Point = async (args, env) => {
 };
 
 g3d.Point.update = async (args, env) => {
+  if (env.hasOwnProperty("vertices")) return; //reject if inside Complex
+
   let data = await interpretate(args[0], env);
 
   env.wake();
