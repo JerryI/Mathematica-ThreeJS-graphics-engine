@@ -550,7 +550,7 @@ g3d.Point = async (args, env) => {
 
   let material;
   
-  if (env.vertices.colored) {
+  if (env?.vertices?.colored) {
     //geometry.setAttribute()
     geometry.setAttribute( 'color', env.vertices.colors );
 
@@ -1542,7 +1542,7 @@ g3d.Polygon = async (args, env) => {
     geometry.computeVertexNormals();
 
     //check if colored (Material BUG) !!!
-    if (env.vertices.colored) {
+    if (env?.vertices?.colored) {
       //geometry.setAttribute()
       geometry.setAttribute( 'color', env.vertices.colors );
 
