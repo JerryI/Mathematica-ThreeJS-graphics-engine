@@ -2029,7 +2029,9 @@ let color = 0xffffff;
 if (args.length > 0) color = await interpretate(args[0], copy); 
 
 if (args.length > 1) {
+
   position = await interpretate(args[1], env);
+
   if (position instanceof NumericArrayObject) {
     position = position.normal();
   }
@@ -2060,6 +2062,8 @@ env.wake();
 
 if (args.length > 1) {
   let pos = await interpretate(args[1], env);
+
+  console.log(pos);
 
   if (pos instanceof NumericArrayObject) {
     pos = pos.normal();
