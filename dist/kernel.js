@@ -479,6 +479,9 @@ g3d.Arrow.update = async (args, env) => {
     }
   } else {
     arr = await interpretate(args[0], env);
+    if (arr instanceof NumericArrayObject) {
+      arr = arr.normal();
+    }
   }
   
   if (arr.length === 1) arr = arr[0];
@@ -541,8 +544,15 @@ g3d.Point = async (args, env) => {
     geometry.setAttribute('position', env.vertices.position);
     //env.vertices.geometry.clone();
 
-    let a = await interpretate(args[0], env);
-    geometry.setIndex( a.flat().map((e)=>e-1) );
+    if (data instanceof NumericArrayObject) { 
+      const dp = data.normal(); //FIXME!!!
+      geometry.setIndex( dp.flat().map((e)=>e-1) );
+    } else {  
+      geometry.setIndex( data.flat().map((e)=>e-1) );
+    }
+
+    //let a = await interpretate(args[0], env);
+    
 
   } else {
     geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
@@ -582,10 +592,15 @@ g3d.Point.update = async (args, env) => {
   if (env.hasOwnProperty("vertices")) return; //reject if inside Complex
 
   let data = await interpretate(args[0], env);
+  if (data instanceof NumericArrayObject) {
+    env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.buffer, 3 ) );
+  } else {  
+    env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+  }
 
   env.wake();
 
-  env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+  
   return env.local.points;
 };
 
@@ -626,6 +641,11 @@ g3d.Sphere = async (args, env) => {
 
   console.log(env.local);
   let list = await interpretate(args[0], env);
+
+  if (list instanceof NumericArrayObject) { // convert back automatically
+    list = list.normal();
+  }
+
   console.log('DRAW A SPHERE');
 
   if (list.length === 3) {
@@ -646,10 +666,13 @@ g3d.Sphere = async (args, env) => {
 };
 
 g3d.Sphere.update = async (args, env) => {
-  console.log('Sphere: updating the data!');
+  //console.log('Sphere: updating the data!');
   env.wake();
 
   let c = await interpretate(args[0], env);
+  if (c instanceof NumericArrayObject) { // convert back automatically
+    c = c.normal();
+  }
 
   if (env.local.object.length == 1) {
     c = [c];
@@ -1023,6 +1046,9 @@ g3d.Translate = async (args, env) => {
   let group = new THREE.Group();
 
   let p = await interpretate(args[1], env);
+  if (p instanceof NumericArrayObject) { // convert back automatically
+    p = p.normal();
+  }
 
   //Backup of params
   let copy = Object.assign({}, env);
@@ -1040,7 +1066,10 @@ g3d.Translate = async (args, env) => {
 
 g3d.Translate.update = async (args, env) => {
   env.wake();
-  const p = await interpretate(args[1], env);
+  let p = await interpretate(args[1], env);
+  if (p instanceof NumericArrayObject) { // convert back automatically
+    p = p.normal();
+  }
   const group = env.local.mesh;
 
   if (env.Lerp) {
@@ -1326,7 +1355,11 @@ g3d.GeometricTransformation = async (args, env) => {
 
 g3d.GeometricTransformation.update = async (args, env) => {
   env.wake();
-  const data = await interpretate(args[1], env);
+  let data = await interpretate(args[1], env);
+  if (data instanceof NumericArrayObject) { // convert back automatically
+    data = data.normal();
+  }
+  
 
   if (env.local.entities) {
     //list of matrixes
@@ -1401,8 +1434,18 @@ g3d.GraphicsComplex = async (args, env) => {
   const options = await core._getRules(args, {...env, hold: true});
   
 
-  const pts = (await interpretate(args[0], copy)).flat();
-  const vertices = new Float32Array( pts );
+  let pts = (await interpretate(args[0], copy));
+  let vertices;
+  
+  if (pts instanceof NumericArrayObject) { // convert back automatically
+    vertices = new Float32Array(pts.buffer);
+  } else {
+    pts = pts.flat();
+    vertices = new Float32Array( pts );
+  }
+  
+  
+  
 
   //local storage
   copy.vertices = {
@@ -1419,7 +1462,13 @@ g3d.GraphicsComplex = async (args, env) => {
   if ('VertexColors' in options) {
     const colors = await interpretate(options["VertexColors"], env);
     copy.vertices.colored = true;
-    copy.vertices.colors = new THREE.Float32BufferAttribute( new Float32Array( colors.flat() ), 3 );
+
+    if (colors instanceof NumericArrayObject) {
+      copy.vertices.colors = new THREE.Float32BufferAttribute( new Float32Array( colors.buffer ), 3 );
+    } else {
+      copy.vertices.colors = new THREE.Float32BufferAttribute( new Float32Array( colors.flat() ), 3 );
+    }
+    
   }
 
   const group = new THREE.Group();
@@ -1438,8 +1487,14 @@ g3d.Reflectivity = () => {
 g3d.GraphicsComplex.update = async (args, env) => {
   env.wake();
 
-  const pts = (await interpretate(args[0], env)).flat();
-  const vertices = new Float32Array( pts );
+  let pts = (await interpretate(args[0], env));
+  let vertices;
+
+  if (pts instanceof NumericArrayObject) { // convert back automatically
+    vertices = new Float32Array( pts.buffer );
+  } else {
+    vertices = new Float32Array( pts.flat() );
+  }
 
   env.local.vertices.position.set( vertices );
   env.local.vertices.position.needsUpdate = true;
@@ -1447,7 +1502,13 @@ g3d.GraphicsComplex.update = async (args, env) => {
   if (env.local.vertices.colored) {
     const options = await core._getRules(args, {...env, hold: true});
     const colors = await interpretate(options["VertexColors"], env);
-    env.local.vertices.colors.set(new Float32Array( colors.flat() ));
+
+    if (colors instanceof NumericArrayObject) {
+      env.local.vertices.colors.set(new Float32Array( colors.buffer ));
+    } else {
+      env.local.vertices.colors.set(new Float32Array( colors.flat() ));
+    }
+    
     env.local.vertices.colors.needsUpdate = true;
   }
 
@@ -1723,6 +1784,9 @@ g3d.Line = async (args, env) => {
     geometry.setAttribute('position', env.vertices.position);
 
     let a = await interpretate(args[0], env);
+    if (a instanceof NumericArrayObject) { // convert back automatically
+      a = a.normal();
+    }
     
 
     geometry.setIndex( a.flat().map((e)=>e-1) );
@@ -1733,7 +1797,12 @@ g3d.Line = async (args, env) => {
   } else { 
     geometry = new THREE.BufferGeometry();
     const points = await interpretate(args[0], env);
-    geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.flat()), 3 ) );
+    if (points instanceof NumericArrayObject) { // convert back automatically
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.buffer), 3 ) );
+    } else {
+      geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array(points.flat()), 3 ) );
+    }
+    
 
   }
 
@@ -1758,7 +1827,10 @@ g3d.Line = async (args, env) => {
 
 g3d.Line.update = async (args, env) => {
   
-  const points = await interpretate(args[0], env);
+  let points = await interpretate(args[0], env);
+  if (points instanceof NumericArrayObject) { // convert back automatically
+    points = points.normal();
+  }
 
   const positionAttribute = env.local.line.geometry.getAttribute( 'position' );
 
