@@ -555,7 +555,12 @@ g3d.Point = async (args, env) => {
     
 
   } else {
-    geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+    if (data instanceof NumericArrayObject) { 
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.buffer, 3 ) );
+    } else {
+      geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
+    }
+    
   }
 
   let material;
