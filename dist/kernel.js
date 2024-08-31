@@ -2030,6 +2030,9 @@ if (args.length > 0) color = await interpretate(args[0], copy);
 
 if (args.length > 1) {
   position = await interpretate(args[1], env);
+  if (position instanceof NumericArrayObject) {
+    position = position.normal();
+  }
   //position = [position[0], position[1], position[2]];
 }
 
@@ -2057,6 +2060,10 @@ env.wake();
 
 if (args.length > 1) {
   let pos = await interpretate(args[1], env);
+
+  if (pos instanceof NumericArrayObject) {
+    pos = pos.normal();
+  }
   //pos = [pos[0], pos[1], pos[2]];
 
   if (env.Lerp) {
@@ -2104,6 +2111,10 @@ let target = [0,0,0];
 
 if (args.length > 1) {
   position = await interpretate(args[1], env);
+  if (position instanceof NumericArrayObject) {
+    position = position.normal();
+  }
+
   if (position.length == 2) {
     target = position[1];
     //target = [target[0], target[2], -target[1]];
@@ -2143,6 +2154,9 @@ env.wake();
 
 if (args.length > 1) {
   let position = await interpretate(args[1], env);
+  if (position instanceof NumericArrayObject) {
+    position = position.normal();
+  }
   if (position.length == 2) {
     let target = position[1];
     //target = [target[0], target[2], target[1]];
