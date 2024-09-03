@@ -2257,8 +2257,6 @@ let intensity = 100; if (args.length > 2) intensity = await interpretate(args[2]
 let distance = 0; if (args.length > 3) distance = await interpretate(args[3], env);
 let decay = 2; if (args.length  > 4) decay = await interpretate(args[4], env);
 
-console.log(position);
-console.log(color);
 
 const light = new THREE.PointLight(color, intensity, distance, decay);
 light.castShadow = env.shadows;
@@ -2276,8 +2274,6 @@ env.wake();
 
 if (args.length > 1) {
   let pos = await interpretate(args[1], env);
-
-  console.log(pos);
 
   if (pos instanceof NumericArrayObject) {
     pos = pos.normal();
@@ -2543,6 +2539,53 @@ let OrbitControls;
 let FullScreenQuad;
 
 let CSS2D = undefined;
+
+const blobToBase64 = blob => {
+  const reader = new FileReader();
+  reader.readAsDataURL(blob);
+  return new Promise(resolve => {
+    reader.onloadend = () => {
+      resolve(reader.result);
+    };
+  });
+};
+
+g3d['Graphics3D`Serialize'] = async (args, env) => {
+  const opts = await core._getRules(args, env);
+  let dom = env.element;
+
+  if (opts.TemporalDOM) {
+    dom = document.createElement('div');
+    dom.style.pointerEvents = 'none';
+    dom.style.opacity = 0;
+    dom.style.position = 'absolute';
+
+    document.body.appendChild(dom);
+  }
+
+  await interpretate(args[0], {...env, element: dom});
+
+  const promise = new Deferred();
+  console.log(env.global);
+
+  env.global.renderer.domElement.toBlob(function(blob){
+    promise.resolve(blob)
+  }, 'image/png', 1.0);
+
+  const blob = await promise.promise;
+
+  Object.values(env.global.stack).forEach((el) => {
+    el.dispose();
+  });
+
+  if (opts.TemporalDOM) {
+    dom.remove();
+  }
+
+  const encoded = await blobToBase64(blob);
+ 
+  return encoded;  
+}
 
 core.Graphics3D = async (args, env) => {  
 //Lazy loading
@@ -3921,6 +3964,8 @@ cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
 cameraFolder.close();  
 
 animate();
+
+return env;
 }
 
 core.Graphics3D.destroy = (args, env) => {

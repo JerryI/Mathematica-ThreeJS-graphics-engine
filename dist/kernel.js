@@ -57,6 +57,53 @@ g3d.CapForm = g3d.Void;
 g3d.Appearance = g3d.Void;
 
 
+const blobToBase64 = blob => {
+  const reader = new FileReader();
+  reader.readAsDataURL(blob);
+  return new Promise(resolve => {
+    reader.onloadend = () => {
+      resolve(reader.result);
+    };
+  });
+};
+
+g3d['Graphics3D`Serialize'] = async (args, env) => {
+  const opts = await core._getRules(args, env);
+  let dom = env.element;
+
+  if (opts.TemporalDOM) {
+    dom = document.createElement('div');
+    dom.style.pointerEvents = 'none';
+    dom.style.opacity = 0;
+    dom.style.position = 'absolute';
+
+    document.body.appendChild(dom);
+  }
+
+  await interpretate(args[0], {...env, element: dom});
+
+  const promise = new Deferred();
+  console.log(env.global);
+
+  env.global.renderer.domElement.toBlob(function(blob){
+    promise.resolve(blob)
+  }, 'image/png', 1.0);
+
+  const blob = await promise.promise;
+
+  Object.values(env.global.stack).forEach((el) => {
+    el.dispose();
+  });
+
+  if (opts.TemporalDOM) {
+    dom.remove();
+  }
+
+  const encoded = await blobToBase64(blob);
+ 
+  return encoded;  
+}
+
 /**
 * @type {import('three')}
 */

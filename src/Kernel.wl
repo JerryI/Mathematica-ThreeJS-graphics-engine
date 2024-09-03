@@ -14,6 +14,8 @@ MeshToonMaterial::usage = ""
 
 EventListener::usage = "Internal wrapper for Graphics object to catch events"
 
+Graphics3D`Serialize;
+
 Begin["`Private`"]
 
 listener[p_, list_] := With[{uid = CreateUUID[]}, With[{
@@ -28,6 +30,19 @@ Unprotect[Sphere];
 Sphere      /: EventHandler[p_Sphere, list_List] := listener[p, list]
 
 Protect[Sphere];
+
+
+(*
+
+Then[FrontFetchAsync[Graphics3D`Serialize[Plot3D[Sin[x + y^2], {x, -3, 3}, {y, -2, 2}], "TemporalDOM"->True]], Function[val,
+  test = val;
+]]
+
+ImportString[
+ StringDrop[test, StringLength["data:image/png;base64,"]], 
+ "Base64"]
+
+*)
 
 End[]
 EndPackage[]
