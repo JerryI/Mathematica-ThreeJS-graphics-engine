@@ -1,4 +1,4 @@
-BeginPackage["JerryI`Notebook`Graphics3DUtils`", {"JerryI`Misc`Events`"}]
+BeginPackage["JerryI`Notebook`Graphics3DUtils`", {"JerryI`Misc`Events`", "Notebook`Editor`Kernel`FrontSubmitService`"}]
 
 Metalness::usage = "Specify metallness of the surface Metalness[1] used in Graphics3D"
 Emissive::usage = "Makes a surface emitt light Emissive[RGBColor[...], intensity_:1] used in Graphics3D"
@@ -32,17 +32,11 @@ Sphere      /: EventHandler[p_Sphere, list_List] := listener[p, list]
 Protect[Sphere];
 
 
-(*
-
-Then[FrontFetchAsync[Graphics3D`Serialize[Plot3D[Sin[x + y^2], {x, -3, 3}, {y, -2, 2}], "TemporalDOM"->True]], Function[val,
-  test = val;
-]]
-
-ImportString[
- StringDrop[test, StringLength["data:image/png;base64,"]], 
- "Base64"]
-
-*)
+(* CALL A MODAL HERE *)
+Unprotect[Rasterize]
+Rasterize[g_Graphics3D, any___] := With[{base = FrontFetch[Graphics3D`Serialize[Plot3D[Sin[x + y^2], {x, -3, 3}, {y, -2, 2}], "TemporalDOM"->True] ]},
+  ImportString[StringDrop[base, StringLength["data:image/png;base64,"] ], "Base64"]
+]
 
 End[]
 EndPackage[]
