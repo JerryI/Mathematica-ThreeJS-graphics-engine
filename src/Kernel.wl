@@ -32,11 +32,12 @@ Sphere      /: EventHandler[p_Sphere, list_List] := listener[p, list]
 Protect[Sphere];
 
 
-(* CALL A MODAL HERE *)
+(* CALL A MODAL HERE 
 Unprotect[Rasterize]
 Rasterize[g_Graphics3D, any___] := With[{base = FrontFetch[Graphics3D`Serialize[Plot3D[Sin[x + y^2], {x, -3, 3}, {y, -2, 2}], "TemporalDOM"->True] ]},
   ImportString[StringDrop[base, StringLength["data:image/png;base64,"] ], "Base64"]
 ]
+*)
 
 End[]
 EndPackage[]
