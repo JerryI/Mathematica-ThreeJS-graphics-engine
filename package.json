@@ -1,6 +1,6 @@
 {
   "name": "wljs-graphics3d-threejs",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "A ThreeJS implementation of Mathematica's Graphics3D",
   "wljs-meta": {
     "js": "dist/kernel.js",
@@ -25,7 +25,6 @@
   "dependencies": {
     "@fantasy-color/lab-to-rgb": "^2.1.0",
     "dat.gui": "^0.7.9",
-    "node-sass": "^9.0.0",
     "three-gpu-pathtracer": "^0.0.16",
     "three-mesh-bvh": "^0.6.8"
   },

@@ -1274,7 +1274,11 @@ const decodeTransformation = (arrays, env) => {
 }
 
 g3d.GeometricTransformation = async (args, env) => {  
-  const data = await interpretate(args[1], env);
+  let data = await interpretate(args[1], env);
+
+  if (data instanceof NumericArrayObject) { // convert back automatically
+    data = data.normal();
+  }  
 
   if (data.length > 3) {
     //list of matrixes
