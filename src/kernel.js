@@ -1143,9 +1143,7 @@ g3d.Translate.update = async (args, env) => {
     return;
   }
 
-  group.translateX(p[0]);
-  group.translateY(p[1]);
-  group.translateZ(p[2]);
+  group.position.set(p[0], p[1], p[2]);
 }
 
 g3d.Translate.virtual = true  
@@ -2689,7 +2687,7 @@ g3d.EventListener = async (args, env) => {
   let object = await interpretate(args[0], env);
   if (Array.isArray(object)) object = object[0];
 
-  if (!TransformControls) TransformControls = (await import('three/examples/jsm/controls/TransformControls.js')).TransformControls;
+  if (!TransformControls) TransformControls = (await import('three/addons/controls/TransformControls.js')).TransformControls;
   rules.forEach((rule)=>{
     g3d.EventListener[rule.lhs](rule.rhs, object, copy);
   });
@@ -2702,11 +2700,13 @@ g3d.EventListener.transform = (uid, object, env) => {
   console.warn('Controls transform is enabled');
   const control = new TransformControls(env.camera, env.global.domElement);
 
+  const gizmo = control.getHelper();
+
   const orbit = env.controlObject.o;
 
   control.attach(object); 
 
-  env.global.scene.add(control); 
+  env.global.scene.add(gizmo); 
 
   const updateData = throttle((x,y,z) => {
     server.kernel.emitt(uid, `<|"position"->{${x.toFixed(4)}, ${y.toFixed(4)}, ${z.toFixed(4)}}|>`, 'transform')
