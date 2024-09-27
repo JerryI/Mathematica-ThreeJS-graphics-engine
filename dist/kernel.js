@@ -275,9 +275,23 @@ g3d.TubeArrow = async (args, env) => {
     opacity: env.opacity,
     metalness: env.metalness,
     emissive: env.emissive,
-    emissiveIntensity: env.emissiveIntensity,
     
-    
+    ior: env.ior,
+    transmission: env.transmission,
+    thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+    attenuationColor: env.attenuationColor,
+    attenuationDistance: env.attenuationDistance,
+    clearcoat: env.clearcoat,
+    clearcoatRoughness: env.clearcoatRoughness,
+    sheenColor: env.sheenColor,
+    sheenRoughness: env.sheenRoughness,
+    iridescence: env.iridescence,
+    iridescenceIOR: env.iridescenceIOR,
+    iridescenceThickness: env.iridescenceThickness,
+    specularColor: env.specularColor,
+    specularIntensity: env.specularIntensity,
+    matte: env.matte
     
   });
 
@@ -627,7 +641,22 @@ g3d.Sphere = async (args, env) => {
     metalness: env.metalness,
     emissive: env.emissive,
     emissiveIntensity: env.emissiveIntensity,
-
+    ior: env.ior,
+    transmission: env.transmission,
+    thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+    attenuationColor: env.attenuationColor,
+    attenuationDistance: env.attenuationDistance,
+    clearcoat: env.clearcoat,
+    clearcoatRoughness: env.clearcoatRoughness,
+    sheenColor: env.sheenColor,
+    sheenRoughness: env.sheenRoughness,
+    iridescence: env.iridescence,
+    iridescenceIOR: env.iridescenceIOR,
+    iridescenceThickness: env.iridescenceThickness,
+    specularColor: env.specularColor,
+    specularIntensity: env.specularIntensity,
+    matte: env.matte
   });
 
   function addSphere(cr) {
@@ -820,7 +849,23 @@ g3d.Cuboid = async (args, env) => {
     depthWrite: true,
     metalness: env.metalness,
     emissive: env.emissive,
-emissiveIntensity: env.emissiveIntensity,
+    emissiveIntensity: env.emissiveIntensity,
+    ior: env.ior,
+    transmission: env.transmission,
+    thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+    attenuationColor: env.attenuationColor,
+    attenuationDistance: env.attenuationDistance,
+    clearcoat: env.clearcoat,
+    clearcoatRoughness: env.clearcoatRoughness,
+    sheenColor: env.sheenColor,
+    sheenRoughness: env.sheenRoughness,
+    iridescence: env.iridescence,
+    iridescenceIOR: env.iridescenceIOR,
+    iridescenceThickness: env.iridescenceThickness,
+    specularColor: env.specularColor,
+    specularIntensity: env.specularIntensity,
+    matte: env.matte    
     
     
     
@@ -931,7 +976,22 @@ g3d.Cylinder = async (args, env) => {
     metalness: env.metalness,
     emissive: env.emissive,
 emissiveIntensity: env.emissiveIntensity,
-    
+ior: env.ior,
+transmission: env.transmission,
+thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+attenuationColor: env.attenuationColor,
+attenuationDistance: env.attenuationDistance,
+clearcoat: env.clearcoat,
+clearcoatRoughness: env.clearcoatRoughness,
+sheenColor: env.sheenColor,
+sheenRoughness: env.sheenRoughness,
+iridescence: env.iridescence,
+iridescenceIOR: env.iridescenceIOR,
+iridescenceThickness: env.iridescenceThickness,
+specularColor: env.specularColor,
+specularIntensity: env.specularIntensity,
+matte: env.matte    
     
     
   });
@@ -1551,7 +1611,7 @@ g3d.Polygon = async (args, env) => {
       //more complicatec case, need to covert all polygons into triangles
       let extendedIndexes = [];
 
-      console.log(a);
+      //console.log(a);
 
       if (Array.isArray(a[0])) {
      
@@ -1623,7 +1683,23 @@ g3d.Polygon = async (args, env) => {
         roughness: env.roughness,
         metalness: env.metalness,
         emissive: env.emissive,
-        emissiveIntensity: env.emissiveIntensity,        
+        emissiveIntensity: env.emissiveIntensity, 
+        ior: env.ior,
+        transmission: env.transmission,
+        thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+        attenuationColor: env.attenuationColor,
+        attenuationDistance: env.attenuationDistance,
+        clearcoat: env.clearcoat,
+        clearcoatRoughness: env.clearcoatRoughness,
+        sheenColor: env.sheenColor,
+        sheenRoughness: env.sheenRoughness,
+        iridescence: env.iridescence,
+        iridescenceIOR: env.iridescenceIOR,
+        iridescenceThickness: env.iridescenceThickness,
+        specularColor: env.specularColor,
+        specularIntensity: env.specularIntensity,
+        matte: env.matte              
       });
     } else {
       material = new env.material({
@@ -1633,7 +1709,23 @@ g3d.Polygon = async (args, env) => {
         roughness: env.roughness,
         metalness: env.metalness,
         emissive: env.emissive,
-        emissiveIntensity: env.emissiveIntensity
+        emissiveIntensity: env.emissiveIntensity,
+        ior: env.ior,
+        transmission: env.transmission,
+        thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+        attenuationColor: env.attenuationColor,
+        attenuationDistance: env.attenuationDistance,
+        clearcoat: env.clearcoat,
+        clearcoatRoughness: env.clearcoatRoughness,
+        sheenColor: env.sheenColor,
+        sheenRoughness: env.sheenRoughness,
+        iridescence: env.iridescence,
+        iridescenceIOR: env.iridescenceIOR,
+        iridescenceThickness: env.iridescenceThickness,
+        specularColor: env.specularColor,
+        specularIntensity: env.specularIntensity,
+        matte: env.matte        
       });         
     }
 
@@ -1688,7 +1780,22 @@ g3d.Polygon = async (args, env) => {
       metalness: env.metalness,
       emissive: env.emissive,
       emissiveIntensity: env.emissiveIntensity,
-      
+      ior: env.ior,
+      transmission: env.transmission,
+      thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+      attenuationColor: env.attenuationColor,
+      attenuationDistance: env.attenuationDistance,
+      clearcoat: env.clearcoat,
+      clearcoatRoughness: env.clearcoatRoughness,
+      sheenColor: env.sheenColor,
+      sheenRoughness: env.sheenRoughness,
+      iridescence: env.iridescence,
+      iridescenceIOR: env.iridescenceIOR,
+      iridescenceThickness: env.iridescenceThickness,
+      specularColor: env.specularColor,
+      specularIntensity: env.specularIntensity,
+      matte: env.matte      
       
       
       //depthTest: false
@@ -1739,7 +1846,22 @@ g3d.Polyhedron = async (args, env) => {
       metalness: env.metalness,
       emissive: env.emissive,
 emissiveIntensity: env.emissiveIntensity,
-      
+ior: env.ior,
+transmission: env.transmission,
+thinFilm: env.thinFilm,
+thickness: env.materialThickness,
+attenuationColor: env.attenuationColor,
+attenuationDistance: env.attenuationDistance,
+clearcoat: env.clearcoat,
+clearcoatRoughness: env.clearcoatRoughness,
+sheenColor: env.sheenColor,
+sheenRoughness: env.sheenRoughness,
+iridescence: env.iridescence,
+iridescenceIOR: env.iridescenceIOR,
+iridescenceThickness: env.iridescenceThickness,
+specularColor: env.specularColor,
+specularIntensity: env.specularIntensity,
+matte: env.matte      
       
       
     });
@@ -1772,9 +1894,55 @@ g3d.Text = async (args, env) => {
   env.mesh.add(labelObject);
 };
 
+
+
+    /*params.materialProperties.metalness = 0.0;
+    params.materialProperties.roughness = 0.23;
+    params.materialProperties.transmission = 1.0;
+    params.materialProperties.color = '#ffffff';*/
+
+    const materialProps = [
+      'color',
+      'emissive',
+      'emissiveIntensity',
+      'roughness',
+      'metalness',
+      'ior',
+      'transmission',
+      'thinFilm',
+      "materialThickness",
+      'attenuationColor',
+      'attenuationDistance',
+      'opacity',
+      'clearcoat',
+      'clearcoatRoughness',
+      'sheenColor',
+      'sheenRoughness',
+      'iridescence',
+      'iridescenceIOR',
+      'iridescenceThickness',
+      'specularColor',
+      'specularIntensity',
+      'matte',
+      'flatShading',
+      'castShadow'
+  ];
+
 g3d.Directive = async (args, env) => { 
-  for (const i of args) {
-    await interpretate(i, env);
+  const opts = await core._getRules(args, {...env, hold:true});
+
+  for (let i=0; i<args.length - Object.keys(opts).length; ++i) {
+    await interpretate(args[i], env);
+  }
+
+  const keys = Object.keys(opts);
+  for (let i=0; i<keys.length; ++i) {
+    const okey = keys[i];
+    const key = okey.charAt(0).toLocaleLowerCase() + okey.slice(1);
+
+    if (materialProps.includes(key)) {
+      env[key] = await interpretate(opts[okey], {...env});
+    }
   }
 };
 
@@ -1936,7 +2104,7 @@ g3d.Water = async (args, env) => {
   
   
   if (!Water) {
-    Water         = (await import('./Water-a573d7d4.js')).Water;
+    Water         = (await import('./Water-2fe2a4da.js')).Water;
   }
 
   let options = await core._getRules(args, env);
@@ -2010,9 +2178,25 @@ if (options.ImageSize) {
 return ImageSize;
 };
 
-let RTX = {};
+let RTX = false;
 
-const addDefaultLighting = (scene) => {
+const addDefaultLighting = (scene, RTX, pathtracing) => {
+if (pathtracing) {
+  /*const rectLight = new RTX.ShapedAreaLight( 0xffffff, 1.0,  10.0, 10.0 );
+  rectLight.position.set( 5, 5, 0 );
+  rectLight.lookAt( 0, 0, 0 );
+  scene.add( rectLight )*/
+  const texture = new RTX.GradientEquirectTexture();
+  texture.topColor.set( 0xffffff );
+  texture.bottomColor.set( 0x666666 );
+  texture.update();
+  scene.defaultEnvTexture = texture;
+  scene.environment = texture;
+  scene.background = texture;
+
+  return;
+}
+
 const light = new THREE.PointLight(0xffffff, 2, 10);
 light.position.set(0, 10, 0);
 scene.add(light);
@@ -2290,7 +2474,7 @@ g3d.EventListener = async (args, env) => {
   let object = await interpretate(args[0], env);
   if (Array.isArray(object)) object = object[0];
 
-  if (!TransformControls) TransformControls = (await import('./TransformControls-2614e9c1.js')).TransformControls;
+  if (!TransformControls) TransformControls = (await import('./TransformControls-ace7d401.js')).TransformControls;
   rules.forEach((rule)=>{
     g3d.EventListener[rule.lhs](rule.rhs, object, copy);
   });
@@ -2325,7 +2509,6 @@ g3d.EventListener.transform = (uid, object, env) => {
 
 let RGBELoader;
 let OrbitControls;
-let FullScreenQuad;
 
 let CSS2D = undefined;
 
@@ -2379,11 +2562,11 @@ g3d['Graphics3D`Serialize'] = async (args, env) => {
 core.Graphics3D = async (args, env) => {  
 //Lazy loading
 
-THREE         = (await import('./three.module-e66a3903.js'));
-OrbitControls = (await import('./OrbitControls-36d93d15.js')).OrbitControls;
+THREE         = (await import('./three.module-a640cac7.js'));
+OrbitControls = (await import('./OrbitControls-4c5de539.js')).OrbitControls;
 GUI           = (await import('./dat.gui.module-0f47b92e.js')).GUI;  
-RGBELoader    = (await import('./RGBELoader-132ece2d.js')).RGBELoader; 
-FullScreenQuad = (await import('./Pass-bef7cacb.js')).FullScreenQuad; 
+RGBELoader    = (await import('./RGBELoader-257a4227.js')).RGBELoader; 
+(await import('./Pass-08b8db2e.js')).FullScreenQuad; 
 MathUtils     = THREE.MathUtils;
 
 let sleeping = false;
@@ -2402,7 +2585,7 @@ if (Object.keys(options).length === 0 && args.length > 1) {
 let noGrid = true;
 
 //if (options.Axes) {
-  if (!CSS2D)  CSS2D = await import('./labels-55a2c393.js');
+  if (!CSS2D)  CSS2D = await import('./labels-de0117c0.js');
   
 //}
 
@@ -2426,7 +2609,7 @@ const defaultMatrix = new THREE.Matrix4().set(
 let PathRendering = false;
 if ('RTX' in options) {
   PathRendering = true;
-  RTX = (await import('./index.module-c8bf6d87.js'));
+  RTX = (await import('./index.module-0e1ffa8b.js'));
 }
 
 
@@ -2449,6 +2632,8 @@ const container = env.element;
 const ImageSize = await setImageSize(options, env); 
 
 const params = 	{
+  topColor: 0xffffff,
+  bottomColor: 0x666666,
   multipleImportanceSampling: false,
   stableNoise: false,
   denoiseEnabled: true,
@@ -2460,13 +2645,16 @@ const params = 	{
   environmentBlur: 0.0,
   backgroundBlur: 0.0,
   bounces: 5,
+  sleepAfter: 1000,
+  runInfinitely: false,
+  stopAfterNFrames: 60,
   samplesPerFrame: 1,
   acesToneMapping: true,
   resolutionScale: 1.0,
   transparentTraversals: 20,
   filterGlossyFactor: 0.5,
   tiles: 1,
-  backgroundAlpha: 1,
+  backgroundAlpha: 0,
   checkerboardTransparency: true,
   cameraProjection: 'Orthographic',
 };
@@ -2477,6 +2665,9 @@ if (options.ViewProjection) {
 
 if (!PathRendering) params.resolutionScale = 1.0;
 
+if (PathRendering) {
+  params.sleepAfter = 10000;
+}
 //Setting GUI
 const gui = new GUI({ autoPlace: false, name: '...', closed:true });
 
@@ -2501,11 +2692,12 @@ gui.add(button, 'Save');
 
 
 
+
+
 //Setting up renderer
-let renderer, domElement, controls, ptRenderer, activeCamera, blitQuad, denoiseQuad;
+let renderer, domElement, controls, ptRenderer, activeCamera;
 let perspectiveCamera, orthoCamera;
-let envMap, envMapGenerator, scene;
-let PT_PROGRAM_ID;
+let envMap, scene;
 
 const orthoWidth = 5;
 
@@ -2572,24 +2764,9 @@ if (PathRendering) {
   //equirectCamera = new RTX.EquirectCamera();
   //equirectCamera.position.set( - 4, 2, 3 );
 
-  ptRenderer = new RTX.PathTracingRenderer( renderer );
-  ptRenderer.alpha = true;
-  ptRenderer.material = new RTX.PhysicalPathTracingMaterial();
-  ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', params.transparentTraversals );
-  ptRenderer.material.setDefine( 'FEATURE_MIS', Number( params.multipleImportanceSampling ) );
-  ptRenderer.tiles.set( params.tiles, params.tiles );
-
-  blitQuad = new FullScreenQuad( new THREE.MeshBasicMaterial( {
-    map: ptRenderer.target.texture,
-    blending: THREE.CustomBlending,
-    premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
-  } ) );
-
-  denoiseQuad = new FullScreenQuad( new RTX.DenoiseMaterial( {
-    map: ptRenderer.target.texture,
-    blending: THREE.CustomBlending,
-    premultipliedAlpha: renderer.getContextAttributes().premultipliedAlpha,
-  } ) ); 
+  //ptRenderer = new RTX.PathTracingRenderer( renderer );
+  ptRenderer = new RTX.WebGLPathTracer( renderer );
+  //ptRenderer.setScene( scene, activeCamera ); 
 } 
 
 let controlObject = {
@@ -2610,7 +2787,7 @@ let controlObject = {
 if (options.Controls) {
 
   if ((await interpretate(options.Controls, env)) === 'PointerLockControls') {
-    const o = (await import('./PointerLockControls-20643468.js')).PointerLockControls;
+    const o = (await import('./PointerLockControls-b6a9620c.js')).PointerLockControls;
     
   
 
@@ -2813,7 +2990,7 @@ env.local.domElement = domElement;
 
 if (PathRendering) {
   controls.addEventListener( 'change', () => {
-    ptRenderer.reset();
+    ptRenderer.updateCamera();
   } ); 
 } 
 
@@ -2841,7 +3018,7 @@ const envcopy = {
   edgecolor: new THREE.Color(0, 0, 0),
   mesh: group,
   metalness: 0,
-  emissive: new THREE.Color(0, 0, 0),
+  emissive: undefined,
   emissiveIntensity: 1,
   arrowHeight: 20,
   arrowRadius: 5,
@@ -2854,7 +3031,28 @@ const envcopy = {
 
   Handlers: Handlers,
   wake: wakeFunction,
-  pointSize: 0.8/10.0
+  pointSize: 0.8/10.0,
+
+  emissiveIntensity: undefined,
+  roughness: undefined,
+  metalness: undefined,
+  ior: undefined,
+  transmission: undefined,
+  thinFilm: undefined,
+  materialThickness: undefined,
+  attenuationColor: undefined,
+  attenuationDistance: undefined,
+  opacity: undefined,
+  clearcoat: undefined,
+  clearcoatRoughness: undefined,
+  sheenColor: undefined,
+  sheenRoughness: undefined,
+  iridescence: undefined,
+  iridescenceIOR: undefined,
+  iridescenceThickness: undefined,
+  specularColor: undefined,
+  specularIntensity: undefined,
+  matte: undefined
 };  
 
 env.local.wakeThreadUp = () => {
@@ -3343,16 +3541,19 @@ scene.updateMatrixWorld();
 
 //add some lighting
 if ('Lighting' in options) ; else {
-  addDefaultLighting(scene);
+  addDefaultLighting(scene, RTX, PathRendering);
 }
 
-if (PathRendering)
-  envMapGenerator = new RTX.BlurredEnvMapGenerator( renderer ); 
+if (PathRendering) {
+  ptRenderer.updateLights();
+  new RTX.BlurredEnvMapGenerator( renderer ); 
+}
 
 let envMapPromise;
 
 if ('Lightmap' in options) {
   const url = await interpretate(options.Lightmap, env);
+  params.backgroundAlpha = 1.0;
 
   envMapPromise = new RGBELoader().setDataType( THREE.FloatType )
   .loadAsync(url)
@@ -3375,7 +3576,7 @@ if ('Lightmap' in options) {
     pmremGenerator.dispose();
 
   } );
-}
+} 
 
 
   if (!PathRendering) {
@@ -3384,7 +3585,20 @@ if ('Lightmap' in options) {
   }
 
   if (PathRendering) {
-    var generator = new RTX.PathTracingSceneGenerator( scene );
+
+
+    scene.environmentIntensity = params.environmentIntensity;
+	  scene.backgroundIntensity = params.environmentIntensity;
+    scene.backgroundAlpha = params.backgroundAlpha;
+
+    if (params.backgroundAlpha < 1.0) {
+      scene.background = null;
+    }
+
+    ptRenderer.setScene( scene, activeCamera ); 
+    ptRenderer.updateEnvironment();
+    ptRenderer.updateLights();
+    /*var generator = new RTX.PathTracingSceneGenerator( scene );
     var sceneInfo = generator.generate( scene );
     var { bvh, textures, materials } = sceneInfo;
 
@@ -3401,7 +3615,7 @@ if ('Lightmap' in options) {
 
   material.materialIndexAttribute.updateFrom( geometry.attributes.materialIndex );
   material.textures.setTextures( renderer, 2048, 2048, textures );
-  material.materials.updateFrom( materials, textures );
+  material.materials.updateFrom( materials, textures );*/
 }
 
 if ('Lightmap' in options)
@@ -3414,10 +3628,9 @@ function onResize() {
   const w = ImageSize[0];
   const h = ImageSize[1];
   const scale = params.resolutionScale;
-  const dpr = window.devicePixelRatio;
 
   if (PathRendering) {
-    ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
+    //ptRenderer.setSize( w * scale * dpr, h * scale * dpr );
     ptRenderer.reset();
   }
 
@@ -3443,10 +3656,22 @@ function reset() {
 
 function updateEnvBlur() {
 
-  const blurredTex = envMapGenerator.generate( envMap, params.environmentBlur );
-  ptRenderer.material.envMapInfo.updateFrom( blurredTex );
-  scene.environment = blurredTex;
-  ptRenderer.reset();
+
+const generator = new RTX.BlurredEnvMapGenerator( renderer );
+const blurredEnvMap = generator.generate( envMap, 0.35 );
+scene.background = blurredEnvMap;
+	scene.environment = blurredEnvMap;
+  scene.environmentIntensity = params.environmentIntensity;
+	  scene.backgroundIntensity = params.environmentIntensity;
+    scene.backgroundAlpha = params.backgroundAlpha;
+
+    if ( params.backgroundAlpha < 1.0 ) {
+
+      scene.background = null;
+  
+    }
+  generator.dispose();
+  ptRenderer.updateEnvironment();
 
 }
 
@@ -3491,39 +3716,28 @@ function updateCamera( cameraProjection ) {
 
 let animate;
 
-if (PathRendering) {
-  animate = () => {
-    animateOnce();
+animate = () => {
+  animateOnce();
+
+  if (performance.now() - timeStamp > params.sleepAfter && !params.runInfinitely) {
+    sleeping = true;
+    console.warn('g3d >> Sleeping...');
+  } else {
     env.local.aid = requestAnimationFrame( animate );
-  };
-} else {
-  animate = () => {
-    animateOnce();
+  }
 
-    if (performance.now() - timeStamp > 1000) {
-      sleeping = true;
-      console.warn('g3d >> Sleeping...');
-    } else {
-      env.local.aid = requestAnimationFrame( animate );
-    }
-
-  };    
-}
+};  
 
 
 function updateSettings() {
   wakeFunction();
 
   if (PathRendering) {
-    ptRenderer.material.materials.updateFrom( sceneInfo.materials, sceneInfo.textures );
-
-
-    ptRenderer.material.filterGlossyFactor = params.filterGlossyFactor;
-    ptRenderer.material.environmentIntensity = params.environmentIntensity;
-    ptRenderer.material.backgroundBlur = params.backgroundBlur;
-    ptRenderer.material.bounces = params.bounces;
-    ptRenderer.material.backgroundAlpha = params.backgroundAlpha;
-    ptRenderer.material.physicalCamera.updateFrom( activeCamera );
+    //ptRenderer.renderSample();
+    ptRenderer.bounces = params.bounces;
+    scene.environmentIntensity = params.environmentIntensity;
+	  scene.backgroundIntensity = params.environmentIntensity;
+    scene.backgroundAlpha = params.backgroundAlpha;
   }
 
   activeCamera.updateMatrixWorld();
@@ -3542,32 +3756,17 @@ function updateSettings() {
 function animateOnce() {
   
   if (PathRendering) {
-    activeCamera.updateMatrixWorld();
-    // Get the path tracing shader id. It will be the next program compiled and used here.
-    if ( PT_PROGRAM_ID === undefined ) {
-
-      PT_PROGRAM_ID = renderer.info.programs.length;
-
+    //activeCamera.updateMatrixWorld();
+    
+    if (params.samplesPerFrame > 1) {
+      for (let j=0; j<params.samplesPerFrame; ++j) {
+        ptRenderer.renderSample();
+      }
+    } else {
+      ptRenderer.renderSample();
     }
-
-    for ( let i = 0, l = params.samplesPerFrame; i < l; i ++ ) {
-
-        ptRenderer.update();
-
-    }
-
-
-    denoiseQuad.material.sigma = params.denoiseSigma;
-    denoiseQuad.material.threshold = params.denoiseThreshold;
-    denoiseQuad.material.kSigma = params.denoiseKSigma;
-
-    const quad = params.denoiseEnabled ? denoiseQuad : blitQuad;
-
-    renderer.autoClear = false;
-    quad.material.map = ptRenderer.target.texture;
-    quad.render( renderer );
-    renderer.autoClear = true;
-
+    
+    labelRenderer.render(scene, activeCamera);
   } else {
     renderer.render( scene, activeCamera );
     labelRenderer.render(scene, activeCamera);
@@ -3596,97 +3795,74 @@ onResize();
 updateCamera( params.cameraProjection );
 
 if (PathRendering) {
+  scene.backgroundAlpha = params.backgroundAlpha;
+
   const ptFolder = gui.addFolder( 'Path Tracing' );
 
-ptFolder.add( params, 'stableNoise' ).onChange( value => {
+ptFolder.add( params, 'runInfinitely');  
 
-  ptRenderer.stableNoise = value;
-  updateSettings();
 
-} );
-ptFolder.add( params, 'multipleImportanceSampling' ).onChange( value => {
+ptFolder.add( params, 'samplesPerFrame', 1, 50, 1 );
 
-  ptRenderer.material.setDefine( 'FEATURE_MIS', Number( value ) );
-  ptRenderer.reset();
-  updateSettings();
 
-} );
-ptFolder.add( params, 'tiles', 1, 4, 1 ).onChange( value => {
+//const evFolder = gui.addFolder( 'Environment' );
 
-  ptRenderer.tiles.set( value, value );
-  updateSettings();
-
-} );
-ptFolder.add( params, 'samplesPerFrame', 1, 10, 1 );
-ptFolder.add( params, 'filterGlossyFactor', 0, 1 ).onChange( () => {
+ptFolder.add( params, 'environmentIntensity', 0, 10, 0.1).onChange( () => {
 
   ptRenderer.reset();
   updateSettings();
+  ptRenderer.updateEnvironment();
 
-} );
+} ); 
+
+ptFolder.add( params, 'backgroundAlpha', 0, 1, 0.1).onChange( () => {
+
+  ptRenderer.reset();
+  updateSettings();
+  ptRenderer.updateEnvironment();
+
+} ); 
+
+
+
+/*evFolder.addColor( params, 'topColor').onChange( () => {
+
+  if (scene.defaultEnvTexture) {
+    scene.defaultEnvTexture.topColor.set( params.topColor );
+    scene.defaultEnvTexture.update();
+    
+    //ptRenderer.setScene(scene, activeCamera);
+    ptRenderer.updateEnvironment();
+  }
+
+} ); 
+
+evFolder.addColor( params, 'bottomColor').onChange( () => {
+
+  if (scene.defaultEnvTexture) {
+    scene.defaultEnvTexture.bottomColor.set( params.bottomColor );
+    scene.defaultEnvTexture.update();
+    
+    //ptRenderer.setScene(scene, activeCamera);
+    ptRenderer.updateEnvironment();
+  }
+
+} );*/
+
+//evFolder.close();  
+
+
 ptFolder.add( params, 'bounces', 1, 30, 1 ).onChange( () => {
 
   ptRenderer.reset();
   updateSettings();
 
 } );
-ptFolder.add( params, 'transparentTraversals', 0, 40, 1 ).onChange( value => {
 
-  ptRenderer.material.setDefine( 'TRANSPARENT_TRAVERSALS', value );
-  ptRenderer.reset();
-  updateSettings();
-
-} );
-ptFolder.add( params, 'resolutionScale', 0.1, 1 ).onChange( () => {
-
-  onResize();
-
-} );
-
-const denoiseFolder = gui.addFolder( 'Denoising' );
-denoiseFolder.add( params, 'denoiseEnabled' ).onChange(updateSettings);
-denoiseFolder.add( params, 'denoiseSigma', 0.01, 12.0 ).onChange(updateSettings);
-denoiseFolder.add( params, 'denoiseThreshold', 0.01, 1.0 ).onChange(updateSettings);
-denoiseFolder.add( params, 'denoiseKSigma', 0.0, 12.0 ).onChange(updateSettings);
-denoiseFolder.close();
-
-
-const envFolder = gui.addFolder( 'Environment' );
-envFolder.add( params, 'environmentIntensity', 0, 10 ).onChange( () => {
-
-  ptRenderer.reset();
-  updateSettings();
-
-} );
-envFolder.add( params, 'environmentRotation', 0, 2 * Math.PI ).onChange( v => {
-
-  ptRenderer.material.environmentRotation.makeRotationY( v );
-  ptRenderer.reset();
-  updateSettings();
-
-} );
-envFolder.add( params, 'environmentBlur', 0, 1 ).onChange( () => {
-
-  updateEnvBlur();
-  updateSettings();
-
-} );
-envFolder.add( params, 'backgroundBlur', 0, 1 ).onChange( () => {
-
-  ptRenderer.reset();
-  updateSettings();
-
-} );
-envFolder.add( params, 'backgroundAlpha', 0, 1 ).onChange( () => {
-
-  ptRenderer.reset();
-  updateSettings();
-
-} );
-envFolder.close();
 }
 
 const cameraFolder = gui.addFolder( 'Camera' );
+cameraFolder.add( params, 'sleepAfter', 1000, 30000, 10 );
 cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic' ] ).onChange( v => {
 
   updateCamera( v );
@@ -3697,35 +3873,9 @@ cameraFolder.add( params, 'cameraProjection', [ 'Perspective', 'Orthographic' ] 
 cameraFolder.add( params, 'acesToneMapping' ).onChange( value => {
 
   renderer.toneMapping = value ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
-  if (PathRendering)
-    blitQuad.material.needsUpdate = true;
-
   updateSettings();
 
 } );
-
-if (PathRendering) {
-cameraFolder.add( perspectiveCamera, 'focusDistance', 1, 100 ).onChange( reset );
-cameraFolder.add( perspectiveCamera, 'apertureBlades', 0, 10, 1 ).onChange( function ( v ) {
-
-  perspectiveCamera.apertureBlades = v === 0 ? 0 : Math.max( v, 3 );
-  this.updateDisplay();
-  reset();
-  updateSettings();
-
-} );
-cameraFolder.add( perspectiveCamera, 'apertureRotation', 0, 12.5 ).onChange( reset );
-cameraFolder.add( perspectiveCamera, 'anamorphicRatio', 0.1, 10.0 ).onChange( reset );
-cameraFolder.add( perspectiveCamera, 'bokehSize', 0, 50 ).onChange( reset ).listen();
-cameraFolder.add( perspectiveCamera, 'fStop', 0.3, 20 ).onChange( reset ).listen();
-cameraFolder.add( perspectiveCamera, 'fov', 25, 100 ).onChange( () => {
-
-  perspectiveCamera.updateProjectionMatrix();
-  reset();
-  updateSettings();
-
-} ).listen();
-}
 
 cameraFolder.close();  
 
