@@ -275,6 +275,7 @@ g3d.TubeArrow = async (args, env) => {
     opacity: env.opacity,
     metalness: env.metalness,
     emissive: env.emissive,
+    emissiveIntensity: env.emissiveIntensity,
     
     ior: env.ior,
     transmission: env.transmission,
@@ -465,12 +466,7 @@ g3d.Arrow = async (args, env) => {
   //arrowHelper.castShadow = env.shadows;
   //arrowHelper.receiveShadow = env.shadows;
    
-  if (env.PathRendering) {
-    arrowHelper.line.material.emissive = env.emissive;
-    arrowHelper.cone.material.emissive = env.emissive;
-    arrowHelper.line.material.emissiveIntensity = env.emissiveIntensity;
-    arrowHelper.cone.material.emissiveIntensity = env.emissiveIntensity;
-  }
+
 
   env.mesh.add(arrowHelper);
   arrowHelper.line.material.linewidth = env.thickness;
@@ -3019,7 +3015,6 @@ const envcopy = {
   mesh: group,
   metalness: 0,
   emissive: undefined,
-  emissiveIntensity: 1,
   arrowHeight: 20,
   arrowRadius: 5,
   reflectivity: 0.5,
