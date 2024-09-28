@@ -15,6 +15,7 @@ MeshMaterial::usage = "specifies the material for 3D primitives. MeshMaterial[Me
 
 MeshPhysicalMaterial::usage = ""
 MeshToonMaterial::usage = ""
+MeshFogMaterial::usage = "works only with RTX on"
 
 EventListener::usage = "Internal wrapper for Graphics object to catch events"
 

@@ -2673,6 +2673,20 @@ g3d.MeshLambertMaterial = () => THREE.MeshLambertMaterial
 g3d.MeshPhongMaterial = () => THREE.MeshPhongMaterial
 g3d.MeshToonMaterial = () => THREE.MeshToonMaterial
 
+g3d.MeshFogMaterial = async (args, env) => {
+  let density = 0.01;
+  if (args.length > 0) {
+    density = await interpretate(args[0], env);
+  }
+  function virt () {
+    const fogMaterial = new RTX.FogVolumeMaterial();
+    fogMaterial.density = density;
+    return fogMaterial;
+  };
+
+  return virt;
+}
+
 let TransformControls = false
 
 g3d.EventListener = async (args, env) => {
@@ -2873,6 +2887,16 @@ const params = 	{
 
 if (options.ViewProjection) { 
   params.cameraProjection = await interpretate(options.ViewProjection, env);
+}
+
+if (options.Background) {
+  const backgroundColor = await interpretate(options.Background, {...env});
+  options.Background = backgroundColor;
+  if (backgroundColor?.isColor == true) {
+    params.backgroundAlpha = 1.0;
+
+  }
+  
 }
 
 if (!PathRendering) params.resolutionScale = 1.0;
@@ -3771,10 +3795,22 @@ scene.updateMatrixWorld();
 
 //console.error(new THREE.Box3().setFromObject(scene));
 
+
 //add some lighting
 if ('Lighting' in options) {
   //if ((await interpretate(options.Lighting, env)) === 'None')
-
+  if (options.Background && PathRendering) {
+    if (options.Background.isColor) {
+      params.environmentIntensity = 0.0;
+      const texture = new RTX.GradientEquirectTexture();
+      texture.topColor.set( 0xffffff );
+      texture.bottomColor.set( 0x666666 );
+      texture.update();
+      scene.defaultEnvTexture = texture;
+      scene.environment = texture;
+      scene.background = texture;
+    }
+  }
 } else {
   addDefaultLighting(scene, RTX, PathRendering);
 }
