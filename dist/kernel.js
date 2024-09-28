@@ -270,7 +270,7 @@ g3d.TubeArrow = async (args, env) => {
    */  
   const material = new env.material({
     color: env.color,
-    transparent: false,
+    transparent: env.opacity < 1.0,
     roughness: env.roughness,
     opacity: env.opacity,
     metalness: env.metalness,
@@ -966,7 +966,7 @@ g3d.Cylinder = async (args, env) => {
 
   const material = new env.material({
     color: env.color,
-    transparent: false,
+    transparent: env.opacity < 1.0,
     roughness: env.roughness,
     opacity: env.opacity,
     metalness: env.metalness,
