@@ -387,7 +387,7 @@ g3d.TubeArrow.update = async (args, env) => {
   //translate its center to the middle target point
   env.local.group.position.addScaledVector(position, 1);
 
-  env.wake();
+  env.wake(true);
 }
 
 //g3d.TubeArrow.virtual = true 
@@ -515,7 +515,7 @@ g3d.Arrow.update = async (args, env) => {
   env.local.arrow.setDirection(dir.normalize());
   env.local.arrow.setLength(len);
 
-  env.wake();
+  env.wake(true);
 
 }
 
@@ -598,7 +598,7 @@ g3d.Point.update = async (args, env) => {
     env.local.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( data.flat(Infinity), 3 ) );
   }
 
-  env.wake();
+  env.wake(true);
 
   
   return env.local.points;
@@ -682,7 +682,7 @@ thickness: env.materialThickness,
 
 g3d.Sphere.update = async (args, env) => {
   //console.log('Sphere: updating the data!');
-  env.wake();
+  env.wake(true);
 
   let c = await interpretate(args[0], env);
   if (c instanceof NumericArrayObject) { // convert back automatically
@@ -920,7 +920,7 @@ g3d.Cuboid.update = async (args, env) => {
   //env.local.box.updateMatrix();
 
 
-  env.wake();
+  env.wake(true);
 
 } 
 
@@ -1048,7 +1048,7 @@ g3d.Cylinder.update = async (args, env) => {
   // And make it point to where we want
   env.local.cylinder.geometry.lookAt(direction); 
 
-  env.wake();
+  env.wake(true);
 
 }
 
@@ -1111,7 +1111,7 @@ g3d.Translate = async (args, env) => {
 };
 
 g3d.Translate.update = async (args, env) => {
-  env.wake();
+  env.wake(true);
   let p = await interpretate(args[1], env);
   if (p instanceof NumericArrayObject) { // convert back automatically
     p = p.normal();
@@ -1183,7 +1183,7 @@ g3d.LookAt = async (args, env) => {
 }
 
 g3d.LookAt.update = async (args, env) => {
-  env.wake();
+  env.wake(true);
   const dir = await interpretate(args[1], env);
   env.local.group.lookAt(...dir);
 }  
@@ -1402,7 +1402,7 @@ g3d.GeometricTransformation = async (args, env) => {
 };
 
 g3d.GeometricTransformation.update = async (args, env) => {
-  env.wake();
+  env.wake(true);
   let data = await interpretate(args[1], env);
   if (data instanceof NumericArrayObject) { // convert back automatically
     data = data.normal();
@@ -1533,7 +1533,7 @@ g3d.Reflectivity = () => {
 }
 
 g3d.GraphicsComplex.update = async (args, env) => {
-  env.wake();
+  env.wake(true);
 
   let pts = (await interpretate(args[0], env));
   let vertices;
@@ -2005,7 +2005,7 @@ g3d.Line.update = async (args, env) => {
   env.local.line.geometry.computeBoundingBox();
   env.local.line.geometry.computeBoundingSphere();
 
-  env.wake();
+  env.wake(true);
 }
 
 g3d.Line.destroy = async (args, env) => {
@@ -2451,7 +2451,7 @@ return light;
 }
 
 g3d.PointLight.update = async (args, env) => {
-env.wake();
+env.wake(false, true);
 //const options = await core._getRules(args, {...env, hold: true}); 
 
 if (args.length > 1) {
@@ -2545,7 +2545,7 @@ return spotLight;
 }
 
 g3d.SpotLight.update = async (args, env) => {
-env.wake();
+env.wake(false, true);
 //const options = await core._getRules(args, {...env, hold: true}); 
 
 if (args.length > 1) {
@@ -2785,6 +2785,21 @@ g3d['Graphics3D`Serialize'] = async (args, env) => {
   return encoded;  
 }
 
+g3d['Graphics3D`GetBlob'] = async (args, env) => {
+  const promise = new Deferred();
+  console.log(env.global);
+
+  env.local.animateOnce();
+  env.local.renderer.domElement.toBlob(function(blob){
+    promise.resolve(blob)
+  }, 'image/png', 1.0);
+
+  const blob = await promise.promise;
+  const encoded = await blobToBase64(blob);
+ 
+  return encoded;  
+}
+
 core.Graphics3D = async (args, env) => {  
 //Lazy loading
 
@@ -2807,6 +2822,7 @@ console.log(options);
 if (Object.keys(options).length === 0 && args.length > 1) {
   options = await core._getRules(args[1], {...env, context: g3d, hold:true});
 }
+
 
 let noGrid = true;
 
@@ -2836,7 +2852,15 @@ let PathRendering = false;
 if ('RTX' in options) {
   PathRendering = true;
   RTX = (await import('three-gpu-pathtracer/build/index.module.js'));
+} else if (options.Renderer) {
+  const renderer = await interpretate(options.Renderer, env);
+  if (renderer == 'PathTracing') {
+    PathRendering = true;
+    RTX = (await import('three-gpu-pathtracer/build/index.module.js'));
+  }
 }
+
+
 
 
   /**
@@ -2873,6 +2897,7 @@ const params = 	{
   bounces: 5,
   sleepAfter: 1000,
   runInfinitely: false,
+  fadeDuration: 300,
   stopAfterNFrames: 60,
   samplesPerFrame: 1,
   acesToneMapping: true,
@@ -2880,10 +2905,51 @@ const params = 	{
   transparentTraversals: 20,
   filterGlossyFactor: 0.5,
   tiles: 1,
+  renderDelay: 100,
+  minSamples: 5,
   backgroundAlpha: 0,
   checkerboardTransparency: true,
   cameraProjection: 'Orthographic',
+  enablePathTracing: true
 };
+
+if ('EnablePathTracing' in options) {
+  params.enablePathTracing = await interpretate(options.EnablePathTracing, env);
+}
+
+if ('AcesToneMapping' in options) {
+  params.acesToneMapping = await interpretate(options.AcesToneMapping, env);
+}
+
+if (options.Bounces) {
+  params.bounces = await interpretate(options.Bounces, env);
+}
+
+if ('FadeDuration' in options) {
+  params.fadeDuration = await interpretate(options.FadeDuration, env);
+}
+
+if (options.SleepAfter) {
+  params.sleepAfter = await interpretate(options.SleepAfter, env);
+}
+
+if ('RenderDelay' in options) {
+  params.renderDelay = await interpretate(options.RenderDelay, env);
+}
+
+if ('MinSamples' in options) {
+  params.minSamples = await interpretate(options.MinSamples, env);
+}
+
+if ('EnvironmentIntensity' in options) {
+  params.environmentIntensity = await interpretate(options.EnvironmentIntensity, env);
+}
+
+if ('SamplesPerFrame' in options) {
+  params.samplesPerFrame = await interpretate(options.SamplesPerFrame, env);
+}
+
+
 
 if (options.ViewProjection) { 
   params.cameraProjection = await interpretate(options.ViewProjection, env);
@@ -2911,6 +2977,7 @@ const guiContainer = document.createElement('div');
 guiContainer.classList.add('graphics3d-controller');
 guiContainer.appendChild(gui.domElement);
     
+env.local.animateOnce = animateOnce;
 
 function takeScheenshot() {
   animateOnce();
@@ -2947,6 +3014,9 @@ container.appendChild( renderer.domElement );
 
 domElement = renderer.domElement;
 
+env.local.domElement = domElement;
+env.local.renderer = renderer;
+
 //fix for translate-50% layout
 const layoutOffset = {x:0, y:0};
 if (container.classList.contains('slide-frontend-object')) {
@@ -2982,10 +3052,24 @@ if (PathRendering) {
   renderer.shadowMap.enabled = true;
 }
 
-const wakeFunction = () => {
-  timeStamp = performance.now();
-  if (!sleeping) return;
-  env.local.wakeThreadUp(); 
+let wakeFunction;
+
+if (PathRendering) {
+  wakeFunction = (updateScene, updateLighting) => {
+    timeStamp = performance.now();
+    env.local.updateSceneNext = updateScene == true;
+    env.local.updateLightingNext = updateLighting == true;
+
+    if (!sleeping) return;
+    env.local.wakeThreadUp(); 
+  }
+
+} else {
+  wakeFunction = () => {
+    timeStamp = performance.now();
+    if (!sleeping) return;
+    env.local.wakeThreadUp(); 
+  }
 }
 
 
@@ -3004,6 +3088,10 @@ if (PathRendering) {
 
   //ptRenderer = new RTX.PathTracingRenderer( renderer );
   ptRenderer = new RTX.WebGLPathTracer( renderer );
+  //ptRenderer.enablePathTracing = params.enablePathTracing;
+  ptRenderer.minSamples = params.minSamples;
+  ptRenderer.renderDelay = params.renderDelay;
+  ptRenderer.fadeDuration = params.fadeDuration;
   //ptRenderer.setScene( scene, activeCamera ); 
 } 
 
@@ -3311,7 +3399,7 @@ env.local.wakeThreadUp = () => {
   if (!sleeping) return;
   sleeping = false;
   console.warn("g3d >> waking up!");
-  animate();
+  env.local.aid = requestAnimationFrame( animate );
 }
 
 env.global.renderer = renderer;
@@ -3849,6 +3937,12 @@ if ('Lightmap' in options) {
   } );
 } 
 
+if ('BackgroundAlpha' in options) {
+  params.backgroundAlpha = await interpretate(options.BackgroundAlpha, env);
+  if (params.backgroundAlpha < 1.0) {
+    scene.background = null;
+  }
+}
 
   if (!PathRendering) {
     var pmremGenerator = new THREE.PMREMGenerator( renderer );
@@ -3891,6 +3985,9 @@ if ('Lightmap' in options) {
 
 if ('Lightmap' in options)
   await Promise.all( [ envMapPromise ] );    
+
+
+
 
 
 
@@ -4025,16 +4122,29 @@ function updateSettings() {
   }
 }
 
+env.local.updateLightingNext = false;
+env.local.updateSceneNext = false;
+
 function animateOnce() {
   
   if (PathRendering) {
     //activeCamera.updateMatrixWorld();
+    if (env.local.updateSceneNext) {
+      //console.warn('set scene');
+      ptRenderer.setScene(scene, activeCamera);
+      env.local.updateSceneNext = false;
+    }    
+    if (env.local.updateLightingNext) {
+      ptRenderer.updateLights();
+      env.local.updateLightingNext = false;
+    }
     
     if (params.samplesPerFrame > 1) {
       for (let j=0; j<params.samplesPerFrame; ++j) {
         ptRenderer.renderSample();
       }
     } else {
+      //console.warn('render scene');
       ptRenderer.renderSample();
     }
     
@@ -4079,7 +4189,7 @@ ptFolder.add( params, 'samplesPerFrame', 1, 50, 1 );
 
 //const evFolder = gui.addFolder( 'Environment' );
 
-ptFolder.add( params, 'environmentIntensity', 0, 10, 0.1).onChange( () => {
+ptFolder.add( params, 'environmentIntensity', 0, 3, 0.1).onChange( () => {
 
   ptRenderer.reset();
   updateSettings();
