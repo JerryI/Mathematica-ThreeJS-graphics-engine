@@ -2634,12 +2634,12 @@ const defaultMatrix = new THREE.Matrix4().set(
 let PathRendering = false;
 if ('RTX' in options) {
   PathRendering = true;
-  RTX = (await import('./index.module-c35148b5.js'));
+  RTX = (await import('./index.module-0e1ffa8b.js'));
 } else if (options.Renderer) {
   const renderer = await interpretate(options.Renderer, env);
   if (renderer == 'PathTracing') {
     PathRendering = true;
-    RTX = (await import('./index.module-c35148b5.js'));
+    RTX = (await import('./index.module-0e1ffa8b.js'));
   }
 }
 
@@ -2695,6 +2695,10 @@ const params = 	{
   cameraProjection: 'Orthographic',
   enablePathTracing: true
 };
+
+if (options.MultipleImportanceSampling) {
+  params.multipleImportanceSampling = await interpretate(options.MultipleImportanceSampling, env);
+}
 
 if ('EnablePathTracing' in options) {
   params.enablePathTracing = await interpretate(options.EnablePathTracing, env);
@@ -2873,6 +2877,7 @@ if (PathRendering) {
   ptRenderer.minSamples = params.minSamples;
   ptRenderer.renderDelay = params.renderDelay;
   ptRenderer.fadeDuration = params.fadeDuration;
+  ptRenderer.multipleImportanceSampling = params.multipleImportanceSampling;
   //ptRenderer.setScene( scene, activeCamera ); 
 } 
 
@@ -3946,6 +3951,14 @@ ptFolder.add( params, 'runInfinitely');
 
 
 ptFolder.add( params, 'samplesPerFrame', 1, 50, 1 );
+
+ptFolder.add( params, 'multipleImportanceSampling').onChange(() => {
+
+  ptRenderer.multipleImportanceSampling = params.multipleImportanceSampling;
+  ptRenderer.updateLights();
+  ptRenderer.updateMaterials();
+
+}); 
 
 
 //const evFolder = gui.addFolder( 'Environment' );

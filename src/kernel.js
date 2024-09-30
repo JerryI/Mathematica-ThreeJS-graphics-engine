@@ -2913,6 +2913,10 @@ const params = 	{
   enablePathTracing: true
 };
 
+if (options.MultipleImportanceSampling) {
+  params.multipleImportanceSampling = await interpretate(options.MultipleImportanceSampling, env);
+}
+
 if ('EnablePathTracing' in options) {
   params.enablePathTracing = await interpretate(options.EnablePathTracing, env);
 }
@@ -3092,6 +3096,7 @@ if (PathRendering) {
   ptRenderer.minSamples = params.minSamples;
   ptRenderer.renderDelay = params.renderDelay;
   ptRenderer.fadeDuration = params.fadeDuration;
+  ptRenderer.multipleImportanceSampling = params.multipleImportanceSampling;
   //ptRenderer.setScene( scene, activeCamera ); 
 } 
 
@@ -4185,6 +4190,14 @@ ptFolder.add( params, 'runInfinitely');
 
 
 ptFolder.add( params, 'samplesPerFrame', 1, 50, 1 );
+
+ptFolder.add( params, 'multipleImportanceSampling').onChange(() => {
+
+  ptRenderer.multipleImportanceSampling = params.multipleImportanceSampling;
+  ptRenderer.updateLights();
+  ptRenderer.updateMaterials();
+
+}); 
 
 
 //const evFolder = gui.addFolder( 'Environment' );
