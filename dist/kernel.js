@@ -2716,9 +2716,7 @@ if ('FadeDuration' in options) {
   params.fadeDuration = await interpretate(options.FadeDuration, env);
 }
 
-if (options.SleepAfter) {
-  params.sleepAfter = await interpretate(options.SleepAfter, env);
-}
+
 
 if ('RenderDelay' in options) {
   params.renderDelay = await interpretate(options.RenderDelay, env);
@@ -2756,6 +2754,10 @@ if (!PathRendering) params.resolutionScale = 1.0;
 
 if (PathRendering) {
   params.sleepAfter = 10000;
+}
+
+if (options.SleepAfter) {
+  params.sleepAfter = await interpretate(options.SleepAfter, env);
 }
 //Setting GUI
 const gui = new GUI({ autoPlace: false, name: '...', closed:true });
