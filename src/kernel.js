@@ -2785,7 +2785,7 @@ g3d['Graphics3D`Serialize'] = async (args, env) => {
   return encoded;  
 }
 
-g3d['Graphics3D`GetBlob'] = async (args, env) => {
+g3d['Graphics3D`toDataURL'] = async (args, env) => {
   const promise = new Deferred();
   console.log(env.global);
 
