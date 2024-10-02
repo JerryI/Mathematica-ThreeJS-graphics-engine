@@ -339,7 +339,7 @@ g3d.Tube = async (args, env) => {
 
   const path = new THREE.CatmullRomCurve3(array, false);
 
-  const geometry = new THREE.TubeGeometry( path, 20, radius, 8, false );
+  const geometry = new THREE.TubeGeometry( path, array.length, radius, 8, false );
   
 
   const mesh = new THREE.Mesh(geometry, material);
@@ -371,7 +371,7 @@ g3d.Tube.update = async (args, env) => {
   const path = new THREE.CatmullRomCurve3(array, false);
   
   env.local.tube.geometry.dispose();
-  env.local.tube.geometry = new THREE.TubeGeometry( path, 20, radius, 8, false );
+  env.local.tube.geometry = new THREE.TubeGeometry( path, array.length, radius, 8, false );
   env.wake(true);
 };
 
