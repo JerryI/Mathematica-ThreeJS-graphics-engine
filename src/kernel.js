@@ -237,6 +237,134 @@ g3d.Arrowheads = async (args, env) => {
   }
 };
 
+g3d.Tube = async (args, env) => {
+
+
+  let radius = 1;
+  if (args.length > 1) radius = await interpretate(args[1], env);
+  /**
+   * @type {THREE.Vector3}}
+   */
+  let coordinates = await interpretate(args[0], env);
+  //throw coordinates;
+
+  if (coordinates instanceof NumericArrayObject) {
+    coordinates = coordinates.normal();
+  }
+
+  /**
+   * @type {env.material}}
+   */  
+  const material = new env.material({
+    color: env.color,
+    transparent: env.opacity < 1.0,
+    roughness: env.roughness,
+    opacity: env.opacity,
+    metalness: env.metalness,
+    emissive: env.emissive,
+    emissiveIntensity: env.emissiveIntensity,  
+    ior: env.ior,
+    transmission: env.transmission,
+    thinFilm: env.thinFilm,
+    thickness: env.materialThickness,
+    attenuationColor: env.attenuationColor,
+    attenuationDistance: env.attenuationDistance,
+    clearcoat: env.clearcoat,
+    clearcoatRoughness: env.clearcoatRoughness,
+    sheenColor: env.sheenColor,
+    sheenRoughness: env.sheenRoughness,
+    iridescence: env.iridescence,
+    iridescenceIOR: env.iridescenceIOR,
+    iridescenceThickness: env.iridescenceThickness,
+    specularColor: env.specularColor,
+    specularIntensity: env.specularIntensity,
+    matte: env.matte
+    
+  });
+
+  if (coordinates.length == 2 && false) {
+    env.local.simple = true;
+
+    const p2 = new THREE.Vector3(...coordinates[0]);
+    const p1 = new THREE.Vector3(...coordinates[1]);
+    //direction
+    const dp = p2.clone().addScaledVector(p1, -1);
+
+    const geometry = new THREE.CylinderGeometry(radius, radius, dp.length(), 32, 1);
+
+    const mesh = new THREE.Mesh(geometry, material);
+
+    var HALF_PI = Math.PI * .5;
+    var position  = p1.clone().add(p2).divideScalar(2);
+  
+    var orientation = new THREE.Matrix4();//a new orientation matrix to offset pivot
+    var offsetRotation = new THREE.Matrix4();//a matrix to fix pivot rotation
+    orientation.lookAt(p1,p2,new THREE.Vector3(0,1,0));//look at destination
+    offsetRotation.makeRotationX(HALF_PI);//rotate 90 degs on X
+    orientation.multiply(offsetRotation);//combine orientation with rotation transformations
+    
+    mesh.applyMatrix4(orientation);
+  
+  
+    //group.position=position;    
+  
+  
+    //translate its center to the middle target point
+    mesh.position.addScaledVector(position, 1);
+
+    env.mesh.add(mesh);
+
+    geometry.dispose();
+    material.dispose();
+  
+    return mesh;
+  }
+
+  const array = coordinates.map((el) => new THREE.Vector3(...el));
+
+  const path = new THREE.CatmullRomCurve3(array, false);
+
+  const geometry = new THREE.TubeGeometry( path, 20, radius, 8, false );
+  
+
+  const mesh = new THREE.Mesh(geometry, material);
+
+  env.mesh.add(mesh);
+  env.local.tube = mesh;
+
+  geometry.dispose();
+  material.dispose();
+
+
+}
+
+g3d.Tube.update = async (args, env) => {
+  let radius = 1;
+  if (args.length > 1) radius = await interpretate(args[1], env);
+  /**
+   * @type {THREE.Vector3}}
+   */
+  let coordinates = await interpretate(args[0], env);
+  //throw coordinates;
+
+  if (coordinates instanceof NumericArrayObject) {
+    coordinates = coordinates.normal();
+  }
+
+  const array = coordinates.map((el) => new THREE.Vector3(...el));
+
+  const path = new THREE.CatmullRomCurve3(array, false);
+  
+  env.local.tube.geometry.dispose();
+  env.local.tube.geometry = new THREE.TubeGeometry( path, 20, radius, 8, false );
+  env.wake(true);
+}
+
+g3d.Tube.virtual = true
+
+g3d.Tube.destroy = async (args, env) => {
+  //env.local.tube.dispose();
+}
 
 
 g3d.TubeArrow = async (args, env) => {
@@ -526,7 +654,7 @@ g3d.Arrow.destroy = async (args, env) => {
 
 g3d.Arrow.virtual = true
 
-g3d.Tube = g3d.TubeArrow
+//g3d.Tube = g3d.TubeArrow
 
 g3d.Point = async (args, env) => {
   let data = await interpretate(args[0], env);
