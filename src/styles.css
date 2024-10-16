@@ -9,7 +9,9 @@
 }
 
 .g3d-label {
-    font-size: small;
+    font-size: x-small;
+    color: rgb(28, 30, 33);
+    font-family: system-ui;
 }
 
 .dg.main {
